@@ -23,16 +23,17 @@ export default function CommissionsSection() {
   const [totalExpenses, setTotalExpenses] = useState(0);
 
   const fetchCommissions = useCallback(async () => {
-    if (!db) return;
+    if (!db || !user) return;
     setLoading(true);
     try {
       const commissionsCollectionRef = collection(db, "commissions");
-      const q = query(commissionsCollectionRef, orderBy("date"));
-      const snapshot = await getDocs(q);
+      const snapshot = await getDocs(commissionsCollectionRef);
       const commissionsData: Commission[] = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       })) as Commission[];
+      
+      commissionsData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
       let currentTotal = 0;
       let incomeSum = 0;
@@ -61,7 +62,7 @@ export default function CommissionsSection() {
     } finally {
       setLoading(false);
     }
-  }, [db, toast]);
+  }, [db, toast, user]);
 
   useEffect(() => {
     if (user) {
