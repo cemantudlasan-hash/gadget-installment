@@ -26,11 +26,6 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh]">
-        <div className="text-center mb-4">
-             <p className="text-sm text-muted-foreground">
-                Created and Idea by: <span className="font-semibold text-primary">Ceman Dejamo Tudlasan</span>, Powered By AI.
-            </p>
-        </div>
       <Card className="w-full max-w-md shadow-2xl rounded-2xl border transform transition-all duration-300 hover:scale-105">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-extrabold text-primary font-headline">
