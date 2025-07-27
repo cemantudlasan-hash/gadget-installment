@@ -191,7 +191,7 @@ export default function SalesSection() {
                 </TableHeader>
                 <TableBody>
                   {filteredSales.map((sale) => (
-                    <Collapsible key={sale.id} asChild>
+                     <Collapsible key={sale.id} asChild>
                        <React.Fragment>
                         <TableRow className="hover:bg-primary/5">
                           <TableCell>
