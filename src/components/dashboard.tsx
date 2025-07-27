@@ -5,16 +5,25 @@ import SalesSection from "@/components/sales-section";
 import CommissionsSection from "@/components/commissions-section";
 import PricingCalculator from "@/components/pricing-calculator";
 import { useFirebase } from "@/lib/firebase/context";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
-  const { user } = useFirebase();
+  const { user, loading } = useFirebase();
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto bg-card rounded-2xl shadow-2xl p-6 sm:p-8 border space-y-8">
+        <Skeleton className="h-10 w-1/3 mx-auto" />
+        <Skeleton className="h-8 w-1/4 mx-auto" />
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-7xl mx-auto bg-card rounded-2xl shadow-2xl p-6 sm:p-8 border">
       <div className="text-center mb-8">
-        <p className="text-sm text-muted-foreground mb-1">
-          Created and Idea by: <span className="font-semibold text-primary">Ceman Dejamo Tudlasan</span>, Powered By AI.
-        </p>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-primary font-headline">
           Gadget Installment Management
         </h1>

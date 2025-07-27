@@ -20,7 +20,7 @@ import { Edit, Trash2, Receipt, ChevronDown, PlusCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 export default function SalesSection() {
-  const { db } = useFirebase();
+  const { db, user } = useFirebase();
   const { toast } = useToast();
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,23 +31,32 @@ export default function SalesSection() {
   const [showSalesForm, setShowSalesForm] = useState(false);
 
   useEffect(() => {
-    if (!db) return;
+    if (!db || !user) {
+      setLoading(!user);
+      return;
+    };
+    
+    setLoading(true);
     const salesCollectionRef = collection(db, "sales");
     const q = query(salesCollectionRef);
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const salesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Sale[];
-      salesData.sort((a, b) => new Date(b.dateStart).getTime() - new Date(a.dateStart).getTime());
-      setSales(salesData);
+      
+      const validSalesData = salesData.filter(sale => sale.dateStart);
+
+      validSalesData.sort((a, b) => new Date(b.dateStart).getTime() - new Date(a.dateStart).getTime());
+      
+      setSales(validSalesData);
       setLoading(false);
     }, (err) => {
       console.error("Error fetching sales:", err);
-      toast({ variant: "destructive", title: "Error", description: "Failed to load sales data." });
+      toast({ variant: "destructive", title: "Error", description: "Failed to load sales data. Please check your Firestore rules and network connection." });
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [db, toast]);
+  }, [db, user, toast]);
 
   const handleSaveSale = async (saleData: Omit<Sale, "id">) => {
     if (!db) return;
@@ -56,10 +65,9 @@ export default function SalesSection() {
         await updateDoc(doc(db, "sales", editingSale.id), saleData);
         toast({ title: "Success", description: "Sale updated successfully!" });
       } else {
-        const docRef = await addDoc(collection(db, "sales"), saleData);
+        await addDoc(collection(db, "sales"), saleData);
         toast({ title: "Success", description: "Sale added successfully!" });
 
-        // Add commission and shipping to ledger
         const commissionsCollectionRef = collection(db, "commissions");
         if (saleData.commission > 0) {
             await addDoc(commissionsCollectionRef, { date: saleData.dateStart, description: `Commission for ${saleData.gadget}`, getAmount: saleData.commission, spentAmount: 0 });
@@ -92,7 +100,10 @@ export default function SalesSection() {
     try {
       const saleRef = doc(db, "sales", saleId);
       const saleDoc = sales.find(s => s.id === saleId);
-      if (!saleDoc) throw new Error("Sale not found");
+      if (!saleDoc || !saleDoc.paymentInstallments) {
+        toast({ variant: "destructive", title: "Error", description: "Could not find sale details to record payment." });
+        return;
+      };
 
       let remainingPayment = amountPaid;
       const updatedInstallments = saleDoc.paymentInstallments.map(inst => {
@@ -108,7 +119,7 @@ export default function SalesSection() {
         return inst;
       });
 
-      const newTotalPaid = saleDoc.totalPaidAmount + amountPaid;
+      const newTotalPaid = (saleDoc.totalPaidAmount || 0) + amountPaid;
       await updateDoc(saleRef, {
         paymentInstallments: updatedInstallments,
         totalPaidAmount: newTotalPaid,
@@ -180,11 +191,11 @@ export default function SalesSection() {
                             <div className="text-sm text-muted-foreground md:hidden">{sale.gadget}</div>
                           </TableCell>
                           <TableCell className="hidden md:table-cell">{sale.gadget} ({sale.pieces} pcs)</TableCell>
-                          <TableCell className="text-right hidden lg:table-cell">฿{sale.totalAmountDue.toFixed(2)}</TableCell>
-                          <TableCell className="text-right hidden lg:table-cell">฿{sale.remainingBalance.toFixed(2)}</TableCell>
+                          <TableCell className="text-right hidden lg:table-cell">฿{sale.totalAmountDue?.toFixed(2) || '0.00'}</TableCell>
+                          <TableCell className="text-right hidden lg:table-cell">฿{sale.remainingBalance?.toFixed(2) || '0.00'}</TableCell>
                           <TableCell>
-                            <Badge variant={sale.paymentInstallments.every(p => p.isPaid) ? "default" : "secondary"} className={sale.paymentInstallments.every(p => p.isPaid) ? 'bg-green-600' : ''}>
-                              {sale.paymentInstallments.every(p => p.isPaid) ? "Paid" : "Ongoing"}
+                            <Badge variant={sale.paymentInstallments?.every(p => p.isPaid) ? "default" : "secondary"} className={sale.paymentInstallments?.every(p => p.isPaid) ? 'bg-green-600' : ''}>
+                              {sale.paymentInstallments?.every(p => p.isPaid) ? "Paid" : "Ongoing"}
                             </Badge>
                           </TableCell>
                           <TableCell className="flex items-center space-x-1">
