@@ -191,8 +191,8 @@ export default function SalesSection() {
                 </TableHeader>
                 <TableBody>
                   {filteredSales.map((sale) => (
-                    <Collapsible asChild key={sale.id} tag="tbody">
-                      <>
+                    <Collapsible key={sale.id} asChild>
+                       <React.Fragment>
                         <TableRow className="hover:bg-primary/5">
                           <TableCell>
                             <div className="font-medium">{sale.customerName}</div>
@@ -228,7 +228,7 @@ export default function SalesSection() {
                             </TableCell>
                           </TableRow>
                         </CollapsibleContent>
-                      </>
+                       </React.Fragment>
                     </Collapsible>
                   ))}
                 </TableBody>
