@@ -31,7 +31,7 @@ export default function SalesSection() {
   const [showSalesForm, setShowSalesForm] = useState(false);
 
   const fetchSales = useCallback(async () => {
-    if (!db) return;
+    if (!db || !user) return;
     setLoading(true);
     try {
       const salesCollectionRef = collection(db, "sales");
@@ -53,7 +53,7 @@ export default function SalesSection() {
     } finally {
       setLoading(false);
     }
-  }, [db, toast]);
+  }, [db, toast, user]);
 
   useEffect(() => {
     if (user) {
@@ -189,40 +189,40 @@ export default function SalesSection() {
                 </TableHeader>
                 <TableBody>
                   {filteredSales.map((sale) => (
-                    <Collapsible asChild key={sale.id}>
-                      <>
-                        <TableRow className="hover:bg-primary/5">
-                          <TableCell>
-                            <div className="font-medium">{sale.customerName}</div>
-                            <div className="text-sm text-muted-foreground md:hidden">{sale.gadget}</div>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">{sale.gadget} ({sale.pieces} pcs)</TableCell>
-                          <TableCell className="text-right hidden lg:table-cell">฿{sale.totalAmountDue?.toFixed(2) || '0.00'}</TableCell>
-                          <TableCell className="text-right hidden lg:table-cell">฿{sale.remainingBalance?.toFixed(2) || '0.00'}</TableCell>
-                          <TableCell>
-                            <Badge variant={sale.paymentInstallments?.every(p => p.isPaid) ? "default" : "secondary"} className={sale.paymentInstallments?.every(p => p.isPaid) ? 'bg-green-600' : ''}>
-                              {sale.paymentInstallments?.every(p => p.isPaid) ? "Paid" : "Ongoing"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="flex items-center space-x-1">
-                            <Button variant="ghost" size="icon" onClick={() => { setEditingSale(sale); setShowSalesForm(true); }}><Edit className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => { setReceiptData(sale); setShowReceipt(true); }}><Receipt className="h-4 w-4" /></Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the sale for {sale.customerName}.</AlertDialogDescription></AlertDialogHeader>
-                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteSale(sale.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction></AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                             <CollapsibleTrigger asChild>
-                              <Button variant="ghost" size="icon"><ChevronDown className="h-4 w-4" /></Button>
-                            </CollapsibleTrigger>
-                          </TableCell>
-                        </TableRow>
-                        <CollapsibleContent asChild>
-                           <TableRow><TableCell colSpan={6} className="p-0"><PaymentRecorder sale={sale} onRecordPayment={handleRecordPayment} /></TableCell></TableRow>
-                        </CollapsibleContent>
-                      </>
+                    <Collapsible asChild key={sale.id} tag="tbody">
+                        <>
+                          <TableRow className="hover:bg-primary/5">
+                            <TableCell>
+                              <div className="font-medium">{sale.customerName}</div>
+                              <div className="text-sm text-muted-foreground md:hidden">{sale.gadget}</div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">{sale.gadget} ({sale.pieces} pcs)</TableCell>
+                            <TableCell className="text-right hidden lg:table-cell">฿{sale.totalAmountDue?.toFixed(2) || '0.00'}</TableCell>
+                            <TableCell className="text-right hidden lg:table-cell">฿{sale.remainingBalance?.toFixed(2) || '0.00'}</TableCell>
+                            <TableCell>
+                              <Badge variant={sale.paymentInstallments?.every(p => p.isPaid) ? "default" : "secondary"} className={sale.paymentInstallments?.every(p => p.isPaid) ? 'bg-green-600' : ''}>
+                                {sale.paymentInstallments?.every(p => p.isPaid) ? "Paid" : "Ongoing"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="flex items-center space-x-1">
+                              <Button variant="ghost" size="icon" onClick={() => { setEditingSale(sale); setShowSalesForm(true); }}><Edit className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => { setReceiptData(sale); setShowReceipt(true); }}><Receipt className="h-4 w-4" /></Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the sale for {sale.customerName}.</AlertDialogDescription></AlertDialogHeader>
+                                  <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteSale(sale.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction></AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                               <CollapsibleTrigger asChild>
+                                <Button variant="ghost" size="icon"><ChevronDown className="h-4 w-4" /></Button>
+                              </CollapsibleTrigger>
+                            </TableCell>
+                          </TableRow>
+                          <CollapsibleContent asChild>
+                             <TableRow><TableCell colSpan={6} className="p-0"><PaymentRecorder sale={sale} onRecordPayment={handleRecordPayment} /></TableCell></TableRow>
+                          </CollapsibleContent>
+                        </>
                     </Collapsible>
                   ))}
                 </TableBody>
