@@ -42,7 +42,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
               <Input
                 id="username"
                 type="text"
-                placeholder="admin"
+                placeholder=""
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -53,7 +53,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
               <Input
                 id="password"
                 type="password"
-                placeholder="admin"
+                placeholder=""
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
