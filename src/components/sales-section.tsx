@@ -140,12 +140,12 @@ export default function SalesSection() {
           <CardTitle className="text-xl font-bold text-gray-700">Existing Installment Plans</CardTitle>
           <div className="pt-4">
             <Label>Filter by Customer</Label>
-            <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
+            <Select value={selectedCustomer} onValueChange={(value) => setSelectedCustomer(value === 'all' ? '' : value)}>
               <SelectTrigger className="w-full md:w-1/2">
                 <SelectValue placeholder="All Customers" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Customers</SelectItem>
+                <SelectItem value="all">All Customers</SelectItem>
                 {customerNames.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
               </SelectContent>
             </Select>
