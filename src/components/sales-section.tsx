@@ -16,7 +16,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { Sale } from "@/types";
 import { Edit, Trash2, Receipt, ChevronDown, PlusCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -31,6 +30,7 @@ export default function SalesSection() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState<Sale | null>(null);
   const [showSalesForm, setShowSalesForm] = useState(false);
+  const [openSaleId, setOpenSaleId] = useState<string | null>(null);
 
   const fetchSales = useCallback(async () => {
     if (!db || !user) return;
@@ -191,8 +191,7 @@ export default function SalesSection() {
                 </TableHeader>
                 <TableBody>
                   {filteredSales.map((sale) => (
-                    <Collapsible asChild key={sale.id} >
-                       <React.Fragment>
+                       <React.Fragment key={sale.id}>
                         <TableRow className="hover:bg-primary/5">
                           <TableCell>
                             <div className="font-medium">{sale.customerName}</div>
@@ -216,20 +215,19 @@ export default function SalesSection() {
                                 <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteSale(sale.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction></AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
-                            <CollapsibleTrigger asChild>
-                              <Button variant="ghost" size="icon"><ChevronDown className="h-4 w-4" /></Button>
-                            </CollapsibleTrigger>
+                              <Button variant="ghost" size="icon" onClick={() => setOpenSaleId(openSaleId === sale.id ? null : sale.id)}>
+                                <ChevronDown className={`h-4 w-4 transition-transform ${openSaleId === sale.id ? 'rotate-180' : ''}`} />
+                              </Button>
                           </TableCell>
                         </TableRow>
-                        <CollapsibleContent asChild>
+                        {openSaleId === sale.id && (
                            <TableRow>
                               <TableCell colSpan={6} className="p-0">
                                 <PaymentRecorder sale={sale} onRecordPayment={handleRecordPayment} />
                               </TableCell>
                             </TableRow>
-                        </CollapsibleContent>
+                        )}
                         </React.Fragment>
-                    </Collapsible>
                   ))}
                 </TableBody>
               </Table>
