@@ -191,7 +191,7 @@ export default function SalesSection() {
                 </TableHeader>
                 <TableBody>
                   {filteredSales.map((sale) => (
-                    <Collapsible asChild key={sale.id}>
+                    <Collapsible asChild key={sale.id} tag="tbody">
                       <>
                         <TableRow className="hover:bg-primary/5">
                           <TableCell>
