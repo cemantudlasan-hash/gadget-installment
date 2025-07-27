@@ -54,8 +54,8 @@ export default function CustomerReceipt({ saleData, isOpen, onClose }: CustomerR
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md w-full p-0">
-        <div ref={receiptRef} className="bg-white p-6">
+      <DialogContent className="max-w-sm w-full p-0 flex flex-col">
+        <div ref={receiptRef} className="bg-white p-6 overflow-y-auto max-h-[70vh]">
           <DialogHeader className="text-center mb-4">
             <DialogTitle className="text-xl font-extrabold text-primary">Clef's Techy Gadget Shop.</DialogTitle>
             <p className="text-xs text-muted-foreground">Fb@Technohomeservice</p>
@@ -93,7 +93,7 @@ export default function CustomerReceipt({ saleData, isOpen, onClose }: CustomerR
             </div>
           </div>
         </div>
-        <DialogFooter className="bg-secondary p-4 flex justify-end space-x-2">
+        <DialogFooter className="bg-secondary p-4 flex justify-end space-x-2 border-t mt-auto">
           <Button variant="outline" onClick={onClose}>
             <X className="mr-2 h-4 w-4" /> Close
           </Button>
