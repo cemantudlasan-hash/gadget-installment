@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useFirebase } from "@/lib/firebase/context";
-import { collection, addDoc, doc, updateDoc, deleteDoc, query, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, deleteDoc, query, onSnapshot } from "firebase/firestore";
 import SalesForm from "./sales-form";
 import CustomerReceipt from "./customer-receipt";
 import PaymentRecorder from "./payment-recorder";
@@ -33,10 +33,11 @@ export default function SalesSection() {
   useEffect(() => {
     if (!db) return;
     const salesCollectionRef = collection(db, "sales");
-    const q = query(salesCollectionRef, orderBy("dateStart", "desc"));
+    const q = query(salesCollectionRef);
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const salesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Sale[];
+      salesData.sort((a, b) => new Date(b.dateStart).getTime() - new Date(a.dateStart).getTime());
       setSales(salesData);
       setLoading(false);
     }, (err) => {
