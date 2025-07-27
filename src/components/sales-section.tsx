@@ -17,6 +17,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { Sale } from "@/types";
 import { Edit, Trash2, Receipt, ChevronDown, PlusCircle } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 export default function SalesSection() {
   const { db } = useFirebase();
