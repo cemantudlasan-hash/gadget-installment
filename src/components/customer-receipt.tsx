@@ -54,16 +54,16 @@ export default function CustomerReceipt({ saleData, isOpen, onClose }: CustomerR
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl w-full p-0">
-        <div ref={receiptRef} className="bg-white p-8">
-          <DialogHeader className="text-center mb-6">
-            <DialogTitle className="text-3xl font-extrabold text-primary">Clef's Techy Gadget Shop.</DialogTitle>
-            <p className="text-sm text-muted-foreground">Fb@Technohomeservice</p>
-            <p className="text-sm text-muted-foreground mt-1">Thank you for your purchase, See you soon!</p>
-            <h3 className="text-xl font-bold text-foreground pt-4">Customer Sales Receipt</h3>
+      <DialogContent className="max-w-md w-full p-0">
+        <div ref={receiptRef} className="bg-white p-6">
+          <DialogHeader className="text-center mb-4">
+            <DialogTitle className="text-xl font-extrabold text-primary">Clef's Techy Gadget Shop.</DialogTitle>
+            <p className="text-xs text-muted-foreground">Fb@Technohomeservice</p>
+            <p className="text-xs text-muted-foreground mt-1">Thank you for your purchase, See you soon!</p>
+            <h3 className="text-lg font-bold text-foreground pt-3">Customer Sales Receipt</h3>
           </DialogHeader>
 
-          <div className="space-y-2 text-foreground mb-6 border-t border-b py-4">
+          <div className="space-y-1 text-sm text-foreground mb-4 border-t border-b py-3">
             <p className="flex justify-between items-center"><span className="font-semibold">Receipt ID:</span> <span className="text-right">{saleData.id}</span></p>
             <p className="flex justify-between items-center"><span className="font-semibold">Date:</span> <span className="text-right">{saleData.dateStart}</span></p>
             <p className="flex justify-between items-center"><span className="font-semibold">Customer Name:</span> <span className="text-right">{saleData.customerName}</span></p>
@@ -73,21 +73,21 @@ export default function CustomerReceipt({ saleData, isOpen, onClose }: CustomerR
             <p className="flex justify-between items-center"><span className="font-semibold">Down Payment:</span> <span className="text-right">฿{saleData.downPayment?.toFixed(2)}</span></p>
             <p className="flex justify-between items-center"><span className="font-semibold">Installments:</span> <span className="text-right">{saleData.numberOfInstallments} months</span></p>
             <p className="flex justify-between items-center"><span className="font-semibold">Monthly Payment:</span> <span className="text-right">฿{saleData.monthlyPayment?.toFixed(2)}</span></p>
-            <p className="flex justify-between items-center text-lg"><span className="font-bold">Total Due (after DP):</span> <span className="text-right font-bold">฿{saleData.totalAmountDue?.toFixed(2)}</span></p>
+            <p className="flex justify-between items-center text-base"><span className="font-bold">Total Due (after DP):</span> <span className="text-right font-bold">฿{saleData.totalAmountDue?.toFixed(2)}</span></p>
             <p className="flex justify-between items-center"><span className="font-semibold">Payment Type:</span> <span className="text-right">{saleData.paymentType || 'N/A'}</span></p>
           </div>
 
           <div>
-            <h4 className="text-lg font-bold text-foreground mb-2">Payment Schedule:</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+            <h4 className="text-base font-bold text-foreground mb-2">Payment Schedule:</h4>
+            <div className="grid grid-cols-2 gap-2 text-xs">
               {saleData.paymentInstallments?.map((inst, index) => (
-                <div key={index} className={`p-3 rounded-lg border ${inst.isPaid ? 'bg-green-100 border-green-200 text-green-800' : 'bg-yellow-100 border-yellow-200 text-yellow-800'}`}>
+                <div key={index} className={`p-2 rounded-md border ${inst.isPaid ? 'bg-green-100 border-green-200 text-green-800' : 'bg-yellow-100 border-yellow-200 text-yellow-800'}`}>
                   <p className="font-semibold">Month {inst.month}:</p>
-                  <p className="text-base font-bold text-foreground">฿{inst.paidAmount?.toFixed(2)} / ฿{inst.dueAmount?.toFixed(2)}</p>
+                  <p className="text-sm font-bold text-foreground">฿{inst.paidAmount?.toFixed(2)} / ฿{inst.dueAmount?.toFixed(2)}</p>
                   {inst.isPaid && inst.lastPaymentDate && (
-                    <p className="text-xs text-muted-foreground mt-1">Paid on: {inst.lastPaymentDate}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Paid: {inst.lastPaymentDate}</p>
                   )}
-                  <p className={`text-sm font-medium mt-1`}>Status: {inst.isPaid ? 'Paid' : 'Pending'}</p>
+                  <p className={`font-medium mt-1`}>Status: {inst.isPaid ? 'Paid' : 'Pending'}</p>
                 </div>
               ))}
             </div>
