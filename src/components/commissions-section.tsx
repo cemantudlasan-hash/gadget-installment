@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useFirebase } from "@/lib/firebase/context";
-import { collection, addDoc, doc, updateDoc, deleteDoc, query, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs, orderBy, query } from "firebase/firestore";
 import CommissionForm from "./commission-form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Edit, Trash2 } from "lucide-react";
 
 export default function CommissionsSection() {
-  const { db } = useFirebase();
+  const { db, user } = useFirebase();
   const { toast } = useToast();
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,19 +22,17 @@ export default function CommissionsSection() {
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpenses, setTotalExpenses] = useState(0);
 
-  useEffect(() => {
+  const fetchCommissions = useCallback(async () => {
     if (!db) return;
-
-    const commissionsCollectionRef = collection(db, "commissions");
-    const q = query(commissionsCollectionRef, orderBy("date"));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    setLoading(true);
+    try {
+      const commissionsCollectionRef = collection(db, "commissions");
+      const q = query(commissionsCollectionRef, orderBy("date"));
+      const snapshot = await getDocs(q);
       const commissionsData: Commission[] = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       })) as Commission[];
-
-      commissionsData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
       let currentTotal = 0;
       let incomeSum = 0;
@@ -52,19 +50,25 @@ export default function CommissionsSection() {
       setCommissions(commissionsWithTotal);
       setTotalIncome(incomeSum);
       setTotalExpenses(expenseSum);
-      setLoading(false);
-    }, (err) => {
+    } catch (err: any) {
       console.error("Error fetching commissions:", err);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to load commissions data.",
+        description: `Failed to load commissions data. Details: ${err.message}`,
+        duration: 9000,
       });
+    } finally {
       setLoading(false);
-    });
-
-    return () => unsubscribe();
+    }
   }, [db, toast]);
+
+  useEffect(() => {
+    if (user) {
+      fetchCommissions();
+    }
+  }, [user, fetchCommissions]);
+
 
   const handleSaveCommission = async (commissionData: Omit<Commission, 'id' | 'runningTotal'>) => {
     if (!db) return;
@@ -77,12 +81,13 @@ export default function CommissionsSection() {
         toast({ title: "Success", description: "Entry added successfully!" });
       }
       setEditingCommission(null);
-    } catch (e) {
+      fetchCommissions();
+    } catch (e: any) {
       console.error("Error saving commission:", e);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Error saving entry. Please try again.",
+        description: `Error saving entry: ${e.message}`,
       });
     }
   };
@@ -92,12 +97,13 @@ export default function CommissionsSection() {
     try {
       await deleteDoc(doc(db, "commissions", id));
       toast({ title: "Success", description: "Entry deleted successfully!" });
-    } catch (e) {
+      fetchCommissions();
+    } catch (e: any) {
       console.error("Error deleting commission:", e);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Error deleting entry. Please try again.",
+        description: `Error deleting entry: ${e.message}`,
       });
     }
   };

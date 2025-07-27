@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useFirebase } from "@/lib/firebase/context";
-import { collection, addDoc, doc, updateDoc, deleteDoc, query, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs } from "firebase/firestore";
 import SalesForm from "./sales-form";
 import CustomerReceipt from "./customer-receipt";
 import PaymentRecorder from "./payment-recorder";
@@ -30,33 +30,36 @@ export default function SalesSection() {
   const [receiptData, setReceiptData] = useState<Sale | null>(null);
   const [showSalesForm, setShowSalesForm] = useState(false);
 
-  useEffect(() => {
-    if (!db || !user) {
-      setLoading(!user);
-      return;
-    };
-    
+  const fetchSales = useCallback(async () => {
+    if (!db) return;
     setLoading(true);
-    const salesCollectionRef = collection(db, "sales");
-    const q = query(salesCollectionRef);
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    try {
+      const salesCollectionRef = collection(db, "sales");
+      const snapshot = await getDocs(salesCollectionRef);
       const salesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Sale[];
-      
-      const validSalesData = salesData.filter(sale => sale.dateStart);
 
+      const validSalesData = salesData.filter(sale => sale.dateStart);
       validSalesData.sort((a, b) => new Date(b.dateStart).getTime() - new Date(a.dateStart).getTime());
       
       setSales(validSalesData);
-      setLoading(false);
-    }, (err) => {
+    } catch (err: any) {
       console.error("Error fetching sales:", err);
-      toast({ variant: "destructive", title: "Error", description: "Failed to load sales data. Please check your Firestore rules and network connection." });
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to load sales data. Please check your Firestore rules and network connection. Details: ${err.message}`,
+        duration: 9000,
+      });
+    } finally {
       setLoading(false);
-    });
+    }
+  }, [db, toast]);
 
-    return () => unsubscribe();
-  }, [db, user, toast]);
+  useEffect(() => {
+    if (user) {
+      fetchSales();
+    }
+  }, [user, fetchSales]);
 
   const handleSaveSale = async (saleData: Omit<Sale, "id">) => {
     if (!db) return;
@@ -78,9 +81,10 @@ export default function SalesSection() {
       }
       setEditingSale(null);
       setShowSalesForm(false);
-    } catch (e) {
+      fetchSales(); // Refetch data after saving
+    } catch (e: any) {
       console.error("Error saving sale:", e);
-      toast({ variant: "destructive", title: "Error", description: "Error saving sale. Please try again." });
+      toast({ variant: "destructive", title: "Error", description: `Error saving sale: ${e.message}` });
     }
   };
 
@@ -89,9 +93,10 @@ export default function SalesSection() {
     try {
       await deleteDoc(doc(db, "sales", id));
       toast({ title: "Success", description: "Sale deleted successfully!" });
-    } catch (e) {
+      fetchSales(); // Refetch data after deleting
+    } catch (e: any) {
       console.error("Error deleting sale:", e);
-      toast({ variant: "destructive", title: "Error", description: "Error deleting sale. Please try again." });
+      toast({ variant: "destructive", title: "Error", description: `Error deleting sale: ${e.message}` });
     }
   };
 
@@ -126,9 +131,10 @@ export default function SalesSection() {
         remainingBalance: saleDoc.totalAmountDue - newTotalPaid,
       });
       toast({ title: "Success", description: "Payment recorded successfully!" });
-    } catch (e) {
+      fetchSales(); // Refetch data after payment
+    } catch (e: any) {
       console.error("Error recording payment:", e);
-      toast({ variant: "destructive", title: "Error", description: "Error recording payment. Please try again." });
+      toast({ variant: "destructive", title: "Error", description: `Error recording payment: ${e.message}` });
     }
   };
 
