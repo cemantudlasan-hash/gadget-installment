@@ -72,8 +72,7 @@ export default function CommissionsSection() {
 
     const monthlyLedgerEntries = allCommissions.filter(c => {
         const commissionDate = parseISO(c.date);
-        const isInMonth = isWithinInterval(commissionDate, { start, end });
-        return isInMonth;
+        return isWithinInterval(commissionDate, { start, end });
     });
 
     const filteredBySearch = (searchTerm
@@ -94,8 +93,6 @@ export default function CommissionsSection() {
     const manualIncome = monthlyLedgerEntries.reduce((acc, item) => acc + (item.getAmount || 0), 0);
     const manualExpenses = monthlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
     
-    const expenseSum = manualExpenses;
-
     // Find sales that were fully paid in the current month
     const fullyPaidSalesThisMonth = sales.filter(sale => {
       const isFullyPaid = sale.paymentInstallments.every(p => p.isPaid);
@@ -115,8 +112,7 @@ export default function CommissionsSection() {
     });
 
     const commissionIncomeFromSales = fullyPaidSalesThisMonth.reduce((acc, sale) => acc + sale.commission, 0);
-    const totalIncome = manualIncome + commissionIncomeFromSales;
-
+    const totalMonthlyIncome = manualIncome + commissionIncomeFromSales;
 
     const profitAfterDP = fullyPaidSalesThisMonth.reduce((acc, sale) => {
       // Net Profit for a sale = Commission - Down Payment
@@ -126,10 +122,10 @@ export default function CommissionsSection() {
 
     return {
       monthlyCommissions: commissionsWithTotal,
-      totalCommissionIncome: totalIncome,
-      totalExpenses: expenseSum,
+      totalCommissionIncome: totalMonthlyIncome,
+      totalExpenses: manualExpenses,
       netProfitAfterDP: profitAfterDP,
-      netMonthlyIncome: totalIncome - expenseSum,
+      netMonthlyIncome: totalMonthlyIncome - manualExpenses,
     };
   }, [allCommissions, sales, currentMonth, searchTerm]);
   
