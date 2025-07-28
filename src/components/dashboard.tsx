@@ -47,6 +47,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </Button>
       </div>
 
+      <div className="text-center text-xs text-slate-500 mb-8">
+            <p>AI powered @Firebase</p>
+            <p>Created and Idea by: Ceman Dejamo Tudlasan</p>
+      </div>
+
       <Tabs defaultValue="sales" className="w-full">
         <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-auto sm:h-12 mb-8 bg-slate-800/60 border border-slate-700 text-cyan-300">
           <TabsTrigger value="sales" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Sales & Installments</TabsTrigger>
