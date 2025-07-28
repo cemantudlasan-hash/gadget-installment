@@ -70,13 +70,21 @@ export default function SalesSection() {
         await updateDoc(doc(db, "sales", editingSale.id), saleData);
         toast({ title: "Success", description: "Sale updated successfully!" });
       } else {
-        await addDoc(collection(db, "sales"), saleData);
+        const newSale = await addDoc(collection(db, "sales"), saleData);
         toast({ title: "Success", description: "Sale added successfully!" });
+        
+        // When a new sale is created, also log the down payment to the ledger
+        if (saleData.downPayment > 0) {
+            const commissionsCollectionRef = collection(db, "commissions");
+            await addDoc(commissionsCollectionRef, { 
+                date: saleData.dateStart, 
+                description: `Down payment for ${saleData.gadget} (${saleData.customerName})`, 
+                getAmount: saleData.downPayment, 
+                spentAmount: 0 
+            });
+        }
 
         const commissionsCollectionRef = collection(db, "commissions");
-        if (saleData.commission > 0) {
-            await addDoc(commissionsCollectionRef, { date: saleData.dateStart, description: `Commission for ${saleData.gadget}`, getAmount: saleData.commission, spentAmount: 0 });
-        }
         if (saleData.shippingCost > 0) {
             await addDoc(commissionsCollectionRef, { date: saleData.dateStart, description: `Shipping for ${saleData.gadget}`, getAmount: 0, spentAmount: saleData.shippingCost });
         }
@@ -137,7 +145,17 @@ export default function SalesSection() {
         totalPaidAmount: newTotalPaid,
         remainingBalance: saleDoc.totalAmountDue - newTotalPaid,
       });
-      toast({ title: "Success", description: "Payment recorded successfully!" });
+
+      // Add the payment to the commissions (ledger) collection
+      const commissionsCollectionRef = collection(db, "commissions");
+      await addDoc(commissionsCollectionRef, {
+        date: paymentDate,
+        description: `Payment for ${saleDoc.gadget} (${saleDoc.customerName})`,
+        getAmount: amountPaid,
+        spentAmount: 0,
+      });
+
+      toast({ title: "Success", description: "Payment recorded and ledger updated!" });
       fetchSales(); // Refetch data after payment
     } catch (e: any) {
       console.error("Error recording payment:", e);
