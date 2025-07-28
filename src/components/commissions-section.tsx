@@ -116,15 +116,16 @@ export default function CommissionsSection() {
     const yearlyLedgerEntries = allCommissions.filter(c =>
       isWithinInterval(parseISO(c.date), { start, end })
     );
-  
-    const totalYearlyManualExpenses = yearlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
-  
+
+    const totalYearlyManualExpenses = yearlyLedgerEntries
+      .reduce((acc, item) => acc + (item.spentAmount || 0), 0);
+
     const totalExpenses = totalYearlyManualExpenses;
-  
+      
     const yearlyNetProfitAfterDP = fullyPaidSalesThisYear.reduce((acc, sale) => {
       return acc + (sale.commission - sale.downPayment);
     }, 0);
-  
+    
     const netYearlyIncome = yearlyNetProfitAfterDP - totalExpenses;
   
     return {
@@ -271,7 +272,7 @@ export default function CommissionsSection() {
       <Card>
         <CardHeader>
            <div className="flex justify-between items-center">
-             <CardTitle>Yearly Report</CardTitle>
+             <CardTitle>Sales Report</CardTitle>
              <div className="flex items-center gap-4">
                 <Button variant="outline" size="icon" onClick={() => setCurrentYear(subYears(currentYear, 1))}>
                     <ChevronLeft className="h-4 w-4" />
@@ -286,7 +287,7 @@ export default function CommissionsSection() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-muted p-4 rounded-lg text-center">
-                <p className="text-sm text-muted-foreground">Net Income (Profit - Manual Expenses):</p>
+                <p className="text-sm text-muted-foreground">Net Income (Commissions - DP - Expenses):</p>
                 <p className={`text-2xl font-bold ${yearlyReport.netYearlyIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>฿{yearlyReport.netYearlyIncome.toFixed(2)}</p>
               </div>
               <div className="bg-muted p-4 rounded-lg text-center">
