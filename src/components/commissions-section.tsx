@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Commission } from "@/types";
+import type { Commission, Sale } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
@@ -18,6 +18,7 @@ export default function CommissionsSection() {
   const { db, user } = useFirebase();
   const { toast } = useToast();
   const [allCommissions, setAllCommissions] = useState<Commission[]>([]);
+  const [allSales, setAllSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCommission, setEditingCommission] = useState<Commission | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -28,19 +29,25 @@ export default function CommissionsSection() {
     try {
       const commissionsCollectionRef = collection(db, "commissions");
       const q = query(commissionsCollectionRef, orderBy("date", "desc"));
-      const snapshot = await getDocs(q);
-      const commissionsData: Commission[] = snapshot.docs.map(doc => ({
+      const commissionsSnapshot = await getDocs(q);
+      const commissionsData: Commission[] = commissionsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       })) as Commission[];
       
       setAllCommissions(commissionsData);
+
+      const salesCollectionRef = collection(db, "sales");
+      const salesSnapshot = await getDocs(salesCollectionRef);
+      const salesData = salesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Sale[];
+      setAllSales(salesData);
+
     } catch (err: any)      {
-      console.error("Error fetching commissions:", err);
+      console.error("Error fetching data:", err);
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to load commissions data. Details: ${err.message}`,
+        description: `Failed to load data. Details: ${err.message}`,
         duration: 9000,
       });
     } finally {
@@ -58,31 +65,53 @@ export default function CommissionsSection() {
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
 
-    const filtered = allCommissions.filter(c => {
+    const filteredLedgerEntries = allCommissions.filter(c => {
         const commissionDate = new Date(c.date);
         return isWithinInterval(commissionDate, { start, end });
     }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     let runningTotal = 0;
-    let incomeSum = 0;
-    let expenseSum = 0;
-
-    const commissionsWithTotal = filtered.map(item => {
+    
+    const commissionsWithTotal = filteredLedgerEntries.map(item => {
       const getAmount = item.getAmount || 0;
       const spentAmount = item.spentAmount || 0;
       runningTotal += getAmount - spentAmount;
-      incomeSum += getAmount;
-      expenseSum += spentAmount;
       return { ...item, runningTotal };
     });
+    
+    const expenseSum = filteredLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
+
+    const earnedCommission = allSales.reduce((acc, sale) => {
+        if (sale.totalAmountDue > 0) {
+            const paidPercentage = sale.totalPaidAmount / sale.totalAmountDue;
+            return acc + (paidPercentage * sale.commission);
+        }
+        return acc;
+    }, 0);
+    
+    const incomeSum = allSales.reduce((acc, sale) => {
+      let saleIncomeThisMonth = 0;
+      sale.paymentInstallments?.forEach(inst => {
+        if(inst.lastPaymentDate) {
+          const paymentDate = new Date(inst.lastPaymentDate);
+          if (isWithinInterval(paymentDate, { start, end })) {
+            saleIncomeThisMonth += inst.paidAmount;
+          }
+        }
+      });
+      return acc + saleIncomeThisMonth;
+    }, 0);
+
+
+    const net = incomeSum - expenseSum;
 
     return {
       monthlyCommissions: commissionsWithTotal,
       totalIncome: incomeSum,
       totalExpenses: expenseSum,
-      netProfit: incomeSum - expenseSum,
+      netProfit: net,
     };
-  }, [allCommissions, currentMonth]);
+  }, [allCommissions, allSales, currentMonth]);
 
 
   const handleSaveCommission = async (commissionData: Omit<Commission, 'id' | 'runningTotal'>) => {
