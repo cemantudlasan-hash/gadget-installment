@@ -96,7 +96,7 @@ export default function CommissionsSection() {
   const yearlyReport = useMemo(() => {
     const start = startOfYear(currentYear);
     const end = endOfYear(currentYear);
-  
+
     const fullyPaidSalesThisYear = sales.filter(sale => {
       const isFullyPaid = sale.paymentInstallments.every(p => p.isPaid);
       if (!isFullyPaid) return false;
@@ -286,17 +286,17 @@ export default function CommissionsSection() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-muted p-4 rounded-lg text-center">
+              <div className="flex flex-col bg-muted p-4 rounded-lg text-center">
                 <p className="text-sm text-muted-foreground">Net Income (Commissions - DP - Expenses):</p>
-                <p className={`text-2xl font-bold ${yearlyReport.netYearlyIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>฿{yearlyReport.netYearlyIncome.toFixed(2)}</p>
+                <p className={`text-2xl font-bold mt-auto ${yearlyReport.netYearlyIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>฿{yearlyReport.netYearlyIncome.toFixed(2)}</p>
               </div>
-              <div className="bg-muted p-4 rounded-lg text-center">
+              <div className="flex flex-col bg-muted p-4 rounded-lg text-center">
                 <p className="text-sm text-muted-foreground">Total Expenses (Shipping + Manual):</p>
-                <p className="text-2xl font-bold text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
+                <p className="text-2xl font-bold mt-auto text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
               </div>
-              <div className="bg-muted p-4 rounded-lg text-center">
+              <div className="flex flex-col bg-muted p-4 rounded-lg text-center">
                 <p className="text-sm text-muted-foreground">Profit After Down Payment (from sales):</p>
-                <p className={`text-2xl font-bold ${yearlyReport.netProfitAfterDP >= 0 ? 'text-green-600' : 'text-red-600'}`}>฿{yearlyReport.netProfitAfterDP.toFixed(2)}</p>
+                <p className={`text-2xl font-bold mt-auto ${yearlyReport.netProfitAfterDP >= 0 ? 'text-green-600' : 'text-red-600'}`}>฿{yearlyReport.netProfitAfterDP.toFixed(2)}</p>
               </div>
             </div>
         </CardContent>
