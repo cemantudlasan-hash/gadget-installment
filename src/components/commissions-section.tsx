@@ -122,9 +122,15 @@ export default function CommissionsSection() {
     const start = startOfYear(currentYear);
     const end = endOfYear(currentYear);
     
-    const yearlyExpenses = allCommissions
+    const yearlyLedgerExpenses = allCommissions
       .filter(c => isWithinInterval(parseISO(c.date), { start, end }))
       .reduce((acc, item) => acc + (item.spentAmount || 0), 0);
+      
+    const salesThisYear = sales.filter(sale => isWithinInterval(parseISO(sale.dateStart), { start, end }));
+
+    const yearlyShippingCosts = salesThisYear.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0);
+
+    const totalYearlyExpenses = yearlyLedgerExpenses; // Shipping cost is already in ledger
       
     const fullyPaidSalesThisYear = sales.filter(sale => {
       const isFullyPaid = sale.paymentInstallments.every(p => p.isPaid);
@@ -150,7 +156,7 @@ export default function CommissionsSection() {
 
     return {
       totalIncome: yearlyCommissionIncome,
-      totalExpenses: yearlyExpenses,
+      totalExpenses: totalYearlyExpenses,
       netProfitAfterDP: yearlyNetProfitAfterDP
     }
   }, [allCommissions, sales, currentYear]);
@@ -337,3 +343,5 @@ export default function CommissionsSection() {
     </div>
   );
 }
+
+    
