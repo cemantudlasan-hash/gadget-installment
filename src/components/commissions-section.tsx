@@ -119,6 +119,10 @@ export default function CommissionsSection() {
 
     const totalYearlyManualExpenses = yearlyLedgerEntries
       .reduce((acc, item) => acc + (item.spentAmount || 0), 0);
+      
+    const totalYearlyManualIncome = yearlyLedgerEntries
+      .filter(item => !item.description.includes('Payment for') && !item.description.includes('Down payment for'))
+      .reduce((acc, item) => acc + (item.getAmount || 0), 0);
 
     const totalExpenses = totalYearlyManualExpenses;
       
@@ -126,7 +130,7 @@ export default function CommissionsSection() {
       return acc + (sale.commission - sale.downPayment);
     }, 0);
     
-    const netYearlyIncome = yearlyNetProfitAfterDP - totalExpenses;
+    const netYearlyIncome = yearlyNetProfitAfterDP - totalExpenses + totalYearlyManualIncome;
   
     return {
       totalExpenses: totalExpenses,
@@ -285,18 +289,18 @@ export default function CommissionsSection() {
            </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="flex flex-col bg-muted p-4 rounded-lg text-center">
-                <p className="text-sm text-muted-foreground">Net Income (Commissions - DP - Expenses):</p>
-                <p className={`text-2xl font-bold mt-auto ${yearlyReport.netYearlyIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>฿{yearlyReport.netYearlyIncome.toFixed(2)}</p>
+           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
+                <p className="text-sm text-muted-foreground text-center">Net Income (Commissions - DP - Expenses):</p>
+                <p className={`text-2xl font-bold mt-auto text-center ${yearlyReport.netYearlyIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>฿{yearlyReport.netYearlyIncome.toFixed(2)}</p>
               </div>
-              <div className="flex flex-col bg-muted p-4 rounded-lg text-center">
-                <p className="text-sm text-muted-foreground">Total Expenses (Shipping + Manual):</p>
-                <p className="text-2xl font-bold mt-auto text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
+              <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
+                <p className="text-sm text-muted-foreground text-center">Total Expenses (Shipping + Manual):</p>
+                <p className="text-2xl font-bold mt-auto text-center text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
               </div>
-              <div className="flex flex-col bg-muted p-4 rounded-lg text-center">
-                <p className="text-sm text-muted-foreground">Profit After Down Payment (from sales):</p>
-                <p className={`text-2xl font-bold mt-auto ${yearlyReport.netProfitAfterDP >= 0 ? 'text-green-600' : 'text-red-600'}`}>฿{yearlyReport.netProfitAfterDP.toFixed(2)}</p>
+              <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
+                <p className="text-sm text-muted-foreground text-center">Profit After Down Payment (from sales):</p>
+                <p className={`text-2xl font-bold mt-auto text-center ${yearlyReport.netProfitAfterDP >= 0 ? 'text-green-600' : 'text-red-600'}`}>฿{yearlyReport.netProfitAfterDP.toFixed(2)}</p>
               </div>
             </div>
         </CardContent>
