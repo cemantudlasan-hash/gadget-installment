@@ -137,13 +137,11 @@ export default function CommissionsSection() {
       .filter(c => isWithinInterval(parseISO(c.date), { start, end }));
 
     const yearlyManualIncome = yearlyLedgerEntries.reduce((acc, item) => acc + (item.getAmount || 0), 0);
-    const yearlyManualExpenses = yearlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
-      
+    
     const salesThisYear = sales.filter(sale => isWithinInterval(parseISO(sale.dateStart), { start, end }));
-
     const yearlyShippingCosts = salesThisYear.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0);
 
-    const totalYearlyExpenses = yearlyManualExpenses + yearlyShippingCosts;
+    const totalYearlyExpenses = yearlyShippingCosts;
       
     const fullyPaidSalesThisYear = sales.filter(sale => {
       const isFullyPaid = sale.paymentInstallments.every(p => p.isPaid);
