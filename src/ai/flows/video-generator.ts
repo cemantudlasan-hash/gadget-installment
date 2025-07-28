@@ -9,7 +9,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import * as fs from 'fs';
 import { MediaPart } from 'genkit';
 import { Readable } from 'stream';
 
@@ -41,7 +40,7 @@ const generateVideoFlow = ai.defineFlow(
     outputSchema: GenerateVideoOutputSchema,
   },
   async ({ photoDataUri, prompt }) => {
-    // Manually parse the data URI
+    // Manually parse the data URI to extract the MIME type and the Base64 data.
     const match = photoDataUri.match(/^data:(image\/.+);base64,(.+)$/);
     if (!match) {
       throw new Error('Invalid data URI format for photo.');
@@ -70,7 +69,7 @@ const generateVideoFlow = ai.defineFlow(
       throw new Error('Expected the model to return an operation');
     }
 
-    // Wait for the operation to complete
+    // Wait for the operation to complete. This can take some time.
     while (!operation.done) {
       await new Promise(resolve => setTimeout(resolve, 5000));
       operation = await ai.checkOperation(operation);
