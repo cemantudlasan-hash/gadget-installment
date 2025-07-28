@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useFirebase } from "@/lib/firebase/context";
-import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs, orderBy, query, where, limit } from "firebase/firestore";
 import CommissionForm from "./commission-form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,7 +79,7 @@ export default function CommissionsSection() {
     const filteredBySearch = (searchTerm
         ? allCommissions.filter(c => c.description.toLowerCase().includes(searchTerm.toLowerCase()))
         : monthlyLedgerEntries
-    ).sort((a, b) => a.description.localeCompare(b.description));
+    ).sort((a, b) => b.date.localeCompare(a.date));
 
 
     let runningTotal = 0;
@@ -89,9 +89,12 @@ export default function CommissionsSection() {
       const spentAmount = item.spentAmount || 0;
       runningTotal += getAmount - spentAmount;
       return { ...item, runningTotal };
-    });
+    }).sort((a, b) => a.description.localeCompare(b.description));
     
-    const expenseSum = monthlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
+    const manualIncome = monthlyLedgerEntries.reduce((acc, item) => acc + (item.getAmount || 0), 0);
+    const manualExpenses = monthlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
+    
+    const expenseSum = manualExpenses;
 
     // Find sales that were fully paid in the current month
     const fullyPaidSalesThisMonth = sales.filter(sale => {
@@ -111,7 +114,9 @@ export default function CommissionsSection() {
       return isWithinInterval(lastPaymentDate, { start, end });
     });
 
-    const commissionIncome = fullyPaidSalesThisMonth.reduce((acc, sale) => acc + sale.commission, 0);
+    const commissionIncomeFromSales = fullyPaidSalesThisMonth.reduce((acc, sale) => acc + sale.commission, 0);
+    const totalIncome = manualIncome + commissionIncomeFromSales;
+
 
     const profitAfterDP = fullyPaidSalesThisMonth.reduce((acc, sale) => {
       // Net Profit for a sale = Commission - Down Payment
@@ -121,7 +126,7 @@ export default function CommissionsSection() {
 
     return {
       monthlyCommissions: commissionsWithTotal,
-      totalCommissionIncome: commissionIncome,
+      totalCommissionIncome: totalIncome,
       totalExpenses: expenseSum,
       netProfitAfterDP: profitAfterDP,
     };
@@ -131,15 +136,17 @@ export default function CommissionsSection() {
     const start = startOfYear(currentYear);
     const end = endOfYear(currentYear);
     
-    const yearlyLedgerExpenses = allCommissions
-      .filter(c => isWithinInterval(parseISO(c.date), { start, end }))
-      .reduce((acc, item) => acc + (item.spentAmount || 0), 0);
+    const yearlyLedgerEntries = allCommissions
+      .filter(c => isWithinInterval(parseISO(c.date), { start, end }));
+
+    const yearlyManualIncome = yearlyLedgerEntries.reduce((acc, item) => acc + (item.getAmount || 0), 0);
+    const yearlyManualExpenses = yearlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
       
     const salesThisYear = sales.filter(sale => isWithinInterval(parseISO(sale.dateStart), { start, end }));
 
     const yearlyShippingCosts = salesThisYear.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0);
 
-    const totalYearlyExpenses = yearlyLedgerExpenses; // Shipping cost is already in ledger
+    const totalYearlyExpenses = yearlyManualExpenses;
       
     const fullyPaidSalesThisYear = sales.filter(sale => {
       const isFullyPaid = sale.paymentInstallments.every(p => p.isPaid);
@@ -157,14 +164,16 @@ export default function CommissionsSection() {
       return isWithinInterval(lastPaymentDate, { start, end });
     });
 
-    const yearlyCommissionIncome = fullyPaidSalesThisYear.reduce((acc, sale) => acc + sale.commission, 0);
+    const yearlyCommissionIncomeFromSales = fullyPaidSalesThisYear.reduce((acc, sale) => acc + sale.commission, 0);
+    const totalYearlyIncome = yearlyManualIncome + yearlyCommissionIncomeFromSales;
+
     const yearlyNetProfitAfterDP = fullyPaidSalesThisYear.reduce((acc, sale) => {
       return acc + (sale.commission - sale.downPayment);
     }, 0);
 
 
     return {
-      totalIncome: yearlyCommissionIncome,
+      totalIncome: totalYearlyIncome,
       totalExpenses: totalYearlyExpenses,
       netProfitAfterDP: yearlyNetProfitAfterDP
     }
@@ -188,8 +197,18 @@ export default function CommissionsSection() {
     }
   };
 
-  const handleDeleteCommission = async (id: string) => {
+  const handleDeleteCommission = async (id: string, description: string) => {
     if (!db) return;
+
+    if (description.startsWith("Down payment for") || description.startsWith("Shipping for")) {
+        toast({
+            variant: "destructive",
+            title: "Action Not Allowed",
+            description: "Down payments and shipping costs are linked to sales and cannot be deleted from the ledger. Please edit the corresponding sale entry.",
+        });
+        return;
+    }
+
     try {
       await deleteDoc(doc(db, "commissions", id));
       toast({ title: "Success", description: "Entry deleted successfully!" });
@@ -275,7 +294,7 @@ export default function CommissionsSection() {
                     <TableCell>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                           <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
@@ -288,7 +307,7 @@ export default function CommissionsSection() {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteCommission(item.id)} className="bg-destructive hover:bg-destructive/90">
+                            <AlertDialogAction onClick={() => handleDeleteCommission(item.id, item.description)} className="bg-destructive hover:bg-destructive/90">
                               Delete
                             </AlertDialogAction>
                           </AlertDialogFooter>
@@ -310,7 +329,7 @@ export default function CommissionsSection() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-muted p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground">Total Commission (from paid sales):</p>
+              <p className="text-sm text-muted-foreground">Total Income (Commissions & Manual):</p>
               <p className="text-2xl font-bold text-blue-600">฿{totalCommissionIncome.toFixed(2)}</p>
             </div>
             <div className="bg-muted p-4 rounded-lg">
@@ -318,7 +337,7 @@ export default function CommissionsSection() {
               <p className="text-2xl font-bold text-red-600">฿{totalExpenses.toFixed(2)}</p>
             </div>
              <div className="bg-muted p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground">Profit After Down Payment:</p>
+              <p className="text-sm text-muted-foreground">Profit After Down Payment (from sales):</p>
               <p className={`text-2xl font-bold ${netProfitAfterDP >= 0 ? 'text-green-600' : 'text-red-600'}`}>฿{netProfitAfterDP.toFixed(2)}</p>
             </div>
           </div>
@@ -343,7 +362,7 @@ export default function CommissionsSection() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-muted p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">Total Commission Income:</p>
+                <p className="text-sm text-muted-foreground">Total Income (Commissions & Manual):</p>
                 <p className="text-2xl font-bold text-blue-600">฿{yearlyReport.totalIncome.toFixed(2)}</p>
               </div>
               <div className="bg-muted p-4 rounded-lg">
@@ -351,7 +370,7 @@ export default function CommissionsSection() {
                 <p className="text-2xl font-bold text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
               </div>
               <div className="bg-muted p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">Profit After Down Payment:</p>
+                <p className="text-sm text-muted-foreground">Profit After Down Payment (from sales):</p>
                 <p className={`text-2xl font-bold ${yearlyReport.netProfitAfterDP >= 0 ? 'text-green-600' : 'text-red-600'}`}>฿{yearlyReport.netProfitAfterDP.toFixed(2)}</p>
               </div>
             </div>
@@ -360,9 +379,3 @@ export default function CommissionsSection() {
     </div>
   );
 }
-
-    
-    
-    
-
-    
