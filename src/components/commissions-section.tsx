@@ -66,7 +66,7 @@ export default function CommissionsSection() {
     }
   }, [user, fetchAllData]);
 
-  const { monthlyCommissions, totalExpenses, netProfitAfterDP, netMonthlyIncome } = useMemo(() => {
+  const monthlyCommissions = useMemo(() => {
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
 
@@ -89,46 +89,9 @@ export default function CommissionsSection() {
       runningTotal += getAmount - spentAmount;
       return { ...item, runningTotal };
     });
-    
-    const manualExpenses = monthlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
-    
-    const fullyPaidSalesThisMonth = sales.filter(sale => {
-      const isFullyPaid = sale.paymentInstallments.every(p => p.isPaid);
-      if (!isFullyPaid) return false;
 
-      const lastPaymentDateStr = sale.paymentInstallments.reduce((latest, current) => {
-        if (!current.lastPaymentDate) return latest;
-        if (!latest) return current.lastPaymentDate;
-        return new Date(current.lastPaymentDate) > new Date(latest) ? current.lastPaymentDate : latest;
-      }, null as string | null);
-
-      if (!lastPaymentDateStr) return false;
-      
-      const lastPaymentDate = parseISO(lastPaymentDateStr);
-      return isWithinInterval(lastPaymentDate, { start, end });
-    });
-
-    const shippingCostFromSales = fullyPaidSalesThisMonth.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0);
-    const totalMonthlyExpenses = manualExpenses;
-
-    const profitFromSales = fullyPaidSalesThisMonth.reduce((acc, sale) => {
-      return acc + (sale.commission - sale.downPayment - (sale.shippingCost || 0));
-    }, 0);
-
-    const totalNetMonthlyIncome = profitFromSales - monthlyLedgerEntries.filter(e => !e.description.toLowerCase().includes('down payment')).reduce((acc, item) => acc + (item.spentAmount || 0), 0);
-    
-    const netProfitAfterDP = fullyPaidSalesThisMonth.reduce((acc, sale) => {
-        return acc + (sale.commission - sale.downPayment);
-      }, 0);
-
-
-    return {
-      monthlyCommissions: commissionsWithTotal,
-      totalExpenses: totalMonthlyExpenses,
-      netProfitAfterDP: netProfitAfterDP,
-      netMonthlyIncome: totalNetMonthlyIncome,
-    };
-  }, [allCommissions, sales, currentMonth, searchTerm]);
+    return commissionsWithTotal;
+  }, [allCommissions, currentMonth, searchTerm]);
   
   const yearlyReport = useMemo(() => {
     const start = startOfYear(currentYear);
@@ -139,6 +102,7 @@ export default function CommissionsSection() {
     );
 
     const yearlyManualExpenses = yearlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
+    const totalYearlyExpenses = yearlyManualExpenses;
 
     const fullyPaidSalesThisYear = sales.filter(sale => {
       const isFullyPaid = sale.paymentInstallments.every(p => p.isPaid);
@@ -156,9 +120,6 @@ export default function CommissionsSection() {
       return isWithinInterval(lastPaymentDate, { start, end });
     });
     
-    const shippingCostsFromSalesThisYear = fullyPaidSalesThisYear.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0);
-    const totalYearlyExpenses = yearlyManualExpenses;
-
     const yearlyNetProfitAfterDP = fullyPaidSalesThisYear.reduce((acc, sale) => {
         return acc + (sale.commission - sale.downPayment);
     }, 0);
@@ -308,28 +269,6 @@ export default function CommissionsSection() {
       
       <Card>
         <CardHeader>
-          <CardTitle>Monthly Financial Summary for {format(currentMonth, "MMMM yyyy")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-muted p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground">Net Income (Commission - DP - Costs):</p>
-              <p className={`text-2xl font-bold ${netMonthlyIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>฿{netMonthlyIncome.toFixed(2)}</p>
-            </div>
-            <div className="bg-muted p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground">Total Expenses (incl. Shipping):</p>
-              <p className="text-2xl font-bold text-red-600">฿{totalExpenses.toFixed(2)}</p>
-            </div>
-             <div className="bg-muted p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground">Profit After Down Payment (from sales):</p>
-              <p className={`text-2xl font-bold ${netProfitAfterDP >= 0 ? 'text-green-600' : 'text-red-600'}`}>฿{netProfitAfterDP.toFixed(2)}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
            <div className="flex justify-between items-center">
              <CardTitle>Yearly Report</CardTitle>
              <div className="flex items-center gap-4">
@@ -363,5 +302,3 @@ export default function CommissionsSection() {
     </div>
   );
 }
-
-    
