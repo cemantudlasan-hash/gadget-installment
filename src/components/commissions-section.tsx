@@ -202,15 +202,15 @@ export default function CommissionsSection() {
         onCancel={() => setEditingCommission(null)}
       />
 
-      <Card className="rounded-2xl shadow-lg">
+      <Card className="rounded-2xl shadow-lg bg-slate-800/60 border border-slate-700 text-slate-300">
         <CardHeader>
            <div className="flex justify-between items-center">
-             <CardTitle className="text-xl font-bold text-gray-700">Monthly Ledger</CardTitle>
+             <CardTitle className="text-xl font-bold text-cyan-300">Monthly Ledger</CardTitle>
              <div className="flex items-center gap-4">
                 <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-lg font-semibold text-primary">{format(currentMonth, "MMMM yyyy")}</span>
+                <span className="text-lg font-semibold text-cyan-300">{format(currentMonth, "MMMM yyyy")}</span>
                 <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
                     <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -225,27 +225,27 @@ export default function CommissionsSection() {
               <Skeleton className="h-10 w-full" />
             </div>
           ) : monthlyCommissions.length === 0 ? (
-            <p className="text-center text-gray-500 py-8 text-lg">No ledger entries for this month. Add one above!</p>
+            <p className="text-center text-slate-400 py-8 text-lg">No ledger entries for this month. Add one above!</p>
           ) : (
-            <div className="overflow-x-auto rounded-xl border">
+            <div className="overflow-x-auto rounded-xl border border-slate-700">
               <Table>
-                <TableHeader className="bg-primary/10">
+                <TableHeader className="bg-slate-900/80">
                   <TableRow>
-                    <TableHead className="font-semibold text-primary">Date</TableHead>
-                    <TableHead className="font-semibold text-primary">Description</TableHead>
-                    <TableHead className="text-right font-semibold text-primary">Income (฿)</TableHead>
-                    <TableHead className="text-right font-semibold text-primary">Expense (฿)</TableHead>
-                    <TableHead className="text-right font-semibold text-primary">Running Total (฿)</TableHead>
-                    <TableHead className="font-semibold text-primary">Actions</TableHead>
+                    <TableHead className="font-semibold text-cyan-300">Date</TableHead>
+                    <TableHead className="font-semibold text-cyan-300">Description</TableHead>
+                    <TableHead className="text-right font-semibold text-cyan-300">Income (฿)</TableHead>
+                    <TableHead className="text-right font-semibold text-cyan-300">Expense (฿)</TableHead>
+                    <TableHead className="text-right font-semibold text-cyan-300">Running Total (฿)</TableHead>
+                    <TableHead className="font-semibold text-cyan-300">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {monthlyCommissions.map((item) => (
-                    <TableRow key={item.id} className="hover:bg-primary/5">
+                    <TableRow key={item.id} className="hover:bg-slate-700/50 border-slate-700">
                       <TableCell>{item.date}</TableCell>
                       <TableCell>{item.description}</TableCell>
-                      <TableCell className="text-right font-medium text-green-600">{item.getAmount?.toFixed(2)}</TableCell>
-                      <TableCell className="text-right font-medium text-red-600">{item.spentAmount?.toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-medium text-green-400">{item.getAmount?.toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-medium text-red-400">{item.spentAmount?.toFixed(2)}</TableCell>
                       <TableCell className="text-right font-semibold">{item.runningTotal?.toFixed(2)}</TableCell>
                       <TableCell className="flex items-center space-x-2">
                         <Button variant="ghost" size="icon" onClick={() => setEditingCommission(item)}>
@@ -282,37 +282,37 @@ export default function CommissionsSection() {
         </CardContent>
       </Card>
       
-      <Card className="rounded-2xl shadow-lg bg-primary/5">
+      <Card className="rounded-2xl shadow-lg bg-slate-800/60 border border-slate-700 text-slate-300">
         <CardHeader>
-          <CardTitle className="text-xl font-bold text-primary">Monthly Financial Summary for {format(currentMonth, "MMMM yyyy")}</CardTitle>
+          <CardTitle className="text-xl font-bold text-cyan-300">Monthly Financial Summary for {format(currentMonth, "MMMM yyyy")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-card p-4 rounded-lg border">
-              <p className="text-base font-medium text-muted-foreground">Total Commission (from paid sales):</p>
-              <p className="text-2xl font-bold text-green-600">฿{totalCommissionIncome.toFixed(2)}</p>
+            <div className="bg-slate-900/80 p-4 rounded-lg border border-slate-700">
+              <p className="text-base font-medium text-slate-400">Total Commission (from paid sales):</p>
+              <p className="text-2xl font-bold text-green-400">฿{totalCommissionIncome.toFixed(2)}</p>
             </div>
-            <div className="bg-card p-4 rounded-lg border">
-              <p className="text-base font-medium text-muted-foreground">Total Expenses:</p>
-              <p className="text-2xl font-bold text-red-600">฿{totalExpenses.toFixed(2)}</p>
+            <div className="bg-slate-900/80 p-4 rounded-lg border border-slate-700">
+              <p className="text-base font-medium text-slate-400">Total Expenses:</p>
+              <p className="text-2xl font-bold text-red-400">฿{totalExpenses.toFixed(2)}</p>
             </div>
-             <div className="bg-card p-4 rounded-lg border">
-              <p className="text-base font-medium text-muted-foreground">Profit After Down Payment:</p>
-              <p className={`text-2xl font-bold ${netProfitAfterDP >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>฿{netProfitAfterDP.toFixed(2)}</p>
+             <div className="bg-slate-900/80 p-4 rounded-lg border border-slate-700">
+              <p className="text-base font-medium text-slate-400">Profit After Down Payment:</p>
+              <p className={`text-2xl font-bold ${netProfitAfterDP >= 0 ? 'text-cyan-400' : 'text-orange-400'}`}>฿{netProfitAfterDP.toFixed(2)}</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="rounded-2xl shadow-lg bg-accent/10">
+      <Card className="rounded-2xl shadow-lg bg-slate-800/60 border border-slate-700 text-slate-300">
         <CardHeader>
            <div className="flex justify-between items-center">
-             <CardTitle className="text-xl font-bold text-accent-foreground">Yearly Report</CardTitle>
+             <CardTitle className="text-xl font-bold text-cyan-300">Yearly Report</CardTitle>
              <div className="flex items-center gap-4">
                 <Button variant="outline" size="icon" onClick={() => setCurrentYear(subYears(currentYear, 1))}>
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-lg font-semibold text-primary">{format(currentYear, "yyyy")}</span>
+                <span className="text-lg font-semibold text-cyan-300">{format(currentYear, "yyyy")}</span>
                 <Button variant="outline" size="icon" onClick={() => setCurrentYear(addYears(currentYear, 1))}>
                     <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -321,17 +321,17 @@ export default function CommissionsSection() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-card p-4 rounded-lg border">
-                <p className="text-base font-medium text-muted-foreground">Total Commission Income:</p>
-                <p className="text-2xl font-bold text-green-600">฿{yearlyReport.totalIncome.toFixed(2)}</p>
+              <div className="bg-slate-900/80 p-4 rounded-lg border border-slate-700">
+                <p className="text-base font-medium text-slate-400">Total Commission Income:</p>
+                <p className="text-2xl font-bold text-green-400">฿{yearlyReport.totalIncome.toFixed(2)}</p>
               </div>
-              <div className="bg-card p-4 rounded-lg border">
-                <p className="text-base font-medium text-muted-foreground">Total Expenses:</p>
-                <p className="text-2xl font-bold text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
+              <div className="bg-slate-900/80 p-4 rounded-lg border border-slate-700">
+                <p className="text-base font-medium text-slate-400">Total Expenses:</p>
+                <p className="text-2xl font-bold text-red-400">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
               </div>
-              <div className="bg-card p-4 rounded-lg border">
-                <p className="text-base font-medium text-muted-foreground">Profit After Down Payment:</p>
-                <p className={`text-2xl font-bold ${yearlyReport.netProfitAfterDP >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>฿{yearlyReport.netProfitAfterDP.toFixed(2)}</p>
+              <div className="bg-slate-900/80 p-4 rounded-lg border border-slate-700">
+                <p className="text-base font-medium text-slate-400">Profit After Down Payment:</p>
+                <p className={`text-2xl font-bold ${yearlyReport.netProfitAfterDP >= 0 ? 'text-cyan-400' : 'text-orange-400'}`}>฿{yearlyReport.netProfitAfterDP.toFixed(2)}</p>
               </div>
             </div>
         </CardContent>

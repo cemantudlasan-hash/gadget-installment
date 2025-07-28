@@ -246,17 +246,17 @@ export default function SalesSection() {
         <SalesForm onSave={handleSaveSale} initialData={editingSale} onCancel={() => { setEditingSale(null); setShowSalesForm(false); }} />
       ) : (
         <div className="text-center py-8">
-          <Button onClick={() => setShowSalesForm(true)} size="lg" className="transform hover:scale-105">
+          <Button onClick={() => setShowSalesForm(true)} size="lg" className="transform hover:scale-105 bg-cyan-600/80 hover:bg-cyan-500/80 border border-cyan-500 text-cyan-50">
             <PlusCircle className="mr-2 h-5 w-5" /> Add New Customer
           </Button>
         </div>
       )}
 
-      <Card className="rounded-2xl shadow-lg">
+      <Card className="rounded-2xl shadow-lg bg-slate-800/60 border border-slate-700 text-slate-300">
         <CardHeader>
-          <CardTitle className="text-xl font-bold text-gray-700">Existing Installment Plans</CardTitle>
+          <CardTitle className="text-xl font-bold text-cyan-300">Existing Installment Plans</CardTitle>
           <div className="pt-4">
-            <Label>Filter by Customer</Label>
+            <Label className="text-slate-400">Filter by Customer</Label>
             <Select value={selectedCustomer} onValueChange={(value) => setSelectedCustomer(value === 'all' ? '' : value)}>
               <SelectTrigger className="w-full md:w-1/2">
                 <SelectValue placeholder="All Customers" />
@@ -272,33 +272,33 @@ export default function SalesSection() {
           {loading ? (
             <div className="space-y-2"><Skeleton className="h-12 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div>
           ) : filteredSales.length === 0 ? (
-            <p className="text-center text-gray-500 py-8 text-lg">No sales records found.</p>
+            <p className="text-center text-slate-400 py-8 text-lg">No sales records found.</p>
           ) : (
-            <div className="overflow-x-auto rounded-xl border">
+            <div className="overflow-x-auto rounded-xl border border-slate-700">
               <Table>
-                <TableHeader className="bg-primary/10">
+                <TableHeader className="bg-slate-900/80">
                   <TableRow>
-                    <TableHead className="font-semibold text-primary">Customer</TableHead>
-                    <TableHead className="font-semibold text-primary hidden md:table-cell">Gadget</TableHead>
-                    <TableHead className="text-right font-semibold text-primary hidden lg:table-cell">Total Due</TableHead>
-                    <TableHead className="text-right font-semibold text-primary hidden lg:table-cell">Balance</TableHead>
-                    <TableHead className="font-semibold text-primary">Status</TableHead>
-                    <TableHead className="font-semibold text-primary">Actions</TableHead>
+                    <TableHead className="font-semibold text-cyan-300">Customer</TableHead>
+                    <TableHead className="font-semibold text-cyan-300 hidden md:table-cell">Gadget</TableHead>
+                    <TableHead className="text-right font-semibold text-cyan-300 hidden lg:table-cell">Total Due</TableHead>
+                    <TableHead className="text-right font-semibold text-cyan-300 hidden lg:table-cell">Balance</TableHead>
+                    <TableHead className="font-semibold text-cyan-300">Status</TableHead>
+                    <TableHead className="font-semibold text-cyan-300">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredSales.map((sale) => (
                        <React.Fragment key={sale.id}>
-                        <TableRow className="hover:bg-primary/5">
+                        <TableRow className="hover:bg-slate-700/50 border-slate-700">
                           <TableCell>
-                            <div className="font-medium">{sale.customerName}</div>
-                            <div className="text-sm text-muted-foreground md:hidden">{sale.gadget}</div>
+                            <div className="font-medium text-slate-200">{sale.customerName}</div>
+                            <div className="text-sm text-slate-400 md:hidden">{sale.gadget}</div>
                           </TableCell>
                           <TableCell className="hidden md:table-cell">{sale.gadget} ({sale.pieces} pcs)</TableCell>
                           <TableCell className="text-right hidden lg:table-cell">฿{sale.totalAmountDue?.toFixed(2) || '0.00'}</TableCell>
-                          <TableCell className="text-right hidden lg:table-cell">฿{sale.remainingBalance?.toFixed(2) || '0.00'}</TableCell>
+                          <TableCell className="text-right hidden lg:table-cell text-red-400">฿{sale.remainingBalance?.toFixed(2) || '0.00'}</TableCell>
                           <TableCell>
-                            <Badge variant={sale.paymentInstallments?.every(p => p.isPaid) ? "default" : "secondary"} className={sale.paymentInstallments?.every(p => p.isPaid) ? 'bg-green-600' : ''}>
+                            <Badge variant={sale.paymentInstallments?.every(p => p.isPaid) ? "default" : "secondary"} className={sale.paymentInstallments?.every(p => p.isPaid) ? 'bg-green-600/80 text-green-50' : 'bg-yellow-600/80 text-yellow-50'}>
                               {sale.paymentInstallments?.every(p => p.isPaid) ? "Paid" : "Ongoing"}
                             </Badge>
                           </TableCell>
@@ -319,7 +319,7 @@ export default function SalesSection() {
                         </TableRow>
                         {openSaleId === sale.id && (
                            <TableRow>
-                              <TableCell colSpan={6} className="p-0">
+                              <TableCell colSpan={6} className="p-0 bg-slate-900/50">
                                 <PaymentRecorder sale={sale} onRecordPayment={handleRecordPayment} onEditPayment={handleEditPayment} />
                               </TableCell>
                             </TableRow>

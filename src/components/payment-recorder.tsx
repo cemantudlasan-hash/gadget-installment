@@ -72,41 +72,41 @@ export default function PaymentRecorder({ sale, onRecordPayment, onEditPayment }
 
   return (
     <>
-      <Card className="bg-primary/5 border-primary/20 shadow-md rounded-xl">
+      <Card className="bg-slate-900/70 border-slate-700 shadow-md rounded-xl text-slate-300">
         <CardHeader>
-          <CardTitle className="text-lg">Record Payment for {sale.gadget}</CardTitle>
-          <CardDescription>Manage payments and track balances for this installment plan.</CardDescription>
+          <CardTitle className="text-lg text-cyan-300">Record Payment for {sale.gadget}</CardTitle>
+          <CardDescription className="text-slate-400">Manage payments and track balances for this installment plan.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-card p-3 rounded-lg border">
-              <p className="text-sm font-medium text-muted-foreground">Total Due</p>
-              <p className="text-lg font-bold text-foreground">฿{sale.totalAmountDue?.toFixed(2)}</p>
+            <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
+              <p className="text-sm font-medium text-slate-400">Total Due</p>
+              <p className="text-lg font-bold text-slate-200">฿{sale.totalAmountDue?.toFixed(2)}</p>
             </div>
-            <div className="bg-card p-3 rounded-lg border">
-              <p className="text-sm font-medium text-muted-foreground">Total Paid</p>
-              <p className="text-lg font-bold text-green-600">฿{sale.totalPaidAmount?.toFixed(2)}</p>
+            <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
+              <p className="text-sm font-medium text-slate-400">Total Paid</p>
+              <p className="text-lg font-bold text-green-400">฿{sale.totalPaidAmount?.toFixed(2)}</p>
             </div>
-            <div className="bg-card p-3 rounded-lg border">
-              <p className="text-sm font-medium text-muted-foreground">Balance</p>
-              <p className="text-lg font-bold text-red-600">฿{sale.remainingBalance?.toFixed(2)}</p>
+            <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
+              <p className="text-sm font-medium text-slate-400">Balance</p>
+              <p className="text-lg font-bold text-red-400">฿{sale.remainingBalance?.toFixed(2)}</p>
             </div>
           </div>
           
           {sale.customerNote && (
-            <div className="p-4 bg-blue-100 rounded-lg border border-blue-200">
-              <h5 className="text-md font-semibold text-blue-800 mb-2">Customer Note:</h5>
-              <p className="text-sm text-blue-700 whitespace-pre-wrap">{sale.customerNote}</p>
+            <div className="p-4 bg-blue-900/50 rounded-lg border border-blue-700">
+              <h5 className="text-md font-semibold text-blue-300 mb-2">Customer Note:</h5>
+              <p className="text-sm text-blue-300 whitespace-pre-wrap">{sale.customerNote}</p>
             </div>
           )}
 
           <div>
-            <h5 className="text-md font-semibold text-foreground mb-3">Installment Status</h5>
+            <h5 className="text-md font-semibold text-cyan-400 mb-3">Installment Status</h5>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {sale.paymentInstallments?.map((inst) => (
-                <div key={inst.month} className={`relative p-3 rounded-lg text-center text-xs font-semibold ${inst.isPaid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                <div key={inst.month} className={`relative p-3 rounded-lg text-center text-xs font-semibold ${inst.isPaid ? 'bg-green-900/50 text-green-300' : 'bg-yellow-900/50 text-yellow-300'}`}>
                   <p className="text-sm">Month {inst.month}</p>
-                  <p className="font-bold">฿{inst.paidAmount.toFixed(2)}</p>
+                  <p className="font-bold text-slate-200">฿{inst.paidAmount.toFixed(2)}</p>
                   {inst.isPaid ? (
                     <span className="text-xs">({inst.lastPaymentDate || 'Paid'})</span>
                   ) : (
@@ -131,9 +131,9 @@ export default function PaymentRecorder({ sale, onRecordPayment, onEditPayment }
               <label htmlFor={`date-${sale.id}`} className="text-sm font-medium">Payment Date</label>
               <Input id={`date-${sale.id}`} type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} />
             </div>
-            <Button type="submit" disabled={isDateWarning} className="w-full sm:w-auto">Record Payment</Button>
+            <Button type="submit" disabled={isDateWarning} className="w-full sm:w-auto bg-cyan-600/80 hover:bg-cyan-500/80 border border-cyan-500 text-cyan-50">Record Payment</Button>
           </form>
-          {isDateWarning && <p className="text-destructive text-sm text-center">A payment has already been recorded for this date.</p>}
+          {isDateWarning && <p className="text-red-400 text-sm text-center">A payment has already been recorded for this date.</p>}
 
         </CardContent>
       </Card>

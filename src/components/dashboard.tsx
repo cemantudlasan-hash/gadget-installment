@@ -28,17 +28,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     )
   }
 
-  const futuristicBgClasses = "relative overflow-hidden bg-[#0a192f] font-mono p-4 sm:p-6 rounded-2xl border";
+  const futuristicBgClasses = "relative overflow-hidden bg-transparent font-sans p-0 rounded-2xl";
 
   return (
     <div className="max-w-7xl mx-auto bg-transparent p-0">
       <div className="text-center mb-8 relative">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-primary font-headline">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-cyan-300">
           Gadget Installment Management
         </h1>
         {user && (
-          <div className="text-center text-sm text-muted-foreground mt-4 font-mono">
-            Logged in as: <span className="bg-primary/10 px-2 py-1 rounded-md text-primary font-semibold">Cirannakorn Tudlasan</span>
+          <div className="text-center text-sm text-slate-400 mt-4">
+            Logged in as: <span className="bg-cyan-900/50 px-2 py-1 rounded-md text-cyan-300 font-semibold">Cirannakorn Tudlasan</span>
           </div>
         )}
         <Button onClick={onLogout} variant="outline" size="icon" className="absolute top-0 right-0">

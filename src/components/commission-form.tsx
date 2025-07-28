@@ -65,9 +65,9 @@ export default function CommissionForm({ onSave, initialData, onCancel }: Commis
   };
 
   return (
-    <Card className="shadow-lg rounded-2xl">
+    <Card className="shadow-lg rounded-2xl bg-slate-800/60 border border-slate-700 text-slate-300">
       <CardHeader>
-        <CardTitle className="text-xl font-bold text-gray-700">
+        <CardTitle className="text-xl font-bold text-cyan-300">
           {initialData ? "Edit Ledger Entry" : "Add New Ledger Entry"}
         </CardTitle>
       </CardHeader>
@@ -142,7 +142,7 @@ export default function CommissionForm({ onSave, initialData, onCancel }: Commis
                   Cancel
                 </Button>
               )}
-              <Button type="submit" className="transform hover:scale-105 bg-primary hover:bg-primary/90">
+              <Button type="submit" className="transform hover:scale-105 bg-cyan-600/80 hover:bg-cyan-500/80 border border-cyan-500 text-cyan-50">
                 {initialData ? "Update Entry" : "Add Entry"}
               </Button>
             </div>

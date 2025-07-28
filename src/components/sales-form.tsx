@@ -145,9 +145,9 @@ export default function SalesForm({ onSave, initialData, onCancel }: SalesFormPr
   };
 
   return (
-    <Card className="shadow-lg rounded-2xl">
+    <Card className="shadow-lg rounded-2xl bg-slate-800/60 border border-slate-700 text-slate-300">
       <CardHeader>
-        <CardTitle className="text-xl font-bold text-gray-700">
+        <CardTitle className="text-xl font-bold text-cyan-300">
           {initialData ? "Edit Installment Plan" : "Add New Installment Plan"}
         </CardTitle>
       </CardHeader>
@@ -201,7 +201,7 @@ export default function SalesForm({ onSave, initialData, onCancel }: SalesFormPr
                     <FormLabel className="flex items-center justify-between">
                         <span>Customer Note/Reminders</span>
                         <Button type="button" variant="ghost" size="sm" onClick={handleSuggestNote} disabled={isSuggestingNote}>
-                            {isSuggestingNote ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2 text-accent" />}
+                            {isSuggestingNote ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2 text-cyan-400" />}
                             Suggest Note
                         </Button>
                     </FormLabel>
@@ -211,14 +211,14 @@ export default function SalesForm({ onSave, initialData, onCancel }: SalesFormPr
             )}/>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
-              <Card className="bg-primary/5"><CardHeader><CardDescription>Monthly Payment (฿)</CardDescription><CardTitle>{isFinite(calculatedMonthly) ? calculatedMonthly.toFixed(2) : '0.00'}</CardTitle></CardHeader></Card>
-              <Card className="bg-primary/5"><CardHeader><CardDescription>Commission (฿)</CardDescription><CardTitle>{isFinite(calculatedCommission) ? calculatedCommission.toFixed(2) : '0.00'}</CardTitle></CardHeader></Card>
-              <Card className="bg-primary/5"><CardHeader><CardDescription>Total Due (฿)</CardDescription><CardTitle>{isFinite(calculatedTotalAmountDue) ? calculatedTotalAmountDue.toFixed(2) : '0.00'}</CardTitle></CardHeader></Card>
+              <Card className="bg-slate-900/80 border-slate-700"><CardHeader><CardDescription className="text-slate-400">Monthly Payment (฿)</CardDescription><CardTitle className="text-cyan-400">{isFinite(calculatedMonthly) ? calculatedMonthly.toFixed(2) : '0.00'}</CardTitle></CardHeader></Card>
+              <Card className="bg-slate-900/80 border-slate-700"><CardHeader><CardDescription className="text-slate-400">Commission (฿)</CardDescription><CardTitle className="text-green-400">{isFinite(calculatedCommission) ? calculatedCommission.toFixed(2) : '0.00'}</CardTitle></CardHeader></Card>
+              <Card className="bg-slate-900/80 border-slate-700"><CardHeader><CardDescription className="text-slate-400">Total Due (฿)</CardDescription><CardTitle className="text-orange-400">{isFinite(calculatedTotalAmountDue) ? calculatedTotalAmountDue.toFixed(2) : '0.00'}</CardTitle></CardHeader></Card>
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
               <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-              <Button type="submit" className="bg-primary hover:bg-primary/90">{initialData ? "Update Entry" : "Add Entry"}</Button>
+              <Button type="submit" className="bg-cyan-600/80 hover:bg-cyan-500/80 border border-cyan-500 text-cyan-50">{initialData ? "Update Entry" : "Add Entry"}</Button>
             </div>
           </form>
         </Form>
