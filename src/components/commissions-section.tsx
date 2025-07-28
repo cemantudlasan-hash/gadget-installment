@@ -109,13 +109,13 @@ export default function CommissionsSection() {
     });
 
     const shippingCostFromSales = fullyPaidSalesThisMonth.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0);
-    const totalMonthlyExpenses = manualExpenses + shippingCostFromSales;
+    const totalMonthlyExpenses = manualExpenses;
 
     const profitFromSales = fullyPaidSalesThisMonth.reduce((acc, sale) => {
       return acc + (sale.commission - sale.downPayment - (sale.shippingCost || 0));
     }, 0);
 
-    const totalNetMonthlyIncome = profitFromSales - manualExpenses;
+    const totalNetMonthlyIncome = profitFromSales - monthlyLedgerEntries.filter(e => !e.description.toLowerCase().includes('down payment')).reduce((acc, item) => acc + (item.spentAmount || 0), 0);
     
     const netProfitAfterDP = fullyPaidSalesThisMonth.reduce((acc, sale) => {
         return acc + (sale.commission - sale.downPayment);
@@ -157,7 +157,7 @@ export default function CommissionsSection() {
     });
     
     const shippingCostsFromSalesThisYear = fullyPaidSalesThisYear.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0);
-    const totalYearlyExpenses = shippingCostsFromSalesThisYear + yearlyManualExpenses;
+    const totalYearlyExpenses = yearlyManualExpenses;
 
     const yearlyNetProfitAfterDP = fullyPaidSalesThisYear.reduce((acc, sale) => {
         return acc + (sale.commission - sale.downPayment);
@@ -363,3 +363,5 @@ export default function CommissionsSection() {
     </div>
   );
 }
+
+    
