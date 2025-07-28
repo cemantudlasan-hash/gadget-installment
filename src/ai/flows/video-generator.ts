@@ -8,7 +8,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import * as fs from 'fs';
 import { MediaPart } from 'genkit';
 import { Readable } from 'stream';
@@ -41,13 +41,17 @@ const generateVideoFlow = ai.defineFlow(
     outputSchema: GenerateVideoOutputSchema,
   },
   async ({ photoDataUri, prompt }) => {
+    const contentType = photoDataUri.substring(
+      photoDataUri.indexOf(':') + 1,
+      photoDataUri.indexOf(';')
+    );
     let { operation } = await ai.generate({
       model: 'googleai/veo-2.0-generate-001',
       prompt: [
         {
           media: {
             url: photoDataUri,
-            contentType: 'image/jpeg',
+            contentType: contentType,
           },
         },
         { text: prompt },
