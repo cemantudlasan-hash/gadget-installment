@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,8 +28,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     )
   }
 
+  const futuristicBgClasses = "relative overflow-hidden bg-[#0a192f] font-mono p-4 sm:p-6 rounded-2xl border";
+
   return (
-    <div className="max-w-7xl mx-auto bg-card rounded-2xl shadow-2xl p-6 sm:p-8 border">
+    <div className="max-w-7xl mx-auto bg-transparent p-0">
       <div className="text-center mb-8 relative">
         <h1 className="text-3xl sm:text-4xl font-extrabold text-primary font-headline">
           Gadget Installment Management
@@ -45,20 +48,38 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       </div>
 
       <Tabs defaultValue="sales" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-auto sm:h-12 mb-8">
-          <TabsTrigger value="sales" className="py-3 text-base">Sales & Installments</TabsTrigger>
-          <TabsTrigger value="commissions" className="py-3 text-base">Commissions & Expenses</TabsTrigger>
-          <TabsTrigger value="pricing" className="py-3 text-base">Pricing Calculator</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-auto sm:h-12 mb-8 bg-slate-800/60 border border-slate-700 text-cyan-300">
+          <TabsTrigger value="sales" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Sales & Installments</TabsTrigger>
+          <TabsTrigger value="commissions" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Commissions & Expenses</TabsTrigger>
+          <TabsTrigger value="pricing" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Pricing Calculator</TabsTrigger>
         </TabsList>
 
         <TabsContent value="sales">
-          <SalesSection />
+            <div className={futuristicBgClasses}>
+                 <div className="absolute inset-0 bg-grid-slate-700/[0.04] bg-[10px_10px] [mask-image:linear-gradient(0deg,#000000,transparent)]"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0a192f]"></div>
+                <div className="relative z-10">
+                    <SalesSection />
+                </div>
+            </div>
         </TabsContent>
         <TabsContent value="commissions">
-          <CommissionsSection />
+             <div className={futuristicBgClasses}>
+                <div className="absolute inset-0 bg-grid-slate-700/[0.04] bg-[10px_10px] [mask-image:linear-gradient(0deg,#000000,transparent)]"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0a192f]"></div>
+                <div className="relative z-10">
+                    <CommissionsSection />
+                </div>
+            </div>
         </TabsContent>
         <TabsContent value="pricing">
-          <PricingCalculator />
+            <div className={futuristicBgClasses}>
+                <div className="absolute inset-0 bg-grid-slate-700/[0.04] bg-[10px_10px] [mask-image:linear-gradient(0deg,#000000,transparent)]"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0a192f]"></div>
+                <div className="relative z-10">
+                    <PricingCalculator />
+                </div>
+            </div>
         </TabsContent>
       </Tabs>
     </div>
