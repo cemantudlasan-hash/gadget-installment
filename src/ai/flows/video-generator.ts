@@ -47,14 +47,13 @@ const generateVideoFlow = ai.defineFlow(
       throw new Error('Invalid data URI format for photo.');
     }
     const mimeType = match[1];
-    const base64Data = match[2];
-
+    
     let { operation } = await ai.generate({
       model: 'googleai/veo-2.0-generate-001',
       prompt: [
         {
           media: {
-            url: `data:${mimeType};base64,${base64Data}`,
+            url: photoDataUri,
             contentType: mimeType,
           },
         },
