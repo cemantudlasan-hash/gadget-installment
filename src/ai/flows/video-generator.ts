@@ -72,8 +72,8 @@ const generateVideoFlow = ai.defineFlow(
 
     // Wait for the operation to complete
     while (!operation.done) {
-      operation = await ai.checkOperation(operation);
       await new Promise(resolve => setTimeout(resolve, 5000));
+      operation = await ai.checkOperation(operation);
     }
 
     if (operation.error) {
@@ -87,6 +87,7 @@ const generateVideoFlow = ai.defineFlow(
 
     const fetch = (await import('node-fetch')).default;
     const apiKey = process.env.GEMINI_API_KEY;
+    // The media URL from the AI service might not include the API key, so we add it.
     const videoUrl = `${videoPart.media.url}${apiKey ? `&key=${apiKey}` : ''}`;
     
     const videoDownloadResponse = await fetch(videoUrl);
@@ -97,10 +98,12 @@ const generateVideoFlow = ai.defineFlow(
       );
     }
 
+    // Convert the downloaded video stream to a buffer, then to a Base64 string.
     const videoBuffer = await videoDownloadResponse.buffer();
     const base64Video = videoBuffer.toString('base64');
 
     return {
+      // Return the video as a data URI that can be used directly in the <video> tag.
       videoDataUri: `data:video/mp4;base64,${base64Video}`,
     };
   }
