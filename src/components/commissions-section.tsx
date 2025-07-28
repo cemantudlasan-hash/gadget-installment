@@ -177,7 +177,7 @@ export default function CommissionsSection() {
       totalIncome: totalYearlyIncome,
       totalExpenses: totalYearlyExpenses,
       netProfitAfterDP: yearlyNetProfitAfterDP,
-      netYearlyIncome: totalYearlyIncome - totalYearlyExpenses
+      netYearlyIncome: totalYearlyIncome - totalYearlyExpenses,
     }
   }, [allCommissions, sales, currentYear]);
 
