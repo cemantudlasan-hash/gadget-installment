@@ -12,8 +12,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { Commission, Sale } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Edit, Trash2, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { format, startOfMonth, endOfMonth, isWithinInterval, addMonths, subMonths, parseISO, startOfYear, endOfYear, addYears, subYears } from "date-fns";
+import { Input } from "@/components/ui/input";
 
 export default function CommissionsSection() {
   const { db, user } = useFirebase();
@@ -24,6 +25,7 @@ export default function CommissionsSection() {
   const [editingCommission, setEditingCommission] = useState<Commission | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [currentYear, setCurrentYear] = useState(new Date());
+  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchAllData = useCallback(async () => {
     if (!db || !user) return;
@@ -70,7 +72,9 @@ export default function CommissionsSection() {
 
     const filteredLedgerEntries = allCommissions.filter(c => {
         const commissionDate = parseISO(c.date);
-        return isWithinInterval(commissionDate, { start, end });
+        const isInMonth = isWithinInterval(commissionDate, { start, end });
+        const matchesSearch = c.description.toLowerCase().includes(searchTerm.toLowerCase());
+        return isInMonth && matchesSearch;
     }).sort((a, b) => a.description.localeCompare(b.description));
 
     let runningTotal = 0;
@@ -116,7 +120,7 @@ export default function CommissionsSection() {
       totalExpenses: expenseSum,
       netProfitAfterDP: profitAfterDP,
     };
-  }, [allCommissions, sales, currentMonth]);
+  }, [allCommissions, sales, currentMonth, searchTerm]);
   
   const yearlyReport = useMemo(() => {
     const start = startOfYear(currentYear);
@@ -210,7 +214,7 @@ export default function CommissionsSection() {
 
       <Card>
         <CardHeader>
-           <div className="flex justify-between items-center">
+           <div className="flex justify-between items-center mb-4">
              <CardTitle>Monthly Ledger</CardTitle>
              <div className="flex items-center gap-4">
                 <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
@@ -222,6 +226,15 @@ export default function CommissionsSection() {
                 </Button>
              </div>
            </div>
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                placeholder="Search by description..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10"
+                />
+            </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -231,7 +244,7 @@ export default function CommissionsSection() {
               <Skeleton className="h-10 w-full" />
             </div>
           ) : monthlyCommissions.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No ledger entries for this month. Add one above!</p>
+            <p className="text-center text-muted-foreground py-8">{searchTerm ? 'No matching entries found.' : 'No ledger entries for this month. Add one above!'}</p>
           ) : (
             <Table>
               <TableHeader>
@@ -344,5 +357,6 @@ export default function CommissionsSection() {
   );
 }
 
+    
     
     
