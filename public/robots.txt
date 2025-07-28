@@ -1,7 +1,9 @@
 # See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
 #
-# To ban all spiders from the entire site uncomment the following two lines:
-# User-agent: *
-# Disallow: /
+# A robot just visiting your site might stop and read this file first. It's a way
+# to tell it instructions about visiting your site.
+
 User-agent: *
-Allow: /
+Disallow:
+
+Sitemap: /sitemap.xml
