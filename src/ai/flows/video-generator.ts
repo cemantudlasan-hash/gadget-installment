@@ -17,7 +17,7 @@ const GenerateVideoInputSchema = z.object({
   photoDataUri: z
     .string()
     .describe(
-      "A photo to animate, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "A photo to animate, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
   prompt: z.string().describe('A text prompt describing the desired animation.'),
 });
@@ -55,7 +55,7 @@ const generateVideoFlow = ai.defineFlow(
       config: {
         durationSeconds: 5,
         aspectRatio: '9:16',
-        personGeneration: 'allow_all',
+        personGeneration: 'allow_adult',
       },
     });
 
