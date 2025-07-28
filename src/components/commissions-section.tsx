@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -73,7 +74,14 @@ export default function CommissionsSection() {
       return { ...item, runningTotal };
     });
     
-    const incomeSum = filteredLedgerEntries.reduce((acc, item) => acc + (item.getAmount || 0), 0);
+    const incomeSum = filteredLedgerEntries.reduce((acc, item) => {
+        // Only include entries that are commissions or down payments in "Total Income"
+        if (item.description.toLowerCase().includes('commission') || item.description.toLowerCase().includes('down payment')) {
+            return acc + (item.getAmount || 0);
+        }
+        return acc;
+    }, 0);
+
     const expenseSum = filteredLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
     const net = incomeSum - expenseSum;
 

@@ -192,8 +192,6 @@ export default function SalesSection() {
           spentAmount: 0,
         });
          toast({ title: "Sale Completed!", description: "Commission has been recorded in the ledger." });
-      } else {
-        toast({ title: "Success", description: "Payment recorded and ledger updated!" });
       }
 
       fetchSales();
