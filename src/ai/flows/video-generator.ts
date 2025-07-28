@@ -10,6 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { MediaPart } from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
 
 
 const GenerateVideoInputSchema = z.object({
@@ -40,7 +41,7 @@ const generateVideoFlow = ai.defineFlow(
     outputSchema: GenerateVideoOutputSchema,
   },
   async ({ photoDataUri, prompt }) => {
-    // The model requires the mimeType and the base64 data to be separated.
+    // The model requires the mimeType to be passed explicitly.
     const match = photoDataUri.match(/^data:(image\/\w+);base64,(.*)$/);
     if (!match) {
       throw new Error('Invalid photoDataUri format.');
@@ -48,7 +49,7 @@ const generateVideoFlow = ai.defineFlow(
     const mimeType = match[1];
     
     let { operation } = await ai.generate({
-      model: 'googleai/veo-2.0-generate-001',
+      model: googleAI.model('veo-2.0-generate-001'),
       prompt: [
         {
           media: {
