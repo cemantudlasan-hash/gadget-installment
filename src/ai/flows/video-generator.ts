@@ -9,9 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { MediaPart } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
-
 
 const GenerateVideoInputSchema = z.object({
   photoDataUri: z
