@@ -13,7 +13,7 @@ import type { Commission, Sale } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
-import { format, startOfMonth, endOfMonth, isWithinInterval, addMonths, subMonths, parseISO } from "date-fns";
+import { format, startOfMonth, endOfMonth, isWithinInterval, addMonths, subMonths, parseISO, startOfYear, endOfYear, addYears, subYears } from "date-fns";
 
 export default function CommissionsSection() {
   const { db, user } = useFirebase();
@@ -23,6 +23,7 @@ export default function CommissionsSection() {
   const [loading, setLoading] = useState(true);
   const [editingCommission, setEditingCommission] = useState<Commission | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentYear, setCurrentYear] = useState(new Date());
 
   const fetchAllData = useCallback(async () => {
     if (!db || !user) return;
@@ -116,6 +117,40 @@ export default function CommissionsSection() {
       netProfitAfterDP: profitAfterDP,
     };
   }, [allCommissions, sales, currentMonth]);
+  
+  const yearlyReport = useMemo(() => {
+    const start = startOfYear(currentYear);
+    const end = endOfYear(currentYear);
+    
+    const yearlyExpenses = allCommissions
+      .filter(c => isWithinInterval(parseISO(c.date), { start, end }))
+      .reduce((acc, item) => acc + (item.spentAmount || 0), 0);
+      
+    const fullyPaidSalesThisYear = sales.filter(sale => {
+      const isFullyPaid = sale.paymentInstallments.every(p => p.isPaid);
+      if (!isFullyPaid) return false;
+      
+      const lastPaymentDateStr = sale.paymentInstallments.reduce((latest, current) => {
+        if (!current.lastPaymentDate) return latest;
+        if (!latest) return current.lastPaymentDate;
+        return new Date(current.lastPaymentDate) > new Date(latest) ? current.lastPaymentDate : latest;
+      }, null as string | null);
+
+      if (!lastPaymentDateStr) return false;
+      
+      const lastPaymentDate = parseISO(lastPaymentDateStr);
+      return isWithinInterval(lastPaymentDate, { start, end });
+    });
+
+    const yearlyCommissionIncome = fullyPaidSalesThisYear.reduce((acc, sale) => acc + sale.commission, 0);
+    const yearlyNetProfit = yearlyCommissionIncome - yearlyExpenses;
+
+    return {
+      totalIncome: yearlyCommissionIncome,
+      totalExpenses: yearlyExpenses,
+      netProfit: yearlyNetProfit
+    }
+  }, [allCommissions, sales, currentYear]);
 
 
   const handleSaveCommission = async (commissionData: Omit<Commission, 'id' | 'runningTotal'>) => {
@@ -246,7 +281,7 @@ export default function CommissionsSection() {
       
       <Card className="rounded-2xl shadow-lg bg-primary/5">
         <CardHeader>
-          <CardTitle className="text-xl font-bold text-primary">Financial Summary for {format(currentMonth, "MMMM yyyy")}</CardTitle>
+          <CardTitle className="text-xl font-bold text-primary">Monthly Financial Summary for {format(currentMonth, "MMMM yyyy")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -265,10 +300,39 @@ export default function CommissionsSection() {
           </div>
         </CardContent>
       </Card>
+
+      <Card className="rounded-2xl shadow-lg bg-accent/10">
+        <CardHeader>
+           <div className="flex justify-between items-center">
+             <CardTitle className="text-xl font-bold text-accent-foreground">Yearly Report</CardTitle>
+             <div className="flex items-center gap-4">
+                <Button variant="outline" size="icon" onClick={() => setCurrentYear(subYears(currentYear, 1))}>
+                    <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-lg font-semibold text-primary">{format(currentYear, "yyyy")}</span>
+                <Button variant="outline" size="icon" onClick={() => setCurrentYear(addYears(currentYear, 1))}>
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
+             </div>
+           </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-card p-4 rounded-lg border">
+                <p className="text-base font-medium text-muted-foreground">Total Commission Income:</p>
+                <p className="text-2xl font-bold text-green-600">฿{yearlyReport.totalIncome.toFixed(2)}</p>
+              </div>
+              <div className="bg-card p-4 rounded-lg border">
+                <p className="text-base font-medium text-muted-foreground">Total Expenses:</p>
+                <p className="text-2xl font-bold text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
+              </div>
+              <div className="bg-card p-4 rounded-lg border">
+                <p className="text-base font-medium text-muted-foreground">Net Profit:</p>
+                <p className={`text-2xl font-bold ${yearlyReport.netProfit >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>฿{yearlyReport.netProfit.toFixed(2)}</p>
+              </div>
+            </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
-
-    
-
-    
