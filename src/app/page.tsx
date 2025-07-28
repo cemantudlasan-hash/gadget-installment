@@ -18,15 +18,13 @@ export default function Home() {
       <main
         className={cn(
           "min-h-screen font-sans",
-          !isLoggedIn && "text-foreground"
+          isLoggedIn ? "dark" : ""
         )}
       >
         {isLoggedIn ? (
           <div 
-            className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden bg-cover bg-center bg-no-repeat p-4 sm:p-6"
-            style={{ backgroundImage: "url(https://storage.googleapis.com/monite-source-images/studio-5-lite/background.jpg)" }}
+            className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden bg-background p-4 sm:p-6"
           >
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
             <div className="relative z-10 w-full">
                 <Dashboard onLogout={handleLogout} />
             </div>
