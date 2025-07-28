@@ -19,7 +19,8 @@ export default function CustomerReceipt({ saleData, isOpen, onClose }: CustomerR
   const receiptRef = useRef<HTMLDivElement>(null);
 
   const handleSaveAsImage = () => {
-    if (!receiptRef.current) {
+    const receiptElement = receiptRef.current;
+    if (!receiptElement) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -28,7 +29,7 @@ export default function CustomerReceipt({ saleData, isOpen, onClose }: CustomerR
       return;
     }
 
-    html2canvas(receiptRef.current, { scale: 2, useCORS: true })
+    html2canvas(receiptElement, { scale: 2, useCORS: true, scrollY: -window.scrollY })
       .then((canvas) => {
         const image = canvas.toDataURL("image/png");
         const a = document.createElement("a");
@@ -54,8 +55,8 @@ export default function CustomerReceipt({ saleData, isOpen, onClose }: CustomerR
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm w-full p-0 flex flex-col">
-        <div ref={receiptRef} className="bg-white p-6 overflow-y-auto max-h-[70vh]">
+      <DialogContent className="max-w-sm w-full p-0 flex flex-col max-h-[90vh] overflow-y-auto">
+        <div ref={receiptRef} className="bg-white p-6">
           <DialogHeader className="text-center mb-4">
             <DialogTitle className="text-xl font-extrabold text-primary">Clef's Techy Gadget Shop.</DialogTitle>
             <p className="text-xs text-muted-foreground">Fb@Technohomeservice</p>
@@ -93,7 +94,7 @@ export default function CustomerReceipt({ saleData, isOpen, onClose }: CustomerR
             </div>
           </div>
         </div>
-        <DialogFooter className="bg-secondary p-4 flex justify-end space-x-2 border-t mt-auto">
+        <DialogFooter className="bg-secondary p-4 flex justify-end space-x-2 border-t mt-auto sticky bottom-0">
           <Button variant="outline" onClick={onClose}>
             <X className="mr-2 h-4 w-4" /> Close
           </Button>
