@@ -96,38 +96,42 @@ export default function CommissionsSection() {
   const yearlyReport = useMemo(() => {
     const start = startOfYear(currentYear);
     const end = endOfYear(currentYear);
-
-    const yearlyLedgerEntries = allCommissions.filter(c =>
-      isWithinInterval(parseISO(c.date), { start, end })
-    );
-
-    const yearlyManualExpenses = yearlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
-    const totalYearlyExpenses = yearlyManualExpenses;
-
+  
     const fullyPaidSalesThisYear = sales.filter(sale => {
       const isFullyPaid = sale.paymentInstallments.every(p => p.isPaid);
       if (!isFullyPaid) return false;
-
+  
       const lastPaymentDateStr = sale.paymentInstallments.reduce((latest, current) => {
         if (!current.lastPaymentDate) return latest;
         if (!latest) return current.lastPaymentDate;
         return new Date(current.lastPaymentDate) > new Date(latest) ? current.lastPaymentDate : latest;
       }, null as string | null);
-
+  
       if (!lastPaymentDateStr) return false;
-
+  
       const lastPaymentDate = parseISO(lastPaymentDateStr);
       return isWithinInterval(lastPaymentDate, { start, end });
     });
-    
+  
+    const yearlyLedgerEntries = allCommissions.filter(c =>
+      isWithinInterval(parseISO(c.date), { start, end })
+    );
+  
+    const totalYearlyManualExpenses = yearlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
+    const totalYearlyManualIncome = yearlyLedgerEntries.reduce((acc, item) => acc + (item.getAmount || 0), 0);
+  
+    const totalShippingCostsFromPaidSales = fullyPaidSalesThisYear.reduce((acc, sale) => acc + sale.shippingCost, 0);
+
+    const totalExpenses = totalYearlyManualExpenses;
+  
     const yearlyNetProfitAfterDP = fullyPaidSalesThisYear.reduce((acc, sale) => {
-        return acc + (sale.commission - sale.downPayment);
+      return acc + (sale.commission - sale.downPayment);
     }, 0);
-
-    const netYearlyIncome = yearlyNetProfitAfterDP - totalYearlyExpenses;
-
+  
+    const netYearlyIncome = yearlyNetProfitAfterDP - totalExpenses;
+  
     return {
-      totalExpenses: totalYearlyExpenses,
+      totalExpenses: totalExpenses,
       netProfitAfterDP: yearlyNetProfitAfterDP,
       netYearlyIncome: netYearlyIncome,
     };
@@ -284,15 +288,15 @@ export default function CommissionsSection() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-muted p-4 rounded-lg">
+              <div className="bg-muted p-4 rounded-lg text-center">
                 <p className="text-sm text-muted-foreground">Net Income (Profit - Manual Expenses):</p>
                 <p className={`text-2xl font-bold ${yearlyReport.netYearlyIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>฿{yearlyReport.netYearlyIncome.toFixed(2)}</p>
               </div>
-              <div className="bg-muted p-4 rounded-lg">
+              <div className="bg-muted p-4 rounded-lg text-center">
                 <p className="text-sm text-muted-foreground">Total Expenses (Shipping + Manual):</p>
                 <p className="text-2xl font-bold text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
               </div>
-              <div className="bg-muted p-4 rounded-lg">
+              <div className="bg-muted p-4 rounded-lg text-center">
                 <p className="text-sm text-muted-foreground">Profit After Down Payment (from sales):</p>
                 <p className={`text-2xl font-bold ${yearlyReport.netProfitAfterDP >= 0 ? 'text-green-600' : 'text-red-600'}`}>฿{yearlyReport.netProfitAfterDP.toFixed(2)}</p>
               </div>
