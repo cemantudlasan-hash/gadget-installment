@@ -102,5 +102,3 @@ const generateVideoFlow = ai.defineFlow(
     };
   }
 );
-
-    
