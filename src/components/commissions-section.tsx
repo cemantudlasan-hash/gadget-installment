@@ -66,7 +66,7 @@ export default function CommissionsSection() {
     }
   }, [user, fetchAllData]);
 
-  const { monthlyCommissions, totalCommissionIncome, totalExpenses, netProfitAfterDP } = useMemo(() => {
+  const { monthlyCommissions, totalCommissionIncome, totalExpenses, netProfitAfterDP, netMonthlyIncome } = useMemo(() => {
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
 
@@ -79,7 +79,7 @@ export default function CommissionsSection() {
     const filteredBySearch = (searchTerm
         ? allCommissions.filter(c => c.description.toLowerCase().includes(searchTerm.toLowerCase()))
         : monthlyLedgerEntries
-    ).sort((a, b) => b.date.localeCompare(a.date));
+    ).sort((a, b) => a.description.localeCompare(b.description));
 
 
     let runningTotal = 0;
@@ -89,7 +89,7 @@ export default function CommissionsSection() {
       const spentAmount = item.spentAmount || 0;
       runningTotal += getAmount - spentAmount;
       return { ...item, runningTotal };
-    }).sort((a, b) => a.description.localeCompare(b.description));
+    });
     
     const manualIncome = monthlyLedgerEntries.reduce((acc, item) => acc + (item.getAmount || 0), 0);
     const manualExpenses = monthlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
@@ -129,6 +129,7 @@ export default function CommissionsSection() {
       totalCommissionIncome: totalIncome,
       totalExpenses: expenseSum,
       netProfitAfterDP: profitAfterDP,
+      netMonthlyIncome: totalIncome - expenseSum,
     };
   }, [allCommissions, sales, currentMonth, searchTerm]);
   
@@ -146,7 +147,7 @@ export default function CommissionsSection() {
 
     const yearlyShippingCosts = salesThisYear.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0);
 
-    const totalYearlyExpenses = yearlyManualExpenses;
+    const totalYearlyExpenses = yearlyManualExpenses + yearlyShippingCosts;
       
     const fullyPaidSalesThisYear = sales.filter(sale => {
       const isFullyPaid = sale.paymentInstallments.every(p => p.isPaid);
@@ -175,7 +176,8 @@ export default function CommissionsSection() {
     return {
       totalIncome: totalYearlyIncome,
       totalExpenses: totalYearlyExpenses,
-      netProfitAfterDP: yearlyNetProfitAfterDP
+      netProfitAfterDP: yearlyNetProfitAfterDP,
+      netYearlyIncome: totalYearlyIncome - totalYearlyExpenses
     }
   }, [allCommissions, sales, currentYear]);
 
@@ -197,17 +199,8 @@ export default function CommissionsSection() {
     }
   };
 
-  const handleDeleteCommission = async (id: string, description: string) => {
+  const handleDeleteCommission = async (id: string) => {
     if (!db) return;
-
-    if (description.startsWith("Down payment for") || description.startsWith("Shipping for")) {
-        toast({
-            variant: "destructive",
-            title: "Action Not Allowed",
-            description: "Down payments and shipping costs are linked to sales and cannot be deleted from the ledger. Please edit the corresponding sale entry.",
-        });
-        return;
-    }
 
     try {
       await deleteDoc(doc(db, "commissions", id));
@@ -307,7 +300,7 @@ export default function CommissionsSection() {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteCommission(item.id, item.description)} className="bg-destructive hover:bg-destructive/90">
+                            <AlertDialogAction onClick={() => handleDeleteCommission(item.id)} className="bg-destructive hover:bg-destructive/90">
                               Delete
                             </AlertDialogAction>
                           </AlertDialogFooter>
@@ -329,8 +322,8 @@ export default function CommissionsSection() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-muted p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground">Total Income (Commissions & Manual):</p>
-              <p className="text-2xl font-bold text-blue-600">฿{totalCommissionIncome.toFixed(2)}</p>
+              <p className="text-sm text-muted-foreground">Net Income (Total Income - Expenses):</p>
+              <p className={`text-2xl font-bold ${netMonthlyIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>฿{netMonthlyIncome.toFixed(2)}</p>
             </div>
             <div className="bg-muted p-4 rounded-lg">
               <p className="text-sm text-muted-foreground">Total Expenses:</p>
@@ -362,11 +355,11 @@ export default function CommissionsSection() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-muted p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">Total Income (Commissions & Manual):</p>
-                <p className="text-2xl font-bold text-blue-600">฿{yearlyReport.totalIncome.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">Net Income (Total Income - Expenses):</p>
+                <p className={`text-2xl font-bold ${yearlyReport.netYearlyIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>฿{yearlyReport.netYearlyIncome.toFixed(2)}</p>
               </div>
               <div className="bg-muted p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">Total Expenses:</p>
+                <p className="text-sm text-muted-foreground">Total Expenses (incl. Shipping):</p>
                 <p className="text-2xl font-bold text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
               </div>
               <div className="bg-muted p-4 rounded-lg">
@@ -379,3 +372,5 @@ export default function CommissionsSection() {
     </div>
   );
 }
+
+    
