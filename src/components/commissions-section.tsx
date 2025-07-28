@@ -288,11 +288,11 @@ export default function CommissionsSection() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-muted p-4 rounded-lg">
               <p className="text-sm text-muted-foreground">Total Commission (from paid sales):</p>
-              <p className="text-2xl font-bold">฿{totalCommissionIncome.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-blue-600">฿{totalCommissionIncome.toFixed(2)}</p>
             </div>
             <div className="bg-muted p-4 rounded-lg">
               <p className="text-sm text-muted-foreground">Total Expenses:</p>
-              <p className="text-2xl font-bold">฿{totalExpenses.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-red-600">฿{totalExpenses.toFixed(2)}</p>
             </div>
              <div className="bg-muted p-4 rounded-lg">
               <p className="text-sm text-muted-foreground">Profit After Down Payment:</p>
@@ -321,11 +321,11 @@ export default function CommissionsSection() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-muted p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">Total Commission Income:</p>
-                <p className="text-2xl font-bold">฿{yearlyReport.totalIncome.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-blue-600">฿{yearlyReport.totalIncome.toFixed(2)}</p>
               </div>
               <div className="bg-muted p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">Total Expenses:</p>
-                <p className="text-2xl font-bold">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
               </div>
               <div className="bg-muted p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">Profit After Down Payment:</p>
