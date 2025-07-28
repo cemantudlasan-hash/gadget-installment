@@ -26,10 +26,13 @@ export default function Home() {
           "min-h-screen font-sans",
           !isLoggedIn && "text-foreground bg-background"
         )}
-        style={isLoggedIn ? starryNightBg : {}}
       >
         {isLoggedIn ? (
-          <div className="relative p-4 sm:p-6 overflow-hidden bg-black/50 min-h-screen">
+          <div 
+            className="relative p-4 sm:p-6 overflow-hidden min-h-screen"
+            style={starryNightBg}
+          >
+            <div className="absolute inset-0 bg-black/50" />
             <div className="relative z-10">
                 <Dashboard onLogout={handleLogout} />
             </div>
