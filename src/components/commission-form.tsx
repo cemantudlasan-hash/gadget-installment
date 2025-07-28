@@ -28,11 +28,10 @@ type CommissionFormValues = z.infer<typeof commissionSchema>;
 
 interface CommissionFormProps {
   onSave: (data: CommissionFormValues) => void;
-  initialData?: Commission | null;
   onCancel: () => void;
 }
 
-export default function CommissionForm({ onSave, initialData, onCancel }: CommissionFormProps) {
+export default function CommissionForm({ onSave, onCancel }: CommissionFormProps) {
   const form = useForm<CommissionFormValues>({
     resolver: zodResolver(commissionSchema),
     defaultValues: {
@@ -43,22 +42,6 @@ export default function CommissionForm({ onSave, initialData, onCancel }: Commis
     },
   });
 
-  useEffect(() => {
-    if (initialData) {
-      form.reset({
-        ...initialData,
-        date: initialData.date || new Date().toISOString().split("T")[0],
-      });
-    } else {
-      form.reset({
-        date: new Date().toISOString().split("T")[0],
-        description: "",
-        getAmount: 0,
-        spentAmount: 0,
-      });
-    }
-  }, [initialData, form]);
-
   const handleSubmit = (values: CommissionFormValues) => {
     onSave(values);
     form.reset();
@@ -67,7 +50,7 @@ export default function CommissionForm({ onSave, initialData, onCancel }: Commis
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{initialData ? "Edit Ledger Entry" : "Add New Ledger Entry"}</CardTitle>
+        <CardTitle>Add New Ledger Entry</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -93,7 +76,7 @@ export default function CommissionForm({ onSave, initialData, onCancel }: Commis
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Commission from sale" {...field} />
+                      <Input placeholder="e.g., Office Supplies" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -127,7 +110,6 @@ export default function CommissionForm({ onSave, initialData, onCancel }: Commis
               />
             </div>
             <div className="flex justify-end space-x-3 mt-6">
-              {initialData && (
                 <Button
                   type="button"
                   variant="outline"
@@ -138,9 +120,8 @@ export default function CommissionForm({ onSave, initialData, onCancel }: Commis
                 >
                   Cancel
                 </Button>
-              )}
               <Button type="submit">
-                {initialData ? "Update Entry" : "Add Entry"}
+                Add Entry
               </Button>
             </div>
           </form>

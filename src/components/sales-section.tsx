@@ -87,6 +87,24 @@ export default function SalesSection() {
                 });
             }
         }
+         // Handle Down Payment Update in Ledger
+        if (saleData.downPayment !== editingSale.downPayment) {
+            const dpDescription = `Down payment for ${saleData.gadget} (${saleData.customerName})`;
+            const q = query(commissionsCollectionRef, where("description", "==", dpDescription), limit(1));
+            const dpDocs = await getDocs(q);
+
+            if (!dpDocs.empty) {
+                const dpDocId = dpDocs.docs[0].id;
+                await updateDoc(doc(db, "commissions", dpDocId), { getAmount: saleData.downPayment });
+            } else if (saleData.downPayment > 0) {
+                 await addDoc(commissionsCollectionRef, { 
+                    date: saleData.dateStart, 
+                    description: dpDescription, 
+                    getAmount: saleData.downPayment, 
+                    spentAmount: 0
+                });
+            }
+        }
         
         await updateDoc(doc(db, "sales", editingSale.id), saleData);
         toast({ title: "Success", description: "Sale updated successfully!" });

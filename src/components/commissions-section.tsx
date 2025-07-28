@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { Commission, Sale } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Edit, Trash2, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { format, startOfMonth, endOfMonth, isWithinInterval, addMonths, subMonths, parseISO, startOfYear, endOfYear, addYears, subYears } from "date-fns";
 import { Input } from "@/components/ui/input";
 
@@ -22,10 +22,10 @@ export default function CommissionsSection() {
   const [allCommissions, setAllCommissions] = useState<Commission[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingCommission, setEditingCommission] = useState<Commission | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [currentYear, setCurrentYear] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState("");
+  const [showCommissionForm, setShowCommissionForm] = useState(false);
 
   const fetchAllData = useCallback(async () => {
     if (!db || !user) return;
@@ -174,14 +174,9 @@ export default function CommissionsSection() {
   const handleSaveCommission = async (commissionData: Omit<Commission, 'id' | 'runningTotal'>) => {
     if (!db) return;
     try {
-      if (editingCommission) {
-        await updateDoc(doc(db, "commissions", editingCommission.id), commissionData);
-        toast({ title: "Success", description: "Entry updated successfully!" });
-      } else {
-        await addDoc(collection(db, "commissions"), commissionData);
-        toast({ title: "Success", description: "Entry added successfully!" });
-      }
-      setEditingCommission(null);
+      await addDoc(collection(db, "commissions"), commissionData);
+      toast({ title: "Success", description: "Entry added successfully!" });
+      setShowCommissionForm(false);
       fetchAllData();
     } catch (e: any) {
       console.error("Error saving commission:", e);
@@ -211,11 +206,18 @@ export default function CommissionsSection() {
 
   return (
     <div className="space-y-8">
-      <CommissionForm
-        onSave={handleSaveCommission}
-        initialData={editingCommission}
-        onCancel={() => setEditingCommission(null)}
-      />
+      {showCommissionForm ? (
+        <CommissionForm
+          onSave={handleSaveCommission}
+          onCancel={() => setShowCommissionForm(false)}
+        />
+      ) : (
+         <div className="text-center py-4">
+          <Button onClick={() => setShowCommissionForm(true)} size="lg">
+             Add Manual Ledger Entry
+          </Button>
+        </div>
+      )}
 
       <Card>
         <CardHeader>
@@ -271,9 +273,6 @@ export default function CommissionsSection() {
                     <TableCell className="text-right font-medium text-red-600">{item.spentAmount?.toFixed(2)}</TableCell>
                     <TableCell className="text-right font-semibold">{item.runningTotal?.toFixed(2)}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => setEditingCommission(item)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
