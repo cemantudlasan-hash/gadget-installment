@@ -7,7 +7,7 @@ import { FirebaseProvider } from "@/lib/firebase/context";
 import { cn } from "@/lib/utils";
 
 const starryNightBg = {
-  backgroundImage: "url('https://storage.googleapis.com/app-prototyper-media/yue-ki-2013-1.jpg')",
+  backgroundImage: "url('https://storage.googleapis.com/app-prototyper-media/yH7eA9y.jpeg')",
   backgroundSize: 'cover',
   backgroundPosition: 'center',
 };
