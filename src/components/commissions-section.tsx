@@ -66,7 +66,7 @@ export default function CommissionsSection() {
     }
   }, [user, fetchAllData]);
 
-  const { monthlyCommissions, totalCommissionIncome, totalExpenses, netProfitAfterDP, netMonthlyIncome } = useMemo(() => {
+  const { monthlyCommissions, totalExpenses, netProfitAfterDP, netMonthlyIncome } = useMemo(() => {
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
 
@@ -78,7 +78,7 @@ export default function CommissionsSection() {
     const filteredBySearch = (searchTerm
         ? allCommissions.filter(c => c.description.toLowerCase().includes(searchTerm.toLowerCase()))
         : monthlyLedgerEntries
-    ).sort((a, b) => a.description.localeCompare(b.description));
+    ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 
     let runningTotal = 0;
@@ -112,7 +112,11 @@ export default function CommissionsSection() {
     });
 
     const commissionIncomeFromSales = fullyPaidSalesThisMonth.reduce((acc, sale) => acc + sale.commission, 0);
+    const shippingCostFromSales = fullyPaidSalesThisMonth.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0);
+
     const totalMonthlyIncome = manualIncome + commissionIncomeFromSales;
+    const totalMonthlyExpenses = manualExpenses + shippingCostFromSales;
+
 
     const profitAfterDP = fullyPaidSalesThisMonth.reduce((acc, sale) => {
       // Net Profit for a sale = Commission - Down Payment
@@ -122,10 +126,9 @@ export default function CommissionsSection() {
 
     return {
       monthlyCommissions: commissionsWithTotal,
-      totalCommissionIncome: totalMonthlyIncome,
-      totalExpenses: manualExpenses,
+      totalExpenses: totalMonthlyExpenses,
       netProfitAfterDP: profitAfterDP,
-      netMonthlyIncome: totalMonthlyIncome - manualExpenses,
+      netMonthlyIncome: totalMonthlyIncome - totalMonthlyExpenses,
     };
   }, [allCommissions, sales, currentMonth, searchTerm]);
   
@@ -320,7 +323,7 @@ export default function CommissionsSection() {
               <p className={`text-2xl font-bold ${netMonthlyIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>฿{netMonthlyIncome.toFixed(2)}</p>
             </div>
             <div className="bg-muted p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground">Total Expenses:</p>
+              <p className="text-sm text-muted-foreground">Total Expenses (incl. Shipping):</p>
               <p className="text-2xl font-bold text-red-600">฿{totalExpenses.toFixed(2)}</p>
             </div>
              <div className="bg-muted p-4 rounded-lg">
@@ -366,5 +369,3 @@ export default function CommissionsSection() {
     </div>
   );
 }
-
-    
