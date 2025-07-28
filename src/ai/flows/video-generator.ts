@@ -9,7 +9,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { Readable } from 'stream';
 import { MediaPart } from 'genkit';
 
 
@@ -47,15 +46,14 @@ const generateVideoFlow = ai.defineFlow(
       throw new Error('Invalid photoDataUri format.');
     }
     const mimeType = match[1];
-    const base64Data = match[2];
-
+    
     let { operation } = await ai.generate({
       model: 'googleai/veo-2.0-generate-001',
       prompt: [
         {
           media: {
             contentType: mimeType,
-            url: `data:${mimeType};base64,${base64Data}`,
+            url: photoDataUri,
           },
         },
         { text: prompt },
