@@ -71,7 +71,7 @@ export default function CommissionsSection() {
     const filteredLedgerEntries = allCommissions.filter(c => {
         const commissionDate = parseISO(c.date);
         return isWithinInterval(commissionDate, { start, end });
-    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }).sort((a, b) => a.description.localeCompare(b.description));
 
     let runningTotal = 0;
     
@@ -344,4 +344,5 @@ export default function CommissionsSection() {
   );
 }
 
+    
     
