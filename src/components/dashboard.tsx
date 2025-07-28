@@ -6,8 +6,14 @@ import CommissionsSection from "@/components/commissions-section";
 import PricingCalculator from "@/components/pricing-calculator";
 import { useFirebase } from "@/lib/firebase/context";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
-export default function Dashboard() {
+interface DashboardProps {
+  onLogout: () => void;
+}
+
+export default function Dashboard({ onLogout }: DashboardProps) {
   const { user, loading } = useFirebase();
 
   if (loading) {
@@ -23,7 +29,7 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-7xl mx-auto bg-card rounded-2xl shadow-2xl p-6 sm:p-8 border">
-      <div className="text-center mb-8">
+      <div className="text-center mb-8 relative">
         <h1 className="text-3xl sm:text-4xl font-extrabold text-primary font-headline">
           Gadget Installment Management
         </h1>
@@ -32,6 +38,10 @@ export default function Dashboard() {
             Logged in as: <span className="bg-primary/10 px-2 py-1 rounded-md text-primary font-semibold">Cirannakorn Tudlasan</span>
           </div>
         )}
+        <Button onClick={onLogout} variant="outline" size="icon" className="absolute top-0 right-0">
+          <LogOut className="h-4 w-4" />
+          <span className="sr-only">Logout</span>
+        </Button>
       </div>
 
       <Tabs defaultValue="sales" className="w-full">
