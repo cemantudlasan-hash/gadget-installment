@@ -5,18 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { User, Lock } from "lucide-react";
 
-interface LoginFormProps {
-  onLoginSuccess: () => void;
-}
-
 const FuturisticFrame = () => (
     <svg
       className="absolute inset-0 w-full h-full"
       xmlns="http://www.w3.org/2000/svg"
       width="100%"
       height="100%"
-      viewBox="0 0 800 400"
-      preserveAspectRatio="none"
+      viewBox="0 0 800 600"
+      preserveAspectRatio="xMidYMid meet"
     >
       <defs>
         <linearGradient id="glow-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -30,55 +26,65 @@ const FuturisticFrame = () => (
                 <feMergeNode in="SourceGraphic" />
             </feMerge>
         </filter>
+        <radialGradient id="dot-glow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+            <stop offset="0%" style={{stopColor: 'rgba(173, 216, 230, 1)', stopOpacity: 1}} />
+            <stop offset="70%" style={{stopColor: 'rgba(0, 191, 255, 0.5)', stopOpacity: 1}} />
+            <stop offset="100%" style={{stopColor: 'rgba(0, 111, 255, 0)', stopOpacity: 1}} />
+        </radialGradient>
       </defs>
-      <path
-        d="M 150,50 
-           L 350,50 L 400,20 L 450,50
-           L 650,50
-           L 700,100
-           L 700,150
-           L 670,180
-           L 670,220
-           L 700,250
-           L 700,300
-           L 650,350
-           L 450,350 L 400,380 L 350,350
-           L 150,350
-           L 100,300
-           L 100,250
-           L 130,220
-           L 130,180
-           L 100,150
-           L 100,100
-           Z"
-        fill="none"
-        stroke="url(#glow-gradient)"
-        strokeWidth="3"
-        filter="url(#glow)"
-      />
+
+      <g stroke="url(#glow-gradient)" strokeWidth="2" fill="none">
+        {/* Main Frame */}
+        <path d="M 100,50 L 150,50 L 160,40 H 250 L 260,50 H 540 L 550,40 H 640 L 650,50 H 700 L 750,100 V 500 L 700,550 H 650 L 640,560 H 550 L 540,550 H 260 L 250,560 H 160 L 150,550 H 100 L 50,500 V 100 Z" />
+
+        {/* Top Left Details */}
+        <path d="M 160,40 L 155,35 H 135" />
+        <path d="M 260,50 L 265,55 V 75" />
+        
+        {/* Top Right Details */}
+        <path d="M 640,40 L 645,35 H 665" />
+        <path d="M 540,50 L 535,55 V 75" />
+
+        {/* Bottom Left Details */}
+        <path d="M 160,560 L 155,565 H 135" />
+        <path d="M 260,550 L 265,545 V 525" />
+        
+        {/* Bottom Right Details */}
+        <path d="M 640,560 L 645,565 H 665" />
+        <path d="M 540,550 L 535,545 V 525" />
+        
+        {/* Side Details Left */}
+        <path d="M 50,150 H 40 L 30,160 V 200" />
+        <path d="M 50,450 H 40 L 30,440 V 400" />
+        <path d="M 80,100 L 80,90" />
+        <path d="M 80,500 L 80,510" />
+
+        {/* Side Details Right */}
+        <path d="M 750,150 H 760 L 770,160 V 200" />
+        <path d="M 750,450 H 760 L 770,440 V 400" />
+        <path d="M 720,100 L 720,90" />
+        <path d="M 720,500 L 720,510" />
+
+        {/* Glowing Dots */}
+        <circle cx="120" cy="35" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
+        <circle cx="275" cy="35" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
+        <circle cx="525" cy="35" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
+        <circle cx="680" cy="35" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
+        <circle cx="20" cy="220" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
+        <circle cx="20" cy="380" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
+        <circle cx="780" cy="220" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
+        <circle cx="780" cy="380" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
+        <circle cx="120" cy="565" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
+        <circle cx="275" cy="565" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
+        <circle cx="525" cy="565" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
+        <circle cx="680" cy="565" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
+      </g>
+      
        <path
-        d="M 150,50 
-           L 350,50 L 400,20 L 450,50
-           L 650,50
-           L 700,100
-           L 700,150
-           L 670,180
-           L 670,220
-           L 700,250
-           L 700,300
-           L 650,350
-           L 450,350 L 400,380 L 350,350
-           L 150,350
-           L 100,300
-           L 100,250
-           L 130,220
-           L 130,180
-           L 100,150
-           L 100,100
-           Z"
+        d="M 100,50 L 150,50 L 160,40 H 250 L 260,50 H 540 L 550,40 H 640 L 650,50 H 700 L 750,100 V 500 L 700,550 H 650 L 640,560 H 550 L 540,550 H 260 L 250,560 H 160 L 150,550 H 100 L 50,500 V 100 Z"
         fill="rgba(10, 25, 47, 0.5)"
         stroke="rgba(0, 191, 255, 0.5)"
-        strokeWidth="2"
+        strokeWidth="1"
       />
     </svg>
   );
@@ -104,7 +110,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
       
-      <div className="relative z-10 w-full max-w-2xl h-96 flex items-center justify-center p-8">
+      <div className="relative z-10 w-full max-w-2xl h-[30rem] flex items-center justify-center p-8">
         <FuturisticFrame />
         <div className="relative z-20 w-full max-w-sm">
             <h2 className="mb-8 text-center text-3xl font-bold tracking-wider text-cyan-300 uppercase">
