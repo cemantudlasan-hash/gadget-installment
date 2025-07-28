@@ -23,8 +23,10 @@ export default function Home() {
       >
         {isLoggedIn ? (
           <div 
-            className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden bg-background p-4 sm:p-6"
+            className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden bg-cover bg-center p-4 sm:p-6"
+            style={{ backgroundImage: "url(/background.jpg)" }}
           >
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
             <div className="relative z-10 w-full">
                 <Dashboard onLogout={handleLogout} />
             </div>
