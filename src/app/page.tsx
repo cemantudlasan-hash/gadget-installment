@@ -18,7 +18,7 @@ export default function Home() {
       <main
         className={cn(
           "min-h-screen font-sans",
-          isLoggedIn ? "dark" : ""
+          isLoggedIn ? "dark dashboard-bg" : ""
         )}
       >
         {isLoggedIn ? (

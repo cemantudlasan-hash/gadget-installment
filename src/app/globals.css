@@ -71,3 +71,7 @@
 .dark {
   background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
 }
+
+.dark.dashboard-bg {
+    background: radial-gradient(ellipse at top right, #4c2889, #1e293b, #0f172a);
+}
