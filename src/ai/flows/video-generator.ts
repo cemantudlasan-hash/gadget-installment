@@ -10,13 +10,9 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { googleAI } from '@genkit-ai/googleai';
+import { initialImage } from '@/lib/initial-image';
 
 const GenerateVideoInputSchema = z.object({
-  photoDataUri: z
-    .string()
-    .describe(
-      "A photo to animate, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
-    ),
   prompt: z.string().describe('A text prompt describing the desired animation.'),
 });
 export type GenerateVideoInput = z.infer<typeof GenerateVideoInputSchema>;
@@ -38,21 +34,21 @@ const generateVideoFlow = ai.defineFlow(
     inputSchema: GenerateVideoInputSchema,
     outputSchema: GenerateVideoOutputSchema,
   },
-  async ({ photoDataUri, prompt }) => {
+  async ({ prompt }) => {
     // The model requires the mimeType to be passed explicitly.
-    const match = photoDataUri.match(/^data:(image\/\w+);base64,(.*)$/);
+    const match = initialImage.match(/^data:(image\/\w+);base64,(.*)$/);
     if (!match) {
-      throw new Error('Invalid photoDataUri format.');
+      throw new Error('Invalid initialImage format.');
     }
     const mimeType = match[1];
-    
+
     let { operation } = await ai.generate({
       model: googleAI.model('veo-2.0-generate-001'),
       prompt: [
         {
           media: {
             contentType: mimeType,
-            url: photoDataUri,
+            url: initialImage,
           },
         },
         { text: prompt },
@@ -77,7 +73,7 @@ const generateVideoFlow = ai.defineFlow(
     if (operation.error) {
       throw new Error('failed to generate video: ' + operation.error.message);
     }
-    
+
     const videoPart = operation.output?.message?.content.find(p => !!p.media);
     if (!videoPart || !videoPart.media) {
       throw new Error('Failed to find the generated video');
