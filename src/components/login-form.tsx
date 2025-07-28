@@ -32,18 +32,24 @@ const FuturisticFrame = () => (
         </filter>
       </defs>
       <path
-        d="M 50,5 
-           L 750,5 
-           L 750,50 
-           L 780,80 
-           L 780,320 
-           L 750,350 
-           L 750,395 
-           L 50,395 
-           L 50,350 
-           L 20,320 
-           L 20,80 
-           L 50,50 
+        d="M 150,50 
+           L 350,50 L 400,20 L 450,50
+           L 650,50
+           L 700,100
+           L 700,150
+           L 670,180
+           L 670,220
+           L 700,250
+           L 700,300
+           L 650,350
+           L 450,350 L 400,380 L 350,350
+           L 150,350
+           L 100,300
+           L 100,250
+           L 130,220
+           L 130,180
+           L 100,150
+           L 100,100
            Z"
         fill="none"
         stroke="url(#glow-gradient)"
@@ -51,18 +57,24 @@ const FuturisticFrame = () => (
         filter="url(#glow)"
       />
        <path
-        d="M 50,5 
-           L 750,5 
-           L 750,50 
-           L 780,80 
-           L 780,320 
-           L 750,350 
-           L 750,395 
-           L 50,395 
-           L 50,350 
-           L 20,320 
-           L 20,80 
-           L 50,50 
+        d="M 150,50 
+           L 350,50 L 400,20 L 450,50
+           L 650,50
+           L 700,100
+           L 700,150
+           L 670,180
+           L 670,220
+           L 700,250
+           L 700,300
+           L 650,350
+           L 450,350 L 400,380 L 350,350
+           L 150,350
+           L 100,300
+           L 100,250
+           L 130,220
+           L 130,180
+           L 100,150
+           L 100,100
            Z"
         fill="rgba(10, 25, 47, 0.5)"
         stroke="rgba(0, 191, 255, 0.5)"
@@ -92,7 +104,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
       
-      <div className="relative z-10 w-full max-w-lg h-80 flex items-center justify-center p-8">
+      <div className="relative z-10 w-full max-w-2xl h-96 flex items-center justify-center p-8">
         <FuturisticFrame />
         <div className="relative z-20 w-full max-w-sm">
             <h2 className="mb-8 text-center text-3xl font-bold tracking-wider text-cyan-300 uppercase">
