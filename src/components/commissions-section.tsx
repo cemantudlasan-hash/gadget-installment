@@ -136,21 +136,17 @@ export default function CommissionsSection() {
   const yearlyReport = useMemo(() => {
     const start = startOfYear(currentYear);
     const end = endOfYear(currentYear);
-    
-    const yearlyLedgerEntries = allCommissions
-      .filter(c => isWithinInterval(parseISO(c.date), { start, end }));
 
-    const yearlyManualIncome = yearlyLedgerEntries.reduce((acc, item) => acc + (item.getAmount || 0), 0);
-    
-    const salesThisYear = sales.filter(sale => isWithinInterval(parseISO(sale.dateStart), { start, end }));
-    const yearlyShippingCosts = salesThisYear.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0);
+    const yearlyLedgerEntries = allCommissions.filter(c =>
+      isWithinInterval(parseISO(c.date), { start, end })
+    );
 
-    const totalYearlyExpenses = yearlyShippingCosts;
-      
+    const yearlyManualExpenses = yearlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
+
     const fullyPaidSalesThisYear = sales.filter(sale => {
       const isFullyPaid = sale.paymentInstallments.every(p => p.isPaid);
       if (!isFullyPaid) return false;
-      
+
       const lastPaymentDateStr = sale.paymentInstallments.reduce((latest, current) => {
         if (!current.lastPaymentDate) return latest;
         if (!latest) return current.lastPaymentDate;
@@ -158,25 +154,28 @@ export default function CommissionsSection() {
       }, null as string | null);
 
       if (!lastPaymentDateStr) return false;
-      
+
       const lastPaymentDate = parseISO(lastPaymentDateStr);
       return isWithinInterval(lastPaymentDate, { start, end });
     });
-
-    const yearlyCommissionIncomeFromSales = fullyPaidSalesThisYear.reduce((acc, sale) => acc + sale.commission, 0);
-    const totalYearlyIncome = yearlyManualIncome + yearlyCommissionIncomeFromSales;
-
+    
+    const profitFromSales = fullyPaidSalesThisYear.reduce((acc, sale) => {
+        return acc + (sale.commission - sale.downPayment - sale.shippingCost);
+    }, 0);
+    
+    const totalYearlyExpenses = fullyPaidSalesThisYear.reduce((acc, sale) => acc + sale.shippingCost, 0) + yearlyManualExpenses;
+    
     const yearlyNetProfitAfterDP = fullyPaidSalesThisYear.reduce((acc, sale) => {
-      return acc + (sale.commission - sale.downPayment);
+        return acc + (sale.commission - sale.downPayment);
     }, 0);
 
+    const netYearlyIncome = profitFromSales - yearlyManualExpenses;
 
     return {
-      totalIncome: totalYearlyIncome,
       totalExpenses: totalYearlyExpenses,
       netProfitAfterDP: yearlyNetProfitAfterDP,
-      netYearlyIncome: totalYearlyIncome - totalYearlyExpenses,
-    }
+      netYearlyIncome: netYearlyIncome,
+    };
   }, [allCommissions, sales, currentYear]);
 
 
@@ -353,11 +352,11 @@ export default function CommissionsSection() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-muted p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">Net Income (Total Income - Expenses):</p>
+                <p className="text-sm text-muted-foreground">Net Income (Profit - Manual Expenses):</p>
                 <p className={`text-2xl font-bold ${yearlyReport.netYearlyIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>฿{yearlyReport.netYearlyIncome.toFixed(2)}</p>
               </div>
               <div className="bg-muted p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">Total Expenses (incl. Shipping):</p>
+                <p className="text-sm text-muted-foreground">Total Expenses (Shipping + Manual):</p>
                 <p className="text-2xl font-bold text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
               </div>
               <div className="bg-muted p-4 rounded-lg">
