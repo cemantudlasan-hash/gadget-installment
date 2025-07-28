@@ -201,15 +201,9 @@ export default function SalesSection() {
         spentAmount: 0,
       });
 
-      // If this payment completes the sale, record the full commission
+      // If this payment completes the sale, show a toast. The commission is realized over payments.
       if (isNowFullyPaid && !wasAlreadyPaid) {
-        await addDoc(commissionsCollectionRef, {
-          date: paymentDate,
-          description: `Commission for ${saleDoc.gadget} (${saleDoc.customerName})`,
-          getAmount: saleDoc.commission,
-          spentAmount: 0,
-        });
-         toast({ title: "Sale Completed!", description: "Commission has been recorded in the ledger." });
+         toast({ title: "Sale Completed!", description: "All installments have been paid." });
       }
 
       fetchSales();
