@@ -91,13 +91,12 @@ export default function CommissionsSection() {
     });
     
     const manualExpenses = monthlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
+    const manualIncome = monthlyLedgerEntries.reduce((acc, item) => acc + (item.getAmount || 0), 0);
     
-    // Find sales that were fully paid in the current month
     const fullyPaidSalesThisMonth = sales.filter(sale => {
       const isFullyPaid = sale.paymentInstallments.every(p => p.isPaid);
       if (!isFullyPaid) return false;
 
-      // Find the last payment date among all installments
       const lastPaymentDateStr = sale.paymentInstallments.reduce((latest, current) => {
         if (!current.lastPaymentDate) return latest;
         if (!latest) return current.lastPaymentDate;
@@ -114,7 +113,6 @@ export default function CommissionsSection() {
     const totalMonthlyExpenses = manualExpenses + shippingCostFromSales;
 
     const netProfitAfterDP = fullyPaidSalesThisMonth.reduce((acc, sale) => {
-      // Net Profit for a sale = Commission - Down Payment
       return acc + (sale.commission - sale.downPayment);
     }, 0);
 
@@ -163,7 +161,8 @@ export default function CommissionsSection() {
         return acc + (sale.commission - sale.downPayment - (sale.shippingCost || 0));
     }, 0);
     
-    const totalYearlyExpenses = fullyPaidSalesThisYear.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0) + yearlyManualExpenses;
+    const shippingCostsFromSalesThisYear = fullyPaidSalesThisYear.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0);
+    const totalYearlyExpenses = shippingCostsFromSalesThisYear + yearlyManualExpenses;
     
     const yearlyNetProfitAfterDP = fullyPaidSalesThisYear.reduce((acc, sale) => {
         return acc + (sale.commission - sale.downPayment);
@@ -369,5 +368,3 @@ export default function CommissionsSection() {
     </div>
   );
 }
-
-    
