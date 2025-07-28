@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useFirebase } from "@/lib/firebase/context";
 import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs, orderBy, query } from "firebase/firestore";
 import CommissionForm from "./commission-form";
@@ -11,47 +11,31 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { Commission } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { format, startOfMonth, endOfMonth, isWithinInterval, addMonths, subMonths } from "date-fns";
 
 export default function CommissionsSection() {
   const { db, user } = useFirebase();
   const { toast } = useToast();
-  const [commissions, setCommissions] = useState<Commission[]>([]);
+  const [allCommissions, setAllCommissions] = useState<Commission[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCommission, setEditingCommission] = useState<Commission | null>(null);
-  const [totalIncome, setTotalIncome] = useState(0);
-  const [totalExpenses, setTotalExpenses] = useState(0);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const fetchCommissions = useCallback(async () => {
     if (!db || !user) return;
     setLoading(true);
     try {
       const commissionsCollectionRef = collection(db, "commissions");
-      const snapshot = await getDocs(commissionsCollectionRef);
+      const q = query(commissionsCollectionRef, orderBy("date", "desc"));
+      const snapshot = await getDocs(q);
       const commissionsData: Commission[] = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       })) as Commission[];
       
-      commissionsData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-      let currentTotal = 0;
-      let incomeSum = 0;
-      let expenseSum = 0;
-
-      const commissionsWithTotal = commissionsData.map(item => {
-        const getAmount = item.getAmount || 0;
-        const spentAmount = item.spentAmount || 0;
-        currentTotal += getAmount - spentAmount;
-        incomeSum += getAmount;
-        expenseSum += spentAmount;
-        return { ...item, runningTotal: currentTotal };
-      });
-
-      setCommissions(commissionsWithTotal);
-      setTotalIncome(incomeSum);
-      setTotalExpenses(expenseSum);
-    } catch (err: any) {
+      setAllCommissions(commissionsData);
+    } catch (err: any)      {
       console.error("Error fetching commissions:", err);
       toast({
         variant: "destructive",
@@ -69,6 +53,36 @@ export default function CommissionsSection() {
       fetchCommissions();
     }
   }, [user, fetchCommissions]);
+
+  const { monthlyCommissions, totalIncome, totalExpenses, netProfit } = useMemo(() => {
+    const start = startOfMonth(currentMonth);
+    const end = endOfMonth(currentMonth);
+
+    const filtered = allCommissions.filter(c => {
+        const commissionDate = new Date(c.date);
+        return isWithinInterval(commissionDate, { start, end });
+    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    let runningTotal = 0;
+    let incomeSum = 0;
+    let expenseSum = 0;
+
+    const commissionsWithTotal = filtered.map(item => {
+      const getAmount = item.getAmount || 0;
+      const spentAmount = item.spentAmount || 0;
+      runningTotal += getAmount - spentAmount;
+      incomeSum += getAmount;
+      expenseSum += spentAmount;
+      return { ...item, runningTotal };
+    });
+
+    return {
+      monthlyCommissions: commissionsWithTotal,
+      totalIncome: incomeSum,
+      totalExpenses: expenseSum,
+      netProfit: incomeSum - expenseSum,
+    };
+  }, [allCommissions, currentMonth]);
 
 
   const handleSaveCommission = async (commissionData: Omit<Commission, 'id' | 'runningTotal'>) => {
@@ -119,7 +133,18 @@ export default function CommissionsSection() {
 
       <Card className="rounded-2xl shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl font-bold text-gray-700">Ledger Entries</CardTitle>
+           <div className="flex justify-between items-center">
+             <CardTitle className="text-xl font-bold text-gray-700">Monthly Ledger</CardTitle>
+             <div className="flex items-center gap-4">
+                <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+                    <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-lg font-semibold text-primary">{format(currentMonth, "MMMM yyyy")}</span>
+                <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
+             </div>
+           </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -128,8 +153,8 @@ export default function CommissionsSection() {
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-10 w-full" />
             </div>
-          ) : commissions.length === 0 ? (
-            <p className="text-center text-gray-500 py-8 text-lg">No ledger entries found. Add one above!</p>
+          ) : monthlyCommissions.length === 0 ? (
+            <p className="text-center text-gray-500 py-8 text-lg">No ledger entries for this month. Add one above!</p>
           ) : (
             <div className="overflow-x-auto rounded-xl border">
               <Table>
@@ -144,7 +169,7 @@ export default function CommissionsSection() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {commissions.map((item) => (
+                  {monthlyCommissions.map((item) => (
                     <TableRow key={item.id} className="hover:bg-primary/5">
                       <TableCell>{item.date}</TableCell>
                       <TableCell>{item.description}</TableCell>
@@ -188,10 +213,10 @@ export default function CommissionsSection() {
       
       <Card className="rounded-2xl shadow-lg bg-primary/5">
         <CardHeader>
-          <CardTitle className="text-xl font-bold text-primary">Overall Financial Summary</CardTitle>
+          <CardTitle className="text-xl font-bold text-primary">Financial Summary for {format(currentMonth, "MMMM yyyy")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-card p-4 rounded-lg border">
               <p className="text-base font-medium text-muted-foreground">Total Income:</p>
               <p className="text-2xl font-bold text-green-600">฿{totalIncome.toFixed(2)}</p>
@@ -199,6 +224,10 @@ export default function CommissionsSection() {
             <div className="bg-card p-4 rounded-lg border">
               <p className="text-base font-medium text-muted-foreground">Total Expenses:</p>
               <p className="text-2xl font-bold text-red-600">฿{totalExpenses.toFixed(2)}</p>
+            </div>
+             <div className="bg-card p-4 rounded-lg border">
+              <p className="text-base font-medium text-muted-foreground">Net Profit:</p>
+              <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>฿{netProfit.toFixed(2)}</p>
             </div>
           </div>
         </CardContent>
