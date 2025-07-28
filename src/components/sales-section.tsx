@@ -121,12 +121,17 @@ export default function SalesSection() {
           if (Math.abs(inst.paidAmount - inst.dueAmount) < 0.01) {
             inst.isPaid = true;
             inst.lastPaymentDate = paymentDate;
+          } else {
+             // If partially paid, still set the last payment date
+            if (toPay > 0 && !inst.lastPaymentDate) {
+              inst.lastPaymentDate = paymentDate;
+            }
           }
         }
         return inst;
       });
 
-      const newTotalPaid = (saleDoc.totalPaidAmount || 0) + amountPaid;
+      const newTotalPaid = updatedInstallments.reduce((sum, inst) => sum + inst.paidAmount, 0);
       await updateDoc(saleRef, {
         paymentInstallments: updatedInstallments,
         totalPaidAmount: newTotalPaid,
@@ -139,6 +144,42 @@ export default function SalesSection() {
       toast({ variant: "destructive", title: "Error", description: `Error recording payment: ${e.message}` });
     }
   };
+
+  const handleEditPayment = async (saleId: string, month: number, amount: number, date: string) => {
+    if (!db) return;
+    try {
+      const saleRef = doc(db, "sales", saleId);
+      const saleDoc = sales.find(s => s.id === saleId);
+      if (!saleDoc || !saleDoc.paymentInstallments) {
+        toast({ variant: "destructive", title: "Error", description: "Could not find sale details to edit payment." });
+        return;
+      };
+
+      const updatedInstallments = saleDoc.paymentInstallments.map(inst => {
+        if (inst.month === month) {
+          inst.paidAmount = amount;
+          inst.lastPaymentDate = amount > 0 ? date : null;
+          inst.isPaid = Math.abs(inst.paidAmount - inst.dueAmount) < 0.01;
+        }
+        return inst;
+      });
+
+      const newTotalPaid = updatedInstallments.reduce((sum, inst) => sum + inst.paidAmount, 0);
+
+      await updateDoc(saleRef, {
+        paymentInstallments: updatedInstallments,
+        totalPaidAmount: newTotalPaid,
+        remainingBalance: saleDoc.totalAmountDue - newTotalPaid,
+      });
+
+      toast({ title: "Success", description: "Payment updated successfully!" });
+      fetchSales();
+    } catch (e: any) {
+      console.error("Error editing payment:", e);
+      toast({ variant: "destructive", title: "Error", description: `Error editing payment: ${e.message}` });
+    }
+  };
+
 
   const customerNames = [...new Set(sales.map(s => s.customerName))].sort();
   const filteredSales = selectedCustomer ? sales.filter(s => s.customerName === selectedCustomer) : sales;
@@ -223,7 +264,7 @@ export default function SalesSection() {
                         {openSaleId === sale.id && (
                            <TableRow>
                               <TableCell colSpan={6} className="p-0">
-                                <PaymentRecorder sale={sale} onRecordPayment={handleRecordPayment} />
+                                <PaymentRecorder sale={sale} onRecordPayment={handleRecordPayment} onEditPayment={handleEditPayment} />
                               </TableCell>
                             </TableRow>
                         )}
