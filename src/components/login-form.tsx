@@ -86,9 +86,11 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
   };
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden bg-[#0a192f]">
-      <div className="absolute inset-0 bg-grid-slate-700/[0.04] bg-[10px_10px] [mask-image:linear-gradient(0deg,#000000,transparent)]"></div>
-       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0a192f]"></div>
+    <div 
+      className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url(/background.jpg)" }}
+    >
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
       
       <div className="relative z-10 w-full max-w-lg h-80 flex items-center justify-center p-8">
         <FuturisticFrame />
@@ -133,7 +135,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
             </form>
         </div>
       </div>
-      <div className="absolute bottom-4 text-center text-xs text-slate-600">
+      <div className="absolute bottom-4 text-center text-xs text-slate-400 z-10">
             <p>AI powered @Firebase</p>
             <p>Created and Idea by: Ceman Dejamo Tudlasan</p>
       </div>

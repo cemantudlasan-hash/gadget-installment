@@ -41,7 +41,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             Logged in as: <span className="bg-cyan-900/50 px-2 py-1 rounded-md text-cyan-300 font-semibold">Cirannakorn Tudlasan</span>
           </div>
         )}
-        <Button onClick={onLogout} variant="outline" size="icon" className="absolute top-0 right-0">
+        <Button onClick={onLogout} variant="outline" size="icon" className="absolute top-0 right-0 bg-transparent border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-slate-900">
           <LogOut className="h-4 w-4" />
           <span className="sr-only">Logout</span>
         </Button>
@@ -61,8 +61,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         <TabsContent value="sales">
             <div className={futuristicBgClasses}>
-                 <div className="absolute inset-0 bg-grid-slate-700/[0.04] bg-[10px_10px] [mask-image:linear-gradient(0deg,#000000,transparent)]"></div>
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0a192f]"></div>
                 <div className="relative z-10">
                     <SalesSection />
                 </div>
@@ -70,8 +68,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </TabsContent>
         <TabsContent value="commissions">
              <div className={futuristicBgClasses}>
-                <div className="absolute inset-0 bg-grid-slate-700/[0.04] bg-[10px_10px] [mask-image:linear-gradient(0deg,#000000,transparent)]"></div>
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0a192f]"></div>
                 <div className="relative z-10">
                     <CommissionsSection />
                 </div>
@@ -79,8 +75,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </TabsContent>
         <TabsContent value="pricing">
             <div className={futuristicBgClasses}>
-                <div className="absolute inset-0 bg-grid-slate-700/[0.04] bg-[10px_10px] [mask-image:linear-gradient(0deg,#000000,transparent)]"></div>
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0a192f]"></div>
                 <div className="relative z-10">
                     <PricingCalculator />
                 </div>
