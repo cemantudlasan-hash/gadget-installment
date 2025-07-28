@@ -143,12 +143,15 @@ export default function CommissionsSection() {
     });
 
     const yearlyCommissionIncome = fullyPaidSalesThisYear.reduce((acc, sale) => acc + sale.commission, 0);
-    const yearlyNetProfit = yearlyCommissionIncome - yearlyExpenses;
+    const yearlyNetProfitAfterDP = fullyPaidSalesThisYear.reduce((acc, sale) => {
+      return acc + (sale.commission - sale.downPayment);
+    }, 0);
+
 
     return {
       totalIncome: yearlyCommissionIncome,
       totalExpenses: yearlyExpenses,
-      netProfit: yearlyNetProfit
+      netProfitAfterDP: yearlyNetProfitAfterDP
     }
   }, [allCommissions, sales, currentYear]);
 
@@ -327,8 +330,8 @@ export default function CommissionsSection() {
                 <p className="text-2xl font-bold text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
               </div>
               <div className="bg-card p-4 rounded-lg border">
-                <p className="text-base font-medium text-muted-foreground">Net Profit:</p>
-                <p className={`text-2xl font-bold ${yearlyReport.netProfit >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>฿{yearlyReport.netProfit.toFixed(2)}</p>
+                <p className="text-base font-medium text-muted-foreground">Profit After Down Payment:</p>
+                <p className={`text-2xl font-bold ${yearlyReport.netProfitAfterDP >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>฿{yearlyReport.netProfitAfterDP.toFixed(2)}</p>
               </div>
             </div>
         </CardContent>
