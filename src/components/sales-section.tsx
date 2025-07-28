@@ -4,7 +4,7 @@
 import * as React from "react";
 import { useState, useEffect, useCallback } from "react";
 import { useFirebase } from "@/lib/firebase/context";
-import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs, query, where, limit } from "firebase/firestore";
 import SalesForm from "./sales-form";
 import CustomerReceipt from "./customer-receipt";
 import PaymentRecorder from "./payment-recorder";
@@ -66,32 +66,46 @@ export default function SalesSection() {
   const handleSaveSale = async (saleData: Omit<Sale, "id">) => {
     if (!db) return;
     try {
+       const commissionsCollectionRef = collection(db, "commissions");
+
       if (editingSale) {
+        // Handle Shipping Cost Update in Ledger
+        if (saleData.shippingCost !== editingSale.shippingCost) {
+            const shippingDescription = `Shipping for ${saleData.gadget} (${saleData.customerName})`;
+            const q = query(commissionsCollectionRef, where("description", "==", shippingDescription), limit(1));
+            const shippingDocs = await getDocs(q);
+
+            if (!shippingDocs.empty) {
+                const shippingDocId = shippingDocs.docs[0].id;
+                await updateDoc(doc(db, "commissions", shippingDocId), { spentAmount: saleData.shippingCost });
+            } else if (saleData.shippingCost > 0) {
+                 await addDoc(commissionsCollectionRef, { 
+                    date: saleData.dateStart, 
+                    description: shippingDescription, 
+                    getAmount: 0, 
+                    spentAmount: saleData.shippingCost 
+                });
+            }
+        }
+        
         await updateDoc(doc(db, "sales", editingSale.id), saleData);
         toast({ title: "Success", description: "Sale updated successfully!" });
       } else {
-        const newSale = await addDoc(collection(db, "sales"), saleData);
+        await addDoc(collection(db, "sales"), saleData);
         toast({ title: "Success", description: "Sale added successfully!" });
         
-        // When a new sale is created, also log the down payment to the ledger
-        if (saleData.downPayment > 0) {
-            const commissionsCollectionRef = collection(db, "commissions");
+        if (saleData.shippingCost > 0) {
             await addDoc(commissionsCollectionRef, { 
                 date: saleData.dateStart, 
-                description: `Down payment for ${saleData.gadget} (${saleData.customerName})`, 
-                getAmount: saleData.downPayment, 
-                spentAmount: 0 
+                description: `Shipping for ${saleData.gadget} (${saleData.customerName})`, 
+                getAmount: 0, 
+                spentAmount: saleData.shippingCost 
             });
-        }
-
-        const commissionsCollectionRef = collection(db, "commissions");
-        if (saleData.shippingCost > 0) {
-            await addDoc(commissionsCollectionRef, { date: saleData.dateStart, description: `Shipping for ${saleData.gadget}`, getAmount: 0, spentAmount: saleData.shippingCost });
         }
       }
       setEditingSale(null);
       setShowSalesForm(false);
-      fetchSales(); // Refetch data after saving
+      fetchSales();
     } catch (e: any) {
       console.error("Error saving sale:", e);
       toast({ variant: "destructive", title: "Error", description: `Error saving sale: ${e.message}` });
@@ -128,12 +142,10 @@ export default function SalesSection() {
           remainingPayment -= toPay;
           if (Math.abs(inst.paidAmount - inst.dueAmount) < 0.01) {
             inst.isPaid = true;
+          }
+          // Always set or update the last payment date when a payment is applied
+          if (toPay > 0) {
             inst.lastPaymentDate = paymentDate;
-          } else {
-             // If partially paid, still set the last payment date
-            if (toPay > 0 && !inst.lastPaymentDate) {
-              inst.lastPaymentDate = paymentDate;
-            }
           }
         }
         return inst;
