@@ -6,6 +6,12 @@ import Dashboard from "@/components/dashboard";
 import { FirebaseProvider } from "@/lib/firebase/context";
 import { cn } from "@/lib/utils";
 
+const starryNightBg = {
+  backgroundImage: "url('https://storage.googleapis.com/app-prototyper-media/yue-ki-2013-1.jpg')",
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+};
+
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -18,15 +24,12 @@ export default function Home() {
       <main
         className={cn(
           "min-h-screen font-sans",
-          isLoggedIn
-            ? "bg-[#0a192f] text-foreground"
-            : "text-foreground bg-background"
+          !isLoggedIn && "text-foreground bg-background"
         )}
+        style={isLoggedIn ? starryNightBg : {}}
       >
         {isLoggedIn ? (
-          <div className="relative p-4 sm:p-6 overflow-hidden">
-             <div className="absolute inset-0 bg-grid-slate-700/[0.04] bg-[10px_10px] [mask-image:linear-gradient(0deg,#000000,transparent)]"></div>
-             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0a192f]"></div>
+          <div className="relative p-4 sm:p-6 overflow-hidden bg-black/50 min-h-screen">
             <div className="relative z-10">
                 <Dashboard onLogout={handleLogout} />
             </div>
