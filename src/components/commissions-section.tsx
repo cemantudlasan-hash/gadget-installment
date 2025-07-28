@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Commission, Sale } from "@/types";
+import type { Commission } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
@@ -18,7 +18,6 @@ export default function CommissionsSection() {
   const { db, user } = useFirebase();
   const { toast } = useToast();
   const [allCommissions, setAllCommissions] = useState<Commission[]>([]);
-  const [allSales, setAllSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCommission, setEditingCommission] = useState<Commission | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -36,11 +35,6 @@ export default function CommissionsSection() {
       })) as Commission[];
       
       setAllCommissions(commissionsData);
-
-      const salesCollectionRef = collection(db, "sales");
-      const salesSnapshot = await getDocs(salesCollectionRef);
-      const salesData = salesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Sale[];
-      setAllSales(salesData);
 
     } catch (err: any)      {
       console.error("Error fetching data:", err);
@@ -79,30 +73,8 @@ export default function CommissionsSection() {
       return { ...item, runningTotal };
     });
     
+    const incomeSum = filteredLedgerEntries.reduce((acc, item) => acc + (item.getAmount || 0), 0);
     const expenseSum = filteredLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
-
-    const earnedCommission = allSales.reduce((acc, sale) => {
-        if (sale.totalAmountDue > 0) {
-            const paidPercentage = sale.totalPaidAmount / sale.totalAmountDue;
-            return acc + (paidPercentage * sale.commission);
-        }
-        return acc;
-    }, 0);
-    
-    const incomeSum = allSales.reduce((acc, sale) => {
-      let saleIncomeThisMonth = 0;
-      sale.paymentInstallments?.forEach(inst => {
-        if(inst.lastPaymentDate) {
-          const paymentDate = new Date(inst.lastPaymentDate);
-          if (isWithinInterval(paymentDate, { start, end })) {
-            saleIncomeThisMonth += inst.paidAmount;
-          }
-        }
-      });
-      return acc + saleIncomeThisMonth;
-    }, 0);
-
-
     const net = incomeSum - expenseSum;
 
     return {
@@ -111,7 +83,7 @@ export default function CommissionsSection() {
       totalExpenses: expenseSum,
       netProfit: net,
     };
-  }, [allCommissions, allSales, currentMonth]);
+  }, [allCommissions, currentMonth]);
 
 
   const handleSaveCommission = async (commissionData: Omit<Commission, 'id' | 'runningTotal'>) => {

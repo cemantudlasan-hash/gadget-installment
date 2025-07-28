@@ -143,6 +143,8 @@ export default function SalesSection() {
         toast({ variant: "destructive", title: "Error", description: "Could not find sale details to record payment." });
         return;
       };
+      
+      const wasAlreadyPaid = saleDoc.paymentInstallments.every(inst => inst.isPaid);
 
       let remainingPayment = amountPaid;
       const updatedInstallments = saleDoc.paymentInstallments.map(inst => {
@@ -163,7 +165,7 @@ export default function SalesSection() {
       const newTotalPaid = updatedInstallments.reduce((sum, inst) => sum + inst.paidAmount, 0);
       const newRemainingBalance = saleDoc.totalAmountDue - newTotalPaid;
       
-      const allInstallmentsPaid = updatedInstallments.every(inst => inst.isPaid);
+      const isNowFullyPaid = updatedInstallments.every(inst => inst.isPaid);
 
       await updateDoc(saleRef, {
         paymentInstallments: updatedInstallments,
@@ -172,6 +174,8 @@ export default function SalesSection() {
       });
 
       const commissionsCollectionRef = collection(db, "commissions");
+
+      // Record this specific payment in the ledger
       await addDoc(commissionsCollectionRef, {
         date: paymentDate,
         description: `Payment for ${saleDoc.gadget} (${saleDoc.customerName})`,
@@ -179,8 +183,8 @@ export default function SalesSection() {
         spentAmount: 0,
       });
 
-      // If this payment completes the sale, record the commission
-      if (allInstallmentsPaid || newRemainingBalance <= 0) {
+      // If this payment completes the sale, record the full commission
+      if (isNowFullyPaid && !wasAlreadyPaid) {
         await addDoc(commissionsCollectionRef, {
           date: paymentDate,
           description: `Commission for ${saleDoc.gadget} (${saleDoc.customerName})`,
