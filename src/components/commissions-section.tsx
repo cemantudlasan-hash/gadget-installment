@@ -118,10 +118,7 @@ export default function CommissionsSection() {
     );
   
     const totalYearlyManualExpenses = yearlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
-    const totalYearlyManualIncome = yearlyLedgerEntries.reduce((acc, item) => acc + (item.getAmount || 0), 0);
   
-    const totalShippingCostsFromPaidSales = fullyPaidSalesThisYear.reduce((acc, sale) => acc + sale.shippingCost, 0);
-
     const totalExpenses = totalYearlyManualExpenses;
   
     const yearlyNetProfitAfterDP = fullyPaidSalesThisYear.reduce((acc, sale) => {
