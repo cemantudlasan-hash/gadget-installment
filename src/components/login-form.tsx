@@ -86,7 +86,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
   };
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden bg-[#0a192f] font-mono">
+    <div className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden bg-[#0a192f]">
       <div className="absolute inset-0 bg-grid-slate-700/[0.04] bg-[10px_10px] [mask-image:linear-gradient(0deg,#000000,transparent)]"></div>
        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0a192f]"></div>
       
@@ -106,7 +106,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
-                  className="w-full pl-10 pr-3 py-2 bg-slate-800/60 border border-slate-700 rounded-md text-cyan-300 placeholder-slate-500 focus:ring-cyan-500 focus:border-cyan-500 transition-all"
+                  className="w-full pl-10 pr-3 py-2 bg-slate-800/60 border border-slate-700 rounded-md text-slate-300 placeholder-slate-500 focus:ring-cyan-500 focus:border-cyan-500"
                 />
               </div>
               <div className="relative">
@@ -118,7 +118,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full pl-10 pr-3 py-2 bg-slate-800/60 border border-slate-700 rounded-md text-cyan-300 placeholder-slate-500 focus:ring-cyan-500 focus:border-cyan-500 transition-all"
+                  className="w-full pl-10 pr-3 py-2 bg-slate-800/60 border border-slate-700 rounded-md text-slate-300 placeholder-slate-500 focus:ring-cyan-500 focus:border-cyan-500"
                 />
               </div>
               {error && (
@@ -126,7 +126,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
               )}
               <Button
                 type="submit"
-                className="w-full text-lg py-6 font-semibold bg-cyan-600/80 hover:bg-cyan-500/80 border border-cyan-500 text-cyan-50 rounded-md transition-all duration-300 shadow-[0_0_15px_rgba(0,255,255,0.3)] hover:shadow-[0_0_25px_rgba(0,255,255,0.6)]"
+                className="w-full text-lg py-3 font-semibold bg-cyan-600/80 hover:bg-cyan-500/80 border border-cyan-500 text-cyan-50 rounded-md transition-all duration-300 shadow-[0_0_15px_rgba(0,255,255,0.3)] hover:shadow-[0_0_25px_rgba(0,255,255,0.6)]"
               >
                 Access
               </Button>

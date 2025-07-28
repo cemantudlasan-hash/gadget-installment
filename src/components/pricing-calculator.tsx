@@ -25,17 +25,17 @@ export default function PricingCalculator() {
   }, [buyPrice, markupPercentage, downPaymentAmount]);
 
   return (
-    <Card className="max-w-4xl mx-auto shadow-lg rounded-2xl bg-slate-800/60 border border-slate-700 text-slate-300">
+    <Card className="max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-cyan-300">Gadget Pricing Calculator</CardTitle>
-        <CardDescription className="text-slate-400">
+        <CardTitle>Gadget Pricing Calculator</CardTitle>
+        <CardDescription>
           Calculate selling prices and commissions based on your costs and markup.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
           <div className="space-y-2">
-            <Label htmlFor="buyPriceCalc" className="text-slate-400">Buy Price (฿)</Label>
+            <Label htmlFor="buyPriceCalc">Buy Price (฿)</Label>
             <Input
               id="buyPriceCalc"
               type="number"
@@ -46,7 +46,7 @@ export default function PricingCalculator() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="markupPercentage" className="text-slate-400">Markup Percentage (%)</Label>
+            <Label htmlFor="markupPercentage">Markup Percentage (%)</Label>
             <Input
               id="markupPercentage"
               type="number"
@@ -57,7 +57,7 @@ export default function PricingCalculator() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="downPaymentAmount" className="text-slate-400">Customer's Down Payment (฿)</Label>
+            <Label htmlFor="downPaymentAmount">Customer's Down Payment (฿)</Label>
             <Input
               id="downPaymentAmount"
               type="number"
@@ -69,19 +69,19 @@ export default function PricingCalculator() {
           </div>
         </div>
 
-        <div className="mt-8 p-6 bg-slate-900/80 rounded-xl border border-slate-700 text-center space-y-4">
+        <div className="mt-8 p-6 bg-muted rounded-lg text-center space-y-4">
           <div>
-            <p className="text-lg font-semibold text-cyan-400 mb-1">Suggested Selling Price:</p>
-            <p className="text-4xl font-extrabold text-slate-100">฿{sellPrice.toFixed(2)}</p>
+            <p className="text-sm font-medium text-muted-foreground mb-1">Suggested Selling Price:</p>
+            <p className="text-3xl font-bold">฿{sellPrice.toFixed(2)}</p>
           </div>
           <div>
-            <p className="text-lg font-semibold text-cyan-400 mb-1">Calculated Commission:</p>
-            <p className="text-3xl font-extrabold text-green-400">฿{commission.toFixed(2)}</p>
+            <p className="text-sm font-medium text-muted-foreground mb-1">Calculated Commission:</p>
+            <p className="text-2xl font-bold text-green-600">฿{commission.toFixed(2)}</p>
           </div>
           <div>
-            <p className="text-lg font-semibold text-cyan-400 mt-2 mb-1">Customer's Down Payment:</p>
-            <p className="text-3xl font-extrabold text-slate-100">฿{downPaymentAmount.toFixed(2)}</p>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="text-sm font-medium text-muted-foreground mt-2 mb-1">Customer's Down Payment:</p>
+            <p className="text-2xl font-bold">฿{downPaymentAmount.toFixed(2)}</p>
+            <p className="text-xs text-muted-foreground mt-1">
               ({downPaymentPercentage.toFixed(2)}% of Selling Price)
             </p>
           </div>
