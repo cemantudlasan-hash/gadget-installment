@@ -70,23 +70,28 @@ export default function CommissionsSection() {
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
 
-    const filteredLedgerEntries = allCommissions.filter(c => {
+    const monthlyLedgerEntries = allCommissions.filter(c => {
         const commissionDate = parseISO(c.date);
         const isInMonth = isWithinInterval(commissionDate, { start, end });
-        const matchesSearch = c.description.toLowerCase().includes(searchTerm.toLowerCase());
-        return isInMonth && matchesSearch;
-    }).sort((a, b) => a.description.localeCompare(b.description));
+        return isInMonth;
+    });
+
+    const filteredBySearch = (searchTerm
+        ? allCommissions.filter(c => c.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        : monthlyLedgerEntries
+    ).sort((a, b) => a.description.localeCompare(b.description));
+
 
     let runningTotal = 0;
     
-    const commissionsWithTotal = filteredLedgerEntries.map(item => {
+    const commissionsWithTotal = filteredBySearch.map(item => {
       const getAmount = item.getAmount || 0;
       const spentAmount = item.spentAmount || 0;
       runningTotal += getAmount - spentAmount;
       return { ...item, runningTotal };
     });
     
-    const expenseSum = filteredLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
+    const expenseSum = monthlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
 
     // Find sales that were fully paid in the current month
     const fullyPaidSalesThisMonth = sales.filter(sale => {
@@ -229,7 +234,7 @@ export default function CommissionsSection() {
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
-                placeholder="Search by description..."
+                placeholder="Search by description across all months..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10"
