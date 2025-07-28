@@ -94,6 +94,7 @@ export default function SalesSection() {
         await addDoc(collection(db, "sales"), saleData);
         toast({ title: "Success", description: "Sale added successfully!" });
         
+        // Record shipping cost on new sale
         if (saleData.shippingCost > 0) {
             await addDoc(commissionsCollectionRef, { 
                 date: saleData.dateStart, 
@@ -101,6 +102,15 @@ export default function SalesSection() {
                 getAmount: 0, 
                 spentAmount: saleData.shippingCost 
             });
+        }
+        // Record down payment on new sale
+        if (saleData.downPayment > 0) {
+          await addDoc(commissionsCollectionRef, {
+            date: saleData.dateStart,
+            description: `Down payment for ${saleData.gadget} (${saleData.customerName})`,
+            getAmount: saleData.downPayment,
+            spentAmount: 0,
+          });
         }
       }
       setEditingSale(null);
@@ -143,7 +153,6 @@ export default function SalesSection() {
           if (Math.abs(inst.paidAmount - inst.dueAmount) < 0.01) {
             inst.isPaid = true;
           }
-          // Always set or update the last payment date when a payment is applied
           if (toPay > 0) {
             inst.lastPaymentDate = paymentDate;
           }
@@ -152,13 +161,16 @@ export default function SalesSection() {
       });
 
       const newTotalPaid = updatedInstallments.reduce((sum, inst) => sum + inst.paidAmount, 0);
+      const newRemainingBalance = saleDoc.totalAmountDue - newTotalPaid;
+      
+      const allInstallmentsPaid = updatedInstallments.every(inst => inst.isPaid);
+
       await updateDoc(saleRef, {
         paymentInstallments: updatedInstallments,
         totalPaidAmount: newTotalPaid,
-        remainingBalance: saleDoc.totalAmountDue - newTotalPaid,
+        remainingBalance: newRemainingBalance,
       });
 
-      // Add the payment to the commissions (ledger) collection
       const commissionsCollectionRef = collection(db, "commissions");
       await addDoc(commissionsCollectionRef, {
         date: paymentDate,
@@ -167,8 +179,20 @@ export default function SalesSection() {
         spentAmount: 0,
       });
 
-      toast({ title: "Success", description: "Payment recorded and ledger updated!" });
-      fetchSales(); // Refetch data after payment
+      // If this payment completes the sale, record the commission
+      if (allInstallmentsPaid || newRemainingBalance <= 0) {
+        await addDoc(commissionsCollectionRef, {
+          date: paymentDate,
+          description: `Commission for ${saleDoc.gadget} (${saleDoc.customerName})`,
+          getAmount: saleDoc.commission,
+          spentAmount: 0,
+        });
+         toast({ title: "Sale Completed!", description: "Commission has been recorded in the ledger." });
+      } else {
+        toast({ title: "Success", description: "Payment recorded and ledger updated!" });
+      }
+
+      fetchSales();
     } catch (e: any) {
       console.error("Error recording payment:", e);
       toast({ variant: "destructive", title: "Error", description: `Error recording payment: ${e.message}` });
