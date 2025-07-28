@@ -9,21 +9,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Commission } from "@/types";
+import type { Commission, Sale } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
-import { format, startOfMonth, endOfMonth, isWithinInterval, addMonths, subMonths } from "date-fns";
+import { format, startOfMonth, endOfMonth, isWithinInterval, addMonths, subMonths, parseISO } from "date-fns";
 
 export default function CommissionsSection() {
   const { db, user } = useFirebase();
   const { toast } = useToast();
   const [allCommissions, setAllCommissions] = useState<Commission[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCommission, setEditingCommission] = useState<Commission | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  const fetchCommissions = useCallback(async () => {
+  const fetchAllData = useCallback(async () => {
     if (!db || !user) return;
     setLoading(true);
     try {
@@ -36,6 +37,12 @@ export default function CommissionsSection() {
       })) as Commission[];
       
       setAllCommissions(commissionsData);
+
+      const salesCollectionRef = collection(db, "sales");
+      const salesSnapshot = await getDocs(salesCollectionRef);
+      const salesData: Sale[] = salesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Sale[];
+      setSales(salesData);
+
 
     } catch (err: any)      {
       console.error("Error fetching data:", err);
@@ -52,16 +59,16 @@ export default function CommissionsSection() {
 
   useEffect(() => {
     if (user) {
-      fetchCommissions();
+      fetchAllData();
     }
-  }, [user, fetchCommissions]);
+  }, [user, fetchAllData]);
 
   const { monthlyCommissions, totalIncome, totalExpenses, netProfit } = useMemo(() => {
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
 
     const filteredLedgerEntries = allCommissions.filter(c => {
-        const commissionDate = new Date(c.date);
+        const commissionDate = parseISO(c.date);
         return isWithinInterval(commissionDate, { start, end });
     }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -74,24 +81,47 @@ export default function CommissionsSection() {
       return { ...item, runningTotal };
     });
     
-    const incomeSum = filteredLedgerEntries.reduce((acc, item) => {
-        // Only include entries that are commissions or down payments in "Total Income"
-        if (item.description.toLowerCase().includes('commission') || item.description.toLowerCase().includes('down payment')) {
-            return acc + (item.getAmount || 0);
+    const incomeSum = filteredLedgerEntries.reduce((acc, item) => acc + (item.getAmount || 0), 0);
+    const expenseSum = filteredLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
+
+    const netProfitSum = filteredLedgerEntries.reduce((acc, item) => {
+      const income = item.getAmount || 0;
+      const expense = item.spentAmount || 0;
+
+      // For income entries, check if they belong to a fully paid sale
+      if (income > 0) {
+        // Find the sale this commission entry might belong to
+        const relatedSale = sales.find(s => item.description.includes(s.customerName) && item.description.includes(s.gadget));
+        
+        // Only include income in net profit calculation if the sale is fully paid
+        if (relatedSale) {
+            const isFullyPaid = relatedSale.paymentInstallments.every(p => p.isPaid);
+            if (isFullyPaid) {
+                return acc + income;
+            }
+        } else {
+            // If it's not a sale-related income, include it (e.g., other income sources)
+            return acc + income;
         }
-        return acc;
+      }
+      
+      // For expense entries, always deduct them
+      if (expense > 0) {
+          return acc - expense;
+      }
+      
+      return acc;
+
     }, 0);
 
-    const expenseSum = filteredLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
-    const net = incomeSum - expenseSum;
 
     return {
       monthlyCommissions: commissionsWithTotal,
       totalIncome: incomeSum,
       totalExpenses: expenseSum,
-      netProfit: net,
+      netProfit: netProfitSum,
     };
-  }, [allCommissions, currentMonth]);
+  }, [allCommissions, sales, currentMonth]);
 
 
   const handleSaveCommission = async (commissionData: Omit<Commission, 'id' | 'runningTotal'>) => {
@@ -105,7 +135,7 @@ export default function CommissionsSection() {
         toast({ title: "Success", description: "Entry added successfully!" });
       }
       setEditingCommission(null);
-      fetchCommissions();
+      fetchAllData();
     } catch (e: any) {
       console.error("Error saving commission:", e);
       toast({
@@ -121,7 +151,7 @@ export default function CommissionsSection() {
     try {
       await deleteDoc(doc(db, "commissions", id));
       toast({ title: "Success", description: "Entry deleted successfully!" });
-      fetchCommissions();
+      fetchAllData();
     } catch (e: any) {
       console.error("Error deleting commission:", e);
       toast({
@@ -227,7 +257,7 @@ export default function CommissionsSection() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-card p-4 rounded-lg border">
-              <p className="text-base font-medium text-muted-foreground">Total Income:</p>
+              <p className="text-base font-medium text-muted-foreground">Total Income (Cashflow):</p>
               <p className="text-2xl font-bold text-green-600">฿{totalIncome.toFixed(2)}</p>
             </div>
             <div className="bg-card p-4 rounded-lg border">
@@ -235,7 +265,7 @@ export default function CommissionsSection() {
               <p className="text-2xl font-bold text-red-600">฿{totalExpenses.toFixed(2)}</p>
             </div>
              <div className="bg-card p-4 rounded-lg border">
-              <p className="text-base font-medium text-muted-foreground">Net Profit:</p>
+              <p className="text-base font-medium text-muted-foreground">Net Profit (Accrual):</p>
               <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>฿{netProfit.toFixed(2)}</p>
             </div>
           </div>
@@ -244,3 +274,5 @@ export default function CommissionsSection() {
     </div>
   );
 }
+
+    
