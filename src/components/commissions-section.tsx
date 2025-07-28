@@ -159,15 +159,11 @@ export default function CommissionsSection() {
     const shippingCostsFromSalesThisYear = fullyPaidSalesThisYear.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0);
     const totalYearlyExpenses = shippingCostsFromSalesThisYear + yearlyManualExpenses;
 
-    const profitFromSales = fullyPaidSalesThisYear.reduce((acc, sale) => {
-        return acc + (sale.commission - sale.downPayment - (sale.shippingCost || 0));
-    }, 0);
-    
     const yearlyNetProfitAfterDP = fullyPaidSalesThisYear.reduce((acc, sale) => {
         return acc + (sale.commission - sale.downPayment);
     }, 0);
 
-    const netYearlyIncome = profitFromSales - yearlyManualExpenses;
+    const netYearlyIncome = yearlyNetProfitAfterDP - totalYearlyExpenses;
 
     return {
       totalExpenses: totalYearlyExpenses,
