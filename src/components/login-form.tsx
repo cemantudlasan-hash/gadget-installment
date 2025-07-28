@@ -87,8 +87,8 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
 
   return (
     <div 
-      className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: "url(/background.jpg)" }}
+      className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden"
+      style={{ background: 'radial-gradient(ellipse at center, #0a203e 0%, #030a1a 70%)' }}
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
       
