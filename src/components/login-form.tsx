@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 
 interface LoginFormProps {
@@ -70,6 +70,10 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
             </Button>
           </form>
         </CardContent>
+         <CardFooter className="flex flex-col items-center justify-center text-xs text-muted-foreground pt-6">
+          <p>Created and Idea by: Ceman Dejamo Tudlasan</p>
+          <p>AI powered @Firebase</p>
+        </CardFooter>
       </Card>
     </div>
   );
