@@ -9,8 +9,9 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { MediaPart } from 'genkit';
 import { Readable } from 'stream';
+import { MediaPart } from 'genkit';
+
 
 const GenerateVideoInputSchema = z.object({
   photoDataUri: z
@@ -97,8 +98,8 @@ const generateVideoFlow = ai.defineFlow(
       );
     }
 
-    // Convert the downloaded video stream to a buffer, then to a Base64 string.
-    const videoBuffer = await videoDownloadResponse.buffer();
+    const responseBuffer = await videoDownloadResponse.arrayBuffer();
+    const videoBuffer = Buffer.from(responseBuffer);
     const base64Video = videoBuffer.toString('base64');
 
     return {
