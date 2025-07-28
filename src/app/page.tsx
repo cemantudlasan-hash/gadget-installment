@@ -10,9 +10,11 @@ export default function Home() {
 
   return (
     <FirebaseProvider>
-      <main className="min-h-screen font-sans text-foreground p-4 sm:p-6 bg-background">
+      <main className="min-h-screen font-sans text-foreground bg-background">
         {isLoggedIn ? (
-          <Dashboard />
+          <div className="p-4 sm:p-6">
+            <Dashboard />
+          </div>
         ) : (
           <LoginForm onLoginSuccess={() => setIsLoggedIn(true)} />
         )}
