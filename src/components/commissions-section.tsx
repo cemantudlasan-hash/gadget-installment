@@ -91,7 +91,6 @@ export default function CommissionsSection() {
     });
     
     const manualExpenses = monthlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
-    const manualIncome = monthlyLedgerEntries.reduce((acc, item) => acc + (item.getAmount || 0), 0);
     
     const fullyPaidSalesThisMonth = sales.filter(sale => {
       const isFullyPaid = sale.paymentInstallments.every(p => p.isPaid);
@@ -112,15 +111,15 @@ export default function CommissionsSection() {
     const shippingCostFromSales = fullyPaidSalesThisMonth.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0);
     const totalMonthlyExpenses = manualExpenses + shippingCostFromSales;
 
-    const netProfitAfterDP = fullyPaidSalesThisMonth.reduce((acc, sale) => {
-      return acc + (sale.commission - sale.downPayment);
-    }, 0);
-
     const profitFromSales = fullyPaidSalesThisMonth.reduce((acc, sale) => {
       return acc + (sale.commission - sale.downPayment - (sale.shippingCost || 0));
     }, 0);
 
     const totalNetMonthlyIncome = profitFromSales - manualExpenses;
+    
+    const netProfitAfterDP = fullyPaidSalesThisMonth.reduce((acc, sale) => {
+        return acc + (sale.commission - sale.downPayment);
+      }, 0);
 
 
     return {
@@ -157,12 +156,12 @@ export default function CommissionsSection() {
       return isWithinInterval(lastPaymentDate, { start, end });
     });
     
+    const shippingCostsFromSalesThisYear = fullyPaidSalesThisYear.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0);
+    const totalYearlyExpenses = shippingCostsFromSalesThisYear + yearlyManualExpenses;
+
     const profitFromSales = fullyPaidSalesThisYear.reduce((acc, sale) => {
         return acc + (sale.commission - sale.downPayment - (sale.shippingCost || 0));
     }, 0);
-    
-    const shippingCostsFromSalesThisYear = fullyPaidSalesThisYear.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0);
-    const totalYearlyExpenses = shippingCostsFromSalesThisYear + yearlyManualExpenses;
     
     const yearlyNetProfitAfterDP = fullyPaidSalesThisYear.reduce((acc, sale) => {
         return acc + (sale.commission - sale.downPayment);
