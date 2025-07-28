@@ -63,7 +63,7 @@ export default function CommissionsSection() {
     }
   }, [user, fetchAllData]);
 
-  const { monthlyCommissions, totalIncome, totalExpenses, netProfit } = useMemo(() => {
+  const { monthlyCommissions, totalCommissionIncome, totalExpenses, netProfitAfterDP } = useMemo(() => {
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
 
@@ -81,45 +81,39 @@ export default function CommissionsSection() {
       return { ...item, runningTotal };
     });
     
-    const incomeSum = filteredLedgerEntries.reduce((acc, item) => acc + (item.getAmount || 0), 0);
     const expenseSum = filteredLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
 
-    const netProfitSum = filteredLedgerEntries.reduce((acc, item) => {
-      const income = item.getAmount || 0;
-      const expense = item.spentAmount || 0;
+    // Find sales that were fully paid in the current month
+    const fullyPaidSalesThisMonth = sales.filter(sale => {
+      const isFullyPaid = sale.paymentInstallments.every(p => p.isPaid);
+      if (!isFullyPaid) return false;
 
-      // For income entries, check if they belong to a fully paid sale
-      if (income > 0) {
-        // Find the sale this commission entry might belong to
-        const relatedSale = sales.find(s => item.description.includes(s.customerName) && item.description.includes(s.gadget));
-        
-        // Only include income in net profit calculation if the sale is fully paid
-        if (relatedSale) {
-            const isFullyPaid = relatedSale.paymentInstallments.every(p => p.isPaid);
-            if (isFullyPaid) {
-                return acc + income;
-            }
-        } else {
-            // If it's not a sale-related income, include it (e.g., other income sources)
-            return acc + income;
-        }
-      }
-      
-      // For expense entries, always deduct them
-      if (expense > 0) {
-          return acc - expense;
-      }
-      
-      return acc;
+      // Find the last payment date among all installments
+      const lastPaymentDateStr = sale.paymentInstallments.reduce((latest, current) => {
+        if (!current.lastPaymentDate) return latest;
+        if (!latest) return current.lastPaymentDate;
+        return new Date(current.lastPaymentDate) > new Date(latest) ? current.lastPaymentDate : latest;
+      }, null as string | null);
 
+      if (!lastPaymentDateStr) return false;
+      
+      const lastPaymentDate = parseISO(lastPaymentDateStr);
+      return isWithinInterval(lastPaymentDate, { start, end });
+    });
+
+    const commissionIncome = fullyPaidSalesThisMonth.reduce((acc, sale) => acc + sale.commission, 0);
+
+    const profitAfterDP = fullyPaidSalesThisMonth.reduce((acc, sale) => {
+      // Net Profit for a sale = Commission - Down Payment
+      return acc + (sale.commission - sale.downPayment);
     }, 0);
 
 
     return {
       monthlyCommissions: commissionsWithTotal,
-      totalIncome: incomeSum,
+      totalCommissionIncome: commissionIncome,
       totalExpenses: expenseSum,
-      netProfit: netProfitSum,
+      netProfitAfterDP: profitAfterDP,
     };
   }, [allCommissions, sales, currentMonth]);
 
@@ -257,16 +251,16 @@ export default function CommissionsSection() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-card p-4 rounded-lg border">
-              <p className="text-base font-medium text-muted-foreground">Total Income (Cashflow):</p>
-              <p className="text-2xl font-bold text-green-600">฿{totalIncome.toFixed(2)}</p>
+              <p className="text-base font-medium text-muted-foreground">Total Commission (from paid sales):</p>
+              <p className="text-2xl font-bold text-green-600">฿{totalCommissionIncome.toFixed(2)}</p>
             </div>
             <div className="bg-card p-4 rounded-lg border">
               <p className="text-base font-medium text-muted-foreground">Total Expenses:</p>
               <p className="text-2xl font-bold text-red-600">฿{totalExpenses.toFixed(2)}</p>
             </div>
              <div className="bg-card p-4 rounded-lg border">
-              <p className="text-base font-medium text-muted-foreground">Net Profit (Accrual):</p>
-              <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>฿{netProfit.toFixed(2)}</p>
+              <p className="text-base font-medium text-muted-foreground">Profit After Down Payment:</p>
+              <p className={`text-2xl font-bold ${netProfitAfterDP >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>฿{netProfitAfterDP.toFixed(2)}</p>
             </div>
           </div>
         </CardContent>
@@ -274,5 +268,7 @@ export default function CommissionsSection() {
     </div>
   );
 }
+
+    
 
     
