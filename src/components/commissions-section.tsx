@@ -90,7 +90,6 @@ export default function CommissionsSection() {
       return { ...item, runningTotal };
     });
     
-    const manualIncome = monthlyLedgerEntries.reduce((acc, item) => acc + (item.getAmount || 0), 0);
     const manualExpenses = monthlyLedgerEntries.reduce((acc, item) => acc + (item.spentAmount || 0), 0);
     
     // Find sales that were fully paid in the current month
@@ -111,24 +110,26 @@ export default function CommissionsSection() {
       return isWithinInterval(lastPaymentDate, { start, end });
     });
 
-    const commissionIncomeFromSales = fullyPaidSalesThisMonth.reduce((acc, sale) => acc + sale.commission, 0);
     const shippingCostFromSales = fullyPaidSalesThisMonth.reduce((acc, sale) => acc + (sale.shippingCost || 0), 0);
-
-    const totalMonthlyIncome = manualIncome + commissionIncomeFromSales;
     const totalMonthlyExpenses = manualExpenses + shippingCostFromSales;
 
-
-    const profitAfterDP = fullyPaidSalesThisMonth.reduce((acc, sale) => {
+    const netProfitAfterDP = fullyPaidSalesThisMonth.reduce((acc, sale) => {
       // Net Profit for a sale = Commission - Down Payment
       return acc + (sale.commission - sale.downPayment);
     }, 0);
+
+    const profitFromSales = fullyPaidSalesThisMonth.reduce((acc, sale) => {
+      return acc + (sale.commission - sale.downPayment - (sale.shippingCost || 0));
+    }, 0);
+
+    const totalNetMonthlyIncome = profitFromSales - manualExpenses;
 
 
     return {
       monthlyCommissions: commissionsWithTotal,
       totalExpenses: totalMonthlyExpenses,
-      netProfitAfterDP: profitAfterDP,
-      netMonthlyIncome: totalMonthlyIncome - totalMonthlyExpenses,
+      netProfitAfterDP: netProfitAfterDP,
+      netMonthlyIncome: totalNetMonthlyIncome,
     };
   }, [allCommissions, sales, currentMonth, searchTerm]);
   
@@ -319,7 +320,7 @@ export default function CommissionsSection() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-muted p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground">Net Income (Total Income - Expenses):</p>
+              <p className="text-sm text-muted-foreground">Net Income (Commission - DP - Costs):</p>
               <p className={`text-2xl font-bold ${netMonthlyIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>฿{netMonthlyIncome.toFixed(2)}</p>
             </div>
             <div className="bg-muted p-4 rounded-lg">
