@@ -36,4 +36,5 @@ export interface Commission {
   getAmount: number;
   spentAmount: number;
   runningTotal?: number;
+  saleId?: string;
 }

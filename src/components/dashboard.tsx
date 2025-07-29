@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SalesSection from "@/components/sales-section";
 import CommissionsSection from "@/components/commissions-section";
@@ -9,15 +10,64 @@ import { useFirebase } from "@/lib/firebase/context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import type { Commission, Sale } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 interface DashboardProps {
   onLogout: () => void;
 }
 
 export default function Dashboard({ onLogout }: DashboardProps) {
-  const { user, loading } = useFirebase();
+  const { db, user, loading: userLoading } = useFirebase();
+  const { toast } = useToast();
 
-  if (loading) {
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [commissions, setCommissions] = useState<Commission[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+
+  const fetchAllData = useCallback(async () => {
+    if (!db || !user) return;
+    setLoadingData(true);
+    try {
+      // Fetch commissions
+      const commissionsCollectionRef = collection(db, "commissions");
+      const q = query(commissionsCollectionRef, orderBy("date", "desc"));
+      const commissionsSnapshot = await getDocs(q);
+      const commissionsData: Commission[] = commissionsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Commission[];
+      setCommissions(commissionsData);
+
+      // Fetch sales
+      const salesCollectionRef = collection(db, "sales");
+      const salesSnapshot = await getDocs(salesCollectionRef);
+      let salesData = salesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Sale[];
+      salesData = salesData.filter(sale => sale.dateStart);
+      salesData.sort((a, b) => new Date(b.dateStart).getTime() - new Date(a.dateStart).getTime());
+      setSales(salesData);
+
+    } catch (err: any) {
+      console.error("Error fetching data:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to load data. Details: ${err.message}`,
+        duration: 9000,
+      });
+    } finally {
+      setLoadingData(false);
+    }
+  }, [db, user, toast]);
+
+  useEffect(() => {
+    if (user) {
+      fetchAllData();
+    }
+  }, [user, fetchAllData]);
+
+  if (userLoading) {
     return (
       <div className="max-w-7xl mx-auto bg-card rounded-2xl shadow-2xl p-6 sm:p-8 border space-y-8">
         <Skeleton className="h-10 w-1/3 mx-auto" />
@@ -62,14 +112,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <TabsContent value="sales">
             <div className={futuristicBgClasses}>
                 <div className="relative z-10">
-                    <SalesSection />
+                    <SalesSection sales={sales} loading={loadingData} onDataChange={fetchAllData} />
                 </div>
             </div>
         </TabsContent>
         <TabsContent value="commissions">
              <div className={futuristicBgClasses}>
                 <div className="relative z-10">
-                    <CommissionsSection />
+                    <CommissionsSection commissions={commissions} sales={sales} loading={loadingData} onDataChange={fetchAllData} />
                 </div>
             </div>
         </TabsContent>

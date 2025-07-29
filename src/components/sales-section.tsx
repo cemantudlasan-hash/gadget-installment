@@ -2,9 +2,9 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useFirebase } from "@/lib/firebase/context";
-import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs, query, where, limit } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs, query, where, limit, writeBatch } from "firebase/firestore";
 import SalesForm from "./sales-form";
 import CustomerReceipt from "./customer-receipt";
 import PaymentRecorder from "./payment-recorder";
@@ -20,48 +20,22 @@ import type { Sale } from "@/types";
 import { Edit, Trash2, Receipt, ChevronDown, PlusCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
-export default function SalesSection() {
-  const { db, user } = useFirebase();
+interface SalesSectionProps {
+  sales: Sale[];
+  loading: boolean;
+  onDataChange: () => void;
+}
+
+export default function SalesSection({ sales, loading, onDataChange }: SalesSectionProps) {
+  const { db } = useFirebase();
   const { toast } = useToast();
-  const [sales, setSales] = useState<Sale[]>([]);
-  const [loading, setLoading] = useState(true);
+  
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState("");
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState<Sale | null>(null);
   const [showSalesForm, setShowSalesForm] = useState(false);
   const [openSaleId, setOpenSaleId] = useState<string | null>(null);
-
-  const fetchSales = useCallback(async () => {
-    if (!db || !user) return;
-    setLoading(true);
-    try {
-      const salesCollectionRef = collection(db, "sales");
-      const snapshot = await getDocs(salesCollectionRef);
-      let salesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Sale[];
-
-      salesData = salesData.filter(sale => sale.dateStart);
-      salesData.sort((a, b) => new Date(b.dateStart).getTime() - new Date(a.dateStart).getTime());
-      
-      setSales(salesData);
-    } catch (err: any) {
-      console.error("Error fetching sales:", err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to load sales data. Please check your Firestore rules and network connection. Details: ${err.message}`,
-        duration: 9000,
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [db, toast, user]);
-
-  useEffect(() => {
-    if (user) {
-      fetchSales();
-    }
-  }, [user, fetchSales]);
 
   const handleSaveSale = async (saleData: Omit<Sale, "id">) => {
     if (!db) return;
@@ -109,43 +83,77 @@ export default function SalesSection() {
         await updateDoc(doc(db, "sales", editingSale.id), saleData);
         toast({ title: "Success", description: "Sale updated successfully!" });
       } else {
-        await addDoc(collection(db, "sales"), saleData);
+        const newSaleRef = doc(collection(db, "sales"));
+        await updateDoc(newSaleRef, { ...saleData, id: newSaleRef.id });
+
         toast({ title: "Success", description: "Sale added successfully!" });
         
-        // Record shipping cost on new sale
+        const batch = writeBatch(db);
+
         if (saleData.shippingCost > 0) {
-            await addDoc(commissionsCollectionRef, { 
-                date: saleData.dateStart, 
-                description: `Shipping for ${saleData.gadget} (${saleData.customerName})`, 
-                getAmount: 0, 
-                spentAmount: saleData.shippingCost 
-            });
+          const shippingRef = doc(commissionsCollectionRef);
+          batch.set(shippingRef, {
+            date: saleData.dateStart,
+            description: `Shipping for ${saleData.gadget} (${saleData.customerName})`,
+            getAmount: 0,
+            spentAmount: saleData.shippingCost,
+            saleId: newSaleRef.id,
+          });
         }
-        // Record down payment on new sale
         if (saleData.downPayment > 0) {
-          await addDoc(commissionsCollectionRef, {
+          const dpRef = doc(commissionsCollectionRef);
+          batch.set(dpRef, {
             date: saleData.dateStart,
             description: `Down payment for ${saleData.gadget} (${saleData.customerName})`,
             getAmount: saleData.downPayment,
             spentAmount: 0,
+            saleId: newSaleRef.id,
           });
         }
+        await batch.commit();
       }
       setEditingSale(null);
       setShowSalesForm(false);
-      fetchSales();
+      onDataChange();
     } catch (e: any) {
       console.error("Error saving sale:", e);
       toast({ variant: "destructive", title: "Error", description: `Error saving sale: ${e.message}` });
     }
   };
 
-  const handleDeleteSale = async (id: string) => {
+  const handleDeleteSale = async (saleToDelete: Sale) => {
     if (!db) return;
     try {
-      await deleteDoc(doc(db, "sales", id));
-      toast({ title: "Success", description: "Sale deleted successfully!" });
-      fetchSales(); // Refetch data after deleting
+      const batch = writeBatch(db);
+
+      // Delete the sale
+      const saleRef = doc(db, "sales", saleToDelete.id);
+      batch.delete(saleRef);
+
+      // Find and delete associated commission entries
+      const commissionsCollectionRef = collection(db, "commissions");
+      const q = query(commissionsCollectionRef, where("saleId", "==", saleToDelete.id));
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      
+      // Also check for old entries that might not have saleId
+      const dpDesc = `Down payment for ${saleToDelete.gadget} (${saleToDelete.customerName})`;
+      const shipDesc = `Shipping for ${saleToDelete.gadget} (${saleToDelete.customerName})`;
+      const paymentDesc = `Payment for ${saleToDelete.gadget} (${saleToDelete.customerName})`;
+      
+      const oldEntriesQuery = query(commissionsCollectionRef, where("description", "in", [dpDesc, shipDesc, paymentDesc]));
+      const oldEntriesSnapshot = await getDocs(oldEntriesQuery);
+      oldEntriesSnapshot.forEach((doc) => {
+          batch.delete(doc.ref);
+      });
+
+
+      await batch.commit();
+      
+      toast({ title: "Success", description: "Sale and all related ledger entries deleted successfully!" });
+      onDataChange();
     } catch (e: any) {
       console.error("Error deleting sale:", e);
       toast({ variant: "destructive", title: "Error", description: `Error deleting sale: ${e.message}` });
@@ -199,14 +207,14 @@ export default function SalesSection() {
         description: `Payment for ${saleDoc.gadget} (${saleDoc.customerName})`,
         getAmount: amountPaid,
         spentAmount: 0,
+        saleId: saleId
       });
 
-      // If this payment completes the sale, show a toast. The commission is realized over payments.
       if (isNowFullyPaid && !wasAlreadyPaid) {
          toast({ title: "Sale Completed!", description: "All installments have been paid." });
       }
 
-      fetchSales();
+      onDataChange();
     } catch (e: any) {
       console.error("Error recording payment:", e);
       toast({ variant: "destructive", title: "Error", description: `Error recording payment: ${e.message}` });
@@ -241,7 +249,7 @@ export default function SalesSection() {
       });
 
       toast({ title: "Success", description: "Payment updated successfully!" });
-      fetchSales();
+      onDataChange();
     } catch (e: any) {
       console.error("Error editing payment:", e);
       toast({ variant: "destructive", title: "Error", description: `Error editing payment: ${e.message}` });
@@ -319,8 +327,8 @@ export default function SalesSection() {
                             <AlertDialog>
                               <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
                               <AlertDialogContent>
-                                <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the sale for {sale.customerName}.</AlertDialogDescription></AlertDialogHeader>
-                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteSale(sale.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction></AlertDialogFooter>
+                                <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the sale for {sale.customerName} and all associated ledger entries.</AlertDialogDescription></AlertDialogHeader>
+                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteSale(sale)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction></AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
                               <Button variant="ghost" size="icon" onClick={() => setOpenSaleId(openSaleId === sale.id ? null : sale.id)}>

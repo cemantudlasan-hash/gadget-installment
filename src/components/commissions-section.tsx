@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useFirebase } from "@/lib/firebase/context";
-import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs, orderBy, query, where, limit } from "firebase/firestore";
+import { collection, addDoc, doc, deleteDoc } from "firebase/firestore";
 import CommissionForm from "./commission-form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,67 +16,32 @@ import { Trash2, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { format, startOfMonth, endOfMonth, isWithinInterval, addMonths, subMonths, parseISO, startOfYear, endOfYear, addYears, subYears } from "date-fns";
 import { Input } from "@/components/ui/input";
 
-export default function CommissionsSection() {
-  const { db, user } = useFirebase();
+interface CommissionsSectionProps {
+  commissions: Commission[];
+  sales: Sale[];
+  loading: boolean;
+  onDataChange: () => void;
+}
+
+export default function CommissionsSection({ commissions, sales, loading, onDataChange }: CommissionsSectionProps) {
+  const { db } = useFirebase();
   const { toast } = useToast();
-  const [allCommissions, setAllCommissions] = useState<Commission[]>([]);
-  const [sales, setSales] = useState<Sale[]>([]);
-  const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [currentYear, setCurrentYear] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState("");
   const [showCommissionForm, setShowCommissionForm] = useState(false);
 
-  const fetchAllData = useCallback(async () => {
-    if (!db || !user) return;
-    setLoading(true);
-    try {
-      const commissionsCollectionRef = collection(db, "commissions");
-      const q = query(commissionsCollectionRef, orderBy("date", "desc"));
-      const commissionsSnapshot = await getDocs(q);
-      const commissionsData: Commission[] = commissionsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Commission[];
-      
-      setAllCommissions(commissionsData);
-
-      const salesCollectionRef = collection(db, "sales");
-      const salesSnapshot = await getDocs(salesCollectionRef);
-      const salesData: Sale[] = salesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Sale[];
-      setSales(salesData);
-
-
-    } catch (err: any)      {
-      console.error("Error fetching data:", err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to load data. Details: ${err.message}`,
-        duration: 9000,
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [db, toast, user]);
-
-  useEffect(() => {
-    if (user) {
-      fetchAllData();
-    }
-  }, [user, fetchAllData]);
-
   const monthlyCommissions = useMemo(() => {
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
 
-    const monthlyLedgerEntries = allCommissions.filter(c => {
+    const monthlyLedgerEntries = commissions.filter(c => {
         const commissionDate = parseISO(c.date);
         return isWithinInterval(commissionDate, { start, end });
     });
 
     const filteredBySearch = (searchTerm
-        ? allCommissions.filter(c => c.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        ? commissions.filter(c => c.description.toLowerCase().includes(searchTerm.toLowerCase()))
         : monthlyLedgerEntries
     ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -91,7 +56,7 @@ export default function CommissionsSection() {
     });
 
     return commissionsWithTotal;
-  }, [allCommissions, currentMonth, searchTerm]);
+  }, [commissions, currentMonth, searchTerm]);
   
   const yearlyReport = useMemo(() => {
     const start = startOfYear(currentYear);
@@ -117,7 +82,7 @@ export default function CommissionsSection() {
       return isWithinInterval(lastPaymentDate, { start, end });
     });
   
-    const yearlyLedgerEntries = allCommissions.filter(c =>
+    const yearlyLedgerEntries = commissions.filter(c =>
       isWithinInterval(parseISO(c.date), { start, end })
     );
 
@@ -144,7 +109,7 @@ export default function CommissionsSection() {
       totalDownPayments: totalDownPayments,
       netYearlyIncome: netYearlyIncome,
     };
-  }, [allCommissions, sales, currentYear]);
+  }, [commissions, sales, currentYear]);
 
 
   const handleSaveCommission = async (commissionData: Omit<Commission, 'id' | 'runningTotal'>) => {
@@ -153,7 +118,7 @@ export default function CommissionsSection() {
       await addDoc(collection(db, "commissions"), commissionData);
       toast({ title: "Success", description: "Entry added successfully!" });
       setShowCommissionForm(false);
-      fetchAllData();
+      onDataChange();
     } catch (e: any) {
       console.error("Error saving commission:", e);
       toast({
@@ -170,7 +135,7 @@ export default function CommissionsSection() {
     try {
       await deleteDoc(doc(db, "commissions", id));
       toast({ title: "Success", description: "Entry deleted successfully!" });
-      fetchAllData();
+      onDataChange();
     } catch (e: any) {
       console.error("Error deleting commission:", e);
       toast({
