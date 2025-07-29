@@ -281,7 +281,7 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
                   <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[200px]">
+              <DropdownMenuContent className="w-[200px] max-h-60 overflow-y-auto">
                 <DropdownMenuItem onSelect={() => setSelectedCustomer("")}>
                   All Customers
                 </DropdownMenuItem>
