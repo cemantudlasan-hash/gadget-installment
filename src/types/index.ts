@@ -46,6 +46,7 @@ export interface YearlyReport {
   totalExpenses: number;
   netYearlyIncome: number;
   totalDownPayments: number;
+  totalCommission: number;
 }
 
     
