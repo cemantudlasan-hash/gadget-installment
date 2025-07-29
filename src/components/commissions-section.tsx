@@ -117,6 +117,14 @@ export default function CommissionsSection({ commissions, sales, loading, onData
             return false;
         }
     });
+
+    const yearlySales = sales.filter(s => {
+        try {
+            return parseISO(s.dateStart).getFullYear() === year;
+        } catch(e) {
+            return false;
+        }
+    });
     
     const totalYearlyManualExpenses = yearlyLedgerEntries
       .reduce((acc, item) => acc + (item.spentAmount || 0), 0);
@@ -125,12 +133,15 @@ export default function CommissionsSection({ commissions, sales, loading, onData
       .reduce((acc, item) => acc + (item.getAmount || 0), 0);
       
     const netYearlyIncome = totalYearlyIncome - totalYearlyManualExpenses;
+
+    const totalDownPayments = yearlySales.reduce((acc, sale) => acc + (sale.downPayment || 0), 0);
   
     return {
       year,
       totalExpenses: totalYearlyManualExpenses,
       totalIncome: totalYearlyIncome,
       netYearlyIncome: netYearlyIncome,
+      totalDownPayments: totalDownPayments,
     };
   }, [commissions, sales, currentYear]);
 
@@ -312,18 +323,22 @@ export default function CommissionsSection({ commissions, sales, loading, onData
            </div>
         </CardHeader>
         <CardContent>
-           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-               <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
+                <p className="text-sm text-muted-foreground text-center">Total Yearly Income (from Ledger):</p>
+                <p className={`text-2xl font-bold mt-auto text-center text-green-600`}>฿{yearlyReport.totalIncome.toFixed(2)}</p>
+              </div>
+              <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
+                <p className="text-sm text-muted-foreground text-center">Total Yearly Expenses (from Ledger):</p>
+                <p className="text-2xl font-bold mt-auto text-center text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
+              </div>
+              <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
                 <p className="text-sm text-muted-foreground text-center">Net Income (Total Income - Total Expenses):</p>
                 <p className={`text-2xl font-bold mt-auto text-center ${yearlyReport.netYearlyIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>฿{yearlyReport.netYearlyIncome.toFixed(2)}</p>
               </div>
               <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
-                <p className="text-sm text-muted-foreground text-center">Total Yearly Expenses:</p>
-                <p className="text-2xl font-bold mt-auto text-center text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
-              </div>
-              <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
-                <p className="text-sm text-muted-foreground text-center">Total Yearly Income:</p>
-                <p className={`text-2xl font-bold mt-auto text-center text-green-600`}>฿{yearlyReport.totalIncome.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground text-center">Total Down Payments (from Sales):</p>
+                <p className={`text-2xl font-bold mt-auto text-center text-yellow-500`}>฿{yearlyReport.totalDownPayments.toFixed(2)}</p>
               </div>
             </div>
             <div className="mt-6 flex justify-center">
