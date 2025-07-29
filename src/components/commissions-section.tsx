@@ -97,6 +97,10 @@ export default function CommissionsSection() {
     const start = startOfYear(currentYear);
     const end = endOfYear(currentYear);
 
+    const salesThisYear = sales.filter(sale => 
+        sale.dateStart && isWithinInterval(parseISO(sale.dateStart), { start, end })
+    );
+
     const fullyPaidSalesThisYear = sales.filter(sale => {
       const isFullyPaid = sale.paymentInstallments.every(p => p.isPaid);
       if (!isFullyPaid) return false;
@@ -130,11 +134,14 @@ export default function CommissionsSection() {
       return acc + (sale.commission - sale.downPayment);
     }, 0);
     
+    const totalDownPayments = salesThisYear.reduce((acc, sale) => acc + (sale.downPayment || 0), 0);
+    
     const netYearlyIncome = yearlyNetProfitAfterDP - totalExpenses + totalYearlyManualIncome;
   
     return {
       totalExpenses: totalExpenses,
       netProfitAfterDP: yearlyNetProfitAfterDP,
+      totalDownPayments: totalDownPayments,
       netYearlyIncome: netYearlyIncome,
     };
   }, [allCommissions, sales, currentYear]);
@@ -299,8 +306,8 @@ export default function CommissionsSection() {
                 <p className="text-2xl font-bold mt-auto text-center text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
               </div>
               <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
-                <p className="text-sm text-muted-foreground text-center">Profit After Down Payment (from sales):</p>
-                <p className={`text-2xl font-bold mt-auto text-center ${yearlyReport.netProfitAfterDP >= 0 ? 'text-green-600' : 'text-red-600'}`}>฿{yearlyReport.netProfitAfterDP.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground text-center">Total Down Payments (from sales):</p>
+                <p className={`text-2xl font-bold mt-auto text-center text-green-600`}>฿{yearlyReport.totalDownPayments.toFixed(2)}</p>
               </div>
             </div>
         </CardContent>
