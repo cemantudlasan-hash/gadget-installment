@@ -4,7 +4,7 @@
 import * as React from "react";
 import { useState } from "react";
 import { useFirebase } from "@/lib/firebase/context";
-import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs, query, where, limit, writeBatch } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs, query, where, limit, writeBatch, setDoc } from "firebase/firestore";
 import SalesForm from "./sales-form";
 import CustomerReceipt from "./customer-receipt";
 import PaymentRecorder from "./payment-recorder";
@@ -84,7 +84,7 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
         toast({ title: "Success", description: "Sale updated successfully!" });
       } else {
         const newSaleRef = doc(collection(db, "sales"));
-        await updateDoc(newSaleRef, { ...saleData, id: newSaleRef.id });
+        await setDoc(newSaleRef, { ...saleData, id: newSaleRef.id });
 
         toast({ title: "Success", description: "Sale added successfully!" });
         
