@@ -83,9 +83,8 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
       } else {
         const newSaleRef = doc(collection(db, "sales"));
         // Set the sale data, including the generated ID.
-        await setDoc(newSaleRef, { ...saleData, id: newSaleRef.id });
-
-        toast({ title: "Success", description: "Sale added successfully!" });
+        batch.set(newSaleRef, { ...saleData, id: newSaleRef.id });
+        
         // Now that the sale is created, create ledger entries in a batch.
         
         if (saleData.shippingCost > 0) {
@@ -108,6 +107,7 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
             saleId: newSaleRef.id,
           });
         }
+         toast({ title: "Success", description: "Sale added successfully!" });
       }
       await batch.commit();
       setEditingSale(null);
@@ -155,6 +155,8 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
         return;
       };
       
+      const batch = writeBatch(db);
+      
       const wasAlreadyPaid = saleDoc.paymentInstallments.every(inst => inst.isPaid);
 
       let remainingPayment = amountPaid;
@@ -178,11 +180,22 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
       
       const isNowFullyPaid = updatedInstallments.every(inst => inst.isPaid);
 
-      await updateDoc(saleRef, {
+      batch.update(saleRef, {
         paymentInstallments: updatedInstallments,
         totalPaidAmount: newTotalPaid,
         remainingBalance: newRemainingBalance,
       });
+
+      const installmentLedgerRef = doc(collection(db, "commissions"));
+      batch.set(installmentLedgerRef, {
+        date: paymentDate,
+        description: `Installment for ${saleDoc.gadget} (${saleDoc.customerName})`,
+        getAmount: amountPaid,
+        spentAmount: 0,
+        saleId: saleId,
+      });
+      
+      await batch.commit();
 
       if (isNowFullyPaid && !wasAlreadyPaid) {
          toast({ title: "Sale Completed!", description: "All installments have been paid." });

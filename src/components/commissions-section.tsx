@@ -65,20 +65,23 @@ export default function CommissionsSection({ commissions, sales, loading, onData
   const monthlyCommissions = useMemo(() => {
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
+    
+    // Filter by search term across all commissions first
+    const searchedCommissions = searchTerm
+      ? commissions.filter(c => c.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      : commissions;
 
-    const monthlyLedgerEntries = commissions.filter(c => {
-        try {
-            const commissionDate = parseISO(c.date);
-            return isWithinInterval(commissionDate, { start, end });
-        } catch (e) {
-            return false;
-        }
+    // Then filter by the current month for display
+    const monthlyLedgerEntries = searchedCommissions.filter(c => {
+      try {
+        const commissionDate = parseISO(c.date);
+        return isWithinInterval(commissionDate, { start, end });
+      } catch (e) {
+        return false;
+      }
     });
 
-    const filteredBySearch = (searchTerm
-        ? commissions.filter(c => c.description.toLowerCase().includes(searchTerm.toLowerCase()))
-        : monthlyLedgerEntries
-    ).sort((a, b) => {
+    return monthlyLedgerEntries.sort((a, b) => {
        try {
          return new Date(b.date).getTime() - new Date(a.date).getTime()
        } catch(e) {
@@ -86,23 +89,6 @@ export default function CommissionsSection({ commissions, sales, loading, onData
        }
     });
 
-
-    let runningTotal = 0;
-    
-    const allCommissionsSorted = [...commissions].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    const runningTotalMap = new Map<string, number>();
-    allCommissionsSorted.forEach(item => {
-        const getAmount = item.getAmount || 0;
-        const spentAmount = item.spentAmount || 0;
-        runningTotal += getAmount - spentAmount;
-        runningTotalMap.set(item.id, runningTotal);
-    })
-
-    const commissionsWithTotal = filteredBySearch.map(item => {
-      return { ...item, runningTotal: runningTotalMap.get(item.id) || 0 };
-    });
-
-    return commissionsWithTotal;
   }, [commissions, currentMonth, searchTerm]);
   
   const yearlyReport = useMemo(() => {
@@ -262,7 +248,7 @@ export default function CommissionsSection({ commissions, sales, loading, onData
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
-                placeholder="Search by description across all months..."
+                placeholder="Search by description..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10"
@@ -286,7 +272,6 @@ export default function CommissionsSection({ commissions, sales, loading, onData
                   <TableHead>Description</TableHead>
                   <TableHead className="text-right">Received (฿)</TableHead>
                   <TableHead className="text-right">Expense (฿)</TableHead>
-                  <TableHead className="text-right">Balance (฿)</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -297,11 +282,10 @@ export default function CommissionsSection({ commissions, sales, loading, onData
                     <TableCell>{item.description}</TableCell>
                     <TableCell className="text-right font-medium text-green-500">{item.getAmount?.toFixed(2)}</TableCell>
                     <TableCell className="text-right font-medium text-red-500">{item.spentAmount?.toFixed(2)}</TableCell>
-                    <TableCell className="text-right font-semibold">{item.runningTotal?.toFixed(2)}</TableCell>
                     <TableCell>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                           <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                           <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={!!item.saleId}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
@@ -355,7 +339,7 @@ export default function CommissionsSection({ commissions, sales, loading, onData
                 <p className="text-2xl font-bold mt-auto text-center text-red-500">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
               </div>
               <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
-                <p className="text-sm text-muted-foreground text-center">Net Income (Total Commission - Total Expenses):</p>
+                <p className="text-sm text-muted-foreground text-center">Net Income (Commission - Expenses):</p>
                 <p className={`text-2xl font-bold mt-auto text-center ${yearlyReport.netYearlyIncome >= 0 ? 'text-blue-500' : 'text-red-500'}`}>฿{yearlyReport.netYearlyIncome.toFixed(2)}</p>
               </div>
               <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
@@ -444,3 +428,4 @@ export default function CommissionsSection({ commissions, sales, loading, onData
 
 
     
+
