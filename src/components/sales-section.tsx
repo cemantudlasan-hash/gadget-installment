@@ -8,13 +8,18 @@ import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs, query, where, w
 import SalesForm from "./sales-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { Sale } from "@/types";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, ChevronDown } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import CustomerDetails from "./customer-details"; // Import the new component
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface SalesSectionProps {
   sales: Sale[];
@@ -37,12 +42,10 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
       const batch = writeBatch(db);
 
       if (editingSale) {
-        // Update logic remains complex, but let's assume it's mostly correct for now.
         const saleRef = doc(db, "sales", editingSale.id);
         batch.update(saleRef, saleData as any);
         toast({ title: "Success", description: "Sale updated successfully!" });
 
-        // This part needs careful review to avoid duplicates.
         const dpQuery = query(commissionsCollectionRef, where("saleId", "==", editingSale.id), where("description", "like", "Down payment%"));
         const shippingQuery = query(commissionsCollectionRef, where("saleId", "==", editingSale.id), where("description", "like", "Shipping%"));
         
@@ -274,17 +277,26 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
       <Card>
         <CardHeader>
           <CardTitle>Existing Installment Plans</CardTitle>
-          <div className="pt-4">
+          <div className="pt-4 space-y-2">
             <Label>Filter by Customer</Label>
-            <Select value={selectedCustomer} onValueChange={(value) => setSelectedCustomer(value === 'all' ? '' : value)}>
-              <SelectTrigger className="w-full md:w-1/2">
-                <SelectValue placeholder="All Customers" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Customers</SelectItem>
-                {customerNames.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full md:w-1/2 justify-between">
+                  {selectedCustomer || "All Customers"}
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-full md:w-1/2">
+                <DropdownMenuItem onSelect={() => setSelectedCustomer("")}>
+                  All Customers
+                </DropdownMenuItem>
+                {customerNames.map((name) => (
+                  <DropdownMenuItem key={name} onSelect={() => setSelectedCustomer(name)}>
+                    {name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardHeader>
         <CardContent>
