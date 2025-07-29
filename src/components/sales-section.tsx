@@ -165,30 +165,17 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
       const newRemainingBalance = saleDoc.totalAmountDue - newTotalPaid;
       
       const isNowFullyPaid = updatedInstallments.every(inst => inst.isPaid);
-      const batch = writeBatch(db);
 
-      batch.update(saleRef, {
+      await updateDoc(saleRef, {
         paymentInstallments: updatedInstallments,
         totalPaidAmount: newTotalPaid,
         remainingBalance: newRemainingBalance,
       });
 
-      const commissionsCollectionRef = collection(db, "commissions");
-
-      // Record this specific payment in the ledger
-      const paymentRef = doc(commissionsCollectionRef);
-      batch.set(paymentRef, {
-        date: paymentDate,
-        description: `Payment for ${saleDoc.gadget} (${saleDoc.customerName})`,
-        getAmount: amountPaid,
-        spentAmount: 0,
-        saleId: saleId
-      });
-
-      await batch.commit();
-
       if (isNowFullyPaid && !wasAlreadyPaid) {
          toast({ title: "Sale Completed!", description: "All installments have been paid." });
+      } else {
+        toast({ title: "Payment Recorded", description: `฿${amountPaid.toFixed(2)} recorded for ${saleDoc.customerName}.`})
       }
 
       onDataChange();
