@@ -47,8 +47,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       salesData = salesData.filter(sale => sale.dateStart);
       
       const normalizeName = (name: string) => {
-        return name.toLowerCase().replace(/\s+/g, ' ').trim();
-      }
+        // Aggressively remove all whitespace and convert to lower case
+        return name.replace(/\s/g, "").toLowerCase();
+      };
 
       // Sort by customer name (case-insensitive, whitespace-insensitive), then by date
       salesData.sort((a, b) => {
