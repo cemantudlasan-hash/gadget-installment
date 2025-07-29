@@ -227,7 +227,7 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
   };
 
   const groupedSales = useMemo(() => {
-    const normalizeName = (name: string) => name.replace(/\s+/g, '').toLowerCase();
+    const normalizeName = (name: string) => name.replace(/\s/g, "").toLowerCase();
     
     const groups: { [key: string]: Sale[] } = {};
     sales.forEach(sale => {
@@ -311,7 +311,7 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
             <p className="text-center text-muted-foreground py-8">No sales records found.</p>
           ) : (
             <div className="space-y-6">
-              {filteredGroups.map((group, index) => (
+              {filteredGroups.map((group) => (
                 <CustomerDetails
                   key={group[0].customerName}
                   customerName={group[0].customerName}
@@ -329,3 +329,5 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
     </div>
   );
 }
+
+    
