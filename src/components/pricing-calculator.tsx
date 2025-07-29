@@ -72,15 +72,15 @@ export default function PricingCalculator() {
         <div className="mt-8 p-6 bg-muted rounded-lg text-center space-y-4">
           <div>
             <p className="text-sm font-medium text-muted-foreground mb-1">Suggested Selling Price:</p>
-            <p className="text-3xl font-bold">฿{sellPrice.toFixed(2)}</p>
+            <p className="text-3xl font-bold text-blue-500">฿{sellPrice.toFixed(2)}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground mb-1">Calculated Commission:</p>
-            <p className="text-2xl font-bold text-green-600">฿{commission.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-green-500">฿{commission.toFixed(2)}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground mt-2 mb-1">Customer's Down Payment:</p>
-            <p className="text-2xl font-bold">฿{downPaymentAmount.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-yellow-500">฿{downPaymentAmount.toFixed(2)}</p>
             <p className="text-xs text-muted-foreground mt-1">
               ({downPaymentPercentage.toFixed(2)}% of Selling Price)
             </p>
