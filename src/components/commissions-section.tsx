@@ -113,22 +113,24 @@ export default function CommissionsSection({ commissions, sales, loading, onData
     const totalYearlyLedgerExpenses = yearlyLedgerEntries
       .reduce((acc, item) => acc + (item.spentAmount || 0), 0);
       
-    const totalYearlyLedgerIncome = yearlyLedgerEntries
+    const totalYearlyManualIncome = yearlyLedgerEntries
+      .filter(item => !item.saleId) // Only include income not tied to a sale
       .reduce((acc, item) => acc + (item.getAmount || 0), 0);
       
-    const totalYearlyCommission = yearlySales.reduce((acc, sale) => acc + (sale.commission || 0), 0);
+    const totalYearlyCommissionFromSales = yearlySales.reduce((acc, sale) => acc + (sale.commission || 0), 0);
     
-    const netYearlyIncome = totalYearlyCommission - totalYearlyLedgerExpenses;
+    const totalCombinedCommission = totalYearlyCommissionFromSales + totalYearlyManualIncome;
+
+    const netYearlyIncome = totalCombinedCommission - totalYearlyLedgerExpenses;
 
     const totalDownPayments = yearlySales.reduce((acc, sale) => acc + (sale.downPayment || 0), 0);
   
     return {
       year,
       totalExpenses: totalYearlyLedgerExpenses,
-      totalIncome: totalYearlyLedgerIncome,
       netYearlyIncome: netYearlyIncome,
       totalDownPayments: totalDownPayments,
-      totalCommission: totalYearlyCommission,
+      totalCommission: totalCombinedCommission,
     };
   }, [commissions, sales, currentYear]);
 
@@ -331,7 +333,7 @@ export default function CommissionsSection({ commissions, sales, loading, onData
         <CardContent>
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
-                <p className="text-sm text-muted-foreground text-center">Total Commission (from Sales):</p>
+                <p className="text-sm text-muted-foreground text-center">Total Commission (from Sales + Ledger):</p>
                 <p className={`text-2xl font-bold mt-auto text-center text-green-500`}>฿{yearlyReport.totalCommission.toFixed(2)}</p>
               </div>
               <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
@@ -429,3 +431,6 @@ export default function CommissionsSection({ commissions, sales, loading, onData
 
     
 
+
+
+    

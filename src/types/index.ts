@@ -1,4 +1,5 @@
 
+
 export interface Installment {
   month: number;
   dueAmount: number;
@@ -42,11 +43,12 @@ export interface Commission {
 
 export interface YearlyReport {
   year: number;
-  totalIncome: number;
   totalExpenses: number;
   netYearlyIncome: number;
   totalDownPayments: number;
   totalCommission: number;
 }
+
+    
 
     
