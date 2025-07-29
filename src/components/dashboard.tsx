@@ -46,10 +46,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       let salesData = salesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Sale[];
       salesData = salesData.filter(sale => sale.dateStart);
       
-      // Sort by customer name, then by date
+      // Sort by customer name (case-insensitive), then by date
       salesData.sort((a, b) => {
-        if (a.customerName < b.customerName) return -1;
-        if (a.customerName > b.customerName) return 1;
+        const nameA = a.customerName.toLowerCase().trim();
+        const nameB = b.customerName.toLowerCase().trim();
+        if (nameA < nameB) return -1;
+        if (nameA > nameB) return 1;
         return new Date(b.dateStart).getTime() - new Date(a.dateStart).getTime();
       });
 
