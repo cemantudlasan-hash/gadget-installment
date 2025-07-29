@@ -41,54 +41,48 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
     if (!db) return;
     try {
        const commissionsCollectionRef = collection(db, "commissions");
+       const batch = writeBatch(db);
 
       if (editingSale) {
-        // Handle Shipping Cost Update in Ledger
-        if (saleData.shippingCost !== editingSale.shippingCost) {
-            const shippingDescription = `Shipping for ${saleData.gadget} (${saleData.customerName})`;
-            const q = query(commissionsCollectionRef, where("description", "==", shippingDescription), limit(1));
-            const shippingDocs = await getDocs(q);
+        // Find existing ledger entries to update them
+        const dpDescription = `Down payment for ${editingSale.gadget} (${editingSale.customerName})`;
+        const dpQuery = query(commissionsCollectionRef, where("saleId", "==", editingSale.id), where("description", "==", dpDescription), limit(1));
+        const shippingDescription = `Shipping for ${editingSale.gadget} (${editingSale.customerName})`;
+        const shippingQuery = query(commissionsCollectionRef, where("saleId", "==", editingSale.id), where("description", "==", shippingDescription), limit(1));
 
-            if (!shippingDocs.empty) {
-                const shippingDocId = shippingDocs.docs[0].id;
-                await updateDoc(doc(db, "commissions", shippingDocId), { spentAmount: saleData.shippingCost });
-            } else if (saleData.shippingCost > 0) {
-                 await addDoc(commissionsCollectionRef, { 
-                    date: saleData.dateStart, 
-                    description: shippingDescription, 
-                    getAmount: 0, 
-                    spentAmount: saleData.shippingCost 
-                });
-            }
-        }
-         // Handle Down Payment Update in Ledger
-        if (saleData.downPayment !== editingSale.downPayment) {
-            const dpDescription = `Down payment for ${saleData.gadget} (${saleData.customerName})`;
-            const q = query(commissionsCollectionRef, where("description", "==", dpDescription), limit(1));
-            const dpDocs = await getDocs(q);
+        const [dpDocs, shippingDocs] = await Promise.all([
+          getDocs(dpQuery),
+          getDocs(shippingQuery)
+        ]);
 
-            if (!dpDocs.empty) {
-                const dpDocId = dpDocs.docs[0].id;
-                await updateDoc(doc(db, "commissions", dpDocId), { getAmount: saleData.downPayment });
-            } else if (saleData.downPayment > 0) {
-                 await addDoc(commissionsCollectionRef, { 
-                    date: saleData.dateStart, 
-                    description: dpDescription, 
-                    getAmount: saleData.downPayment, 
-                    spentAmount: 0
-                });
-            }
+        // Update Down Payment Ledger
+        const newDpDesc = `Down payment for ${saleData.gadget} (${saleData.customerName})`;
+        if (!dpDocs.empty) {
+          const dpDocId = dpDocs.docs[0].id;
+          batch.update(doc(db, "commissions", dpDocId), { getAmount: saleData.downPayment, description: newDpDesc, date: saleData.dateStart });
+        } else if (saleData.downPayment > 0) {
+          const newDpRef = doc(commissionsCollectionRef);
+          batch.set(newDpRef, { date: saleData.dateStart, description: newDpDesc, getAmount: saleData.downPayment, spentAmount: 0, saleId: editingSale.id });
         }
         
-        await updateDoc(doc(db, "sales", editingSale.id), saleData);
+        // Update Shipping Cost Ledger
+        const newShippingDesc = `Shipping for ${saleData.gadget} (${saleData.customerName})`;
+        if (!shippingDocs.empty) {
+            const shippingDocId = shippingDocs.docs[0].id;
+            batch.update(doc(db, "commissions", shippingDocId), { spentAmount: saleData.shippingCost, description: newShippingDesc, date: saleData.dateStart });
+        } else if (saleData.shippingCost > 0) {
+            const newShippingRef = doc(commissionsCollectionRef);
+            batch.set(newShippingRef, { date: saleData.dateStart, description: newShippingDesc, getAmount: 0, spentAmount: saleData.shippingCost, saleId: editingSale.id });
+        }
+        
+        // Update the sale itself
+        batch.update(doc(db, "sales", editingSale.id), saleData);
         toast({ title: "Success", description: "Sale updated successfully!" });
       } else {
         const newSaleRef = doc(collection(db, "sales"));
         await setDoc(newSaleRef, { ...saleData, id: newSaleRef.id });
 
         toast({ title: "Success", description: "Sale added successfully!" });
-        
-        const batch = writeBatch(db);
 
         if (saleData.shippingCost > 0) {
           const shippingRef = doc(commissionsCollectionRef);
@@ -110,8 +104,8 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
             saleId: newSaleRef.id,
           });
         }
-        await batch.commit();
       }
+      await batch.commit();
       setEditingSale(null);
       setShowSalesForm(false);
       onDataChange();
@@ -124,35 +118,10 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
   const handleDeleteSale = async (saleToDelete: Sale) => {
     if (!db) return;
     try {
-      const batch = writeBatch(db);
-
-      // Delete the sale
-      const saleRef = doc(db, "sales", saleToDelete.id);
-      batch.delete(saleRef);
-
-      // Find and delete associated commission entries
-      const commissionsCollectionRef = collection(db, "commissions");
-      const q = query(commissionsCollectionRef, where("saleId", "==", saleToDelete.id));
-      const querySnapshot = await getDocs(q);
-      querySnapshot.forEach((doc) => {
-        batch.delete(doc.ref);
-      });
+      // Only delete the sale document, associated ledger entries will remain for historical accuracy.
+      await deleteDoc(doc(db, "sales", saleToDelete.id));
       
-      // Also check for old entries that might not have saleId
-      const dpDesc = `Down payment for ${saleToDelete.gadget} (${saleToDelete.customerName})`;
-      const shipDesc = `Shipping for ${saleToDelete.gadget} (${saleToDelete.customerName})`;
-      const paymentDesc = `Payment for ${saleToDelete.gadget} (${saleToDelete.customerName})`;
-      
-      const oldEntriesQuery = query(commissionsCollectionRef, where("description", "in", [dpDesc, shipDesc, paymentDesc]));
-      const oldEntriesSnapshot = await getDocs(oldEntriesQuery);
-      oldEntriesSnapshot.forEach((doc) => {
-          batch.delete(doc.ref);
-      });
-
-
-      await batch.commit();
-      
-      toast({ title: "Success", description: "Sale and all related ledger entries deleted successfully!" });
+      toast({ title: "Success", description: "Sale record deleted successfully! Financial records have been preserved." });
       onDataChange();
     } catch (e: any) {
       console.error("Error deleting sale:", e);
@@ -192,8 +161,9 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
       const newRemainingBalance = saleDoc.totalAmountDue - newTotalPaid;
       
       const isNowFullyPaid = updatedInstallments.every(inst => inst.isPaid);
+      const batch = writeBatch(db);
 
-      await updateDoc(saleRef, {
+      batch.update(saleRef, {
         paymentInstallments: updatedInstallments,
         totalPaidAmount: newTotalPaid,
         remainingBalance: newRemainingBalance,
@@ -202,13 +172,16 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
       const commissionsCollectionRef = collection(db, "commissions");
 
       // Record this specific payment in the ledger
-      await addDoc(commissionsCollectionRef, {
+      const paymentRef = doc(commissionsCollectionRef);
+      batch.set(paymentRef, {
         date: paymentDate,
         description: `Payment for ${saleDoc.gadget} (${saleDoc.customerName})`,
         getAmount: amountPaid,
         spentAmount: 0,
         saleId: saleId
       });
+
+      await batch.commit();
 
       if (isNowFullyPaid && !wasAlreadyPaid) {
          toast({ title: "Sale Completed!", description: "All installments have been paid." });
@@ -222,7 +195,7 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
   };
 
   const handleEditPayment = async (saleId: string, month: number, amount: number, date: string) => {
-    if (!db) return;
+     if (!db) return;
     try {
       const saleRef = doc(db, "sales", saleId);
       const saleDoc = sales.find(s => s.id === saleId);
@@ -231,24 +204,48 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
         return;
       };
 
+      // Find original paid amount for the month to calculate the difference
+      const originalInstallment = saleDoc.paymentInstallments.find(inst => inst.month === month);
+      const originalAmount = originalInstallment ? originalInstallment.paidAmount : 0;
+      const difference = amount - originalAmount;
+
       const updatedInstallments = saleDoc.paymentInstallments.map(inst => {
         if (inst.month === month) {
-          inst.paidAmount = amount;
-          inst.lastPaymentDate = amount > 0 ? date : null;
-          inst.isPaid = Math.abs(inst.paidAmount - inst.dueAmount) < 0.01;
+          return {
+            ...inst,
+            paidAmount: amount,
+            lastPaymentDate: amount > 0 ? date : null,
+            isPaid: Math.abs(amount - inst.dueAmount) < 0.01
+          };
         }
         return inst;
       });
 
       const newTotalPaid = updatedInstallments.reduce((sum, inst) => sum + inst.paidAmount, 0);
 
-      await updateDoc(saleRef, {
+      const batch = writeBatch(db);
+      
+      batch.update(saleRef, {
         paymentInstallments: updatedInstallments,
         totalPaidAmount: newTotalPaid,
         remainingBalance: saleDoc.totalAmountDue - newTotalPaid,
       });
 
-      toast({ title: "Success", description: "Payment updated successfully!" });
+      // Add a ledger entry for the difference
+      if (Math.abs(difference) > 0.01) {
+          const ledgerRef = doc(collection(db, "commissions"));
+          batch.set(ledgerRef, {
+              date: date,
+              description: `Correction for ${saleDoc.gadget} (${saleDoc.customerName}), Month ${month}`,
+              getAmount: difference > 0 ? difference : 0,
+              spentAmount: difference < 0 ? -difference : 0,
+              saleId: saleId,
+          });
+      }
+      
+      await batch.commit();
+
+      toast({ title: "Success", description: "Payment updated successfully and ledger corrected." });
       onDataChange();
     } catch (e: any) {
       console.error("Error editing payment:", e);
@@ -327,7 +324,7 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
                             <AlertDialog>
                               <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
                               <AlertDialogContent>
-                                <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the sale for {sale.customerName} and all associated ledger entries.</AlertDialogDescription></AlertDialogHeader>
+                                <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the installment plan for {sale.customerName}. The associated financial records will be kept for historical reporting.</AlertDialogDescription></AlertDialogHeader>
                                 <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteSale(sale)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction></AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
@@ -354,3 +351,5 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
     </div>
   );
 }
+
+    

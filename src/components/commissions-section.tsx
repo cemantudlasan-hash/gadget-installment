@@ -3,18 +3,24 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { useFirebase } from "@/lib/firebase/context";
-import { collection, addDoc, doc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, doc, deleteDoc, setDoc, getDocs, query, orderBy } from "firebase/firestore";
 import CommissionForm from "./commission-form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Commission, Sale } from "@/types";
+import type { Commission, Sale, YearlyReport } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Trash2, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, Search, Archive, History } from "lucide-react";
 import { format, startOfMonth, endOfMonth, isWithinInterval, addMonths, subMonths, parseISO, startOfYear, endOfYear, addYears, subYears } from "date-fns";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface CommissionsSectionProps {
   commissions: Commission[];
@@ -30,83 +36,100 @@ export default function CommissionsSection({ commissions, sales, loading, onData
   const [currentYear, setCurrentYear] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState("");
   const [showCommissionForm, setShowCommissionForm] = useState(false);
+  const [archivedReports, setArchivedReports] = useState<YearlyReport[]>([]);
+  const [isArchiving, setIsArchiving] = useState(false);
+
+  const fetchArchivedReports = useCallback(async () => {
+    if (!db) return;
+    try {
+      const reportsRef = collection(db, "yearlyReports");
+      const q = query(reportsRef, orderBy("year", "desc"));
+      const snapshot = await getDocs(q);
+      const reports = snapshot.docs.map(doc => doc.data() as YearlyReport);
+      setArchivedReports(reports);
+    } catch (e: any) {
+      console.error("Error fetching archived reports:", e);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Could not fetch archived reports: ${e.message}`,
+      });
+    }
+  }, [db, toast]);
+
+  // Fetch archives on initial component load
+  useState(() => {
+    fetchArchivedReports();
+  });
+
 
   const monthlyCommissions = useMemo(() => {
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
 
     const monthlyLedgerEntries = commissions.filter(c => {
-        const commissionDate = parseISO(c.date);
-        return isWithinInterval(commissionDate, { start, end });
+        try {
+            const commissionDate = parseISO(c.date);
+            return isWithinInterval(commissionDate, { start, end });
+        } catch (e) {
+            return false;
+        }
     });
 
     const filteredBySearch = (searchTerm
         ? commissions.filter(c => c.description.toLowerCase().includes(searchTerm.toLowerCase()))
         : monthlyLedgerEntries
-    ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    ).sort((a, b) => {
+       try {
+         return new Date(b.date).getTime() - new Date(a.date).getTime()
+       } catch(e) {
+         return 0;
+       }
+    });
 
 
     let runningTotal = 0;
     
+    // Calculate running total based on ALL historical commissions, not just the filtered view
+    const allCommissionsSorted = [...commissions].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const runningTotalMap = new Map<string, number>();
+    allCommissionsSorted.forEach(item => {
+        const getAmount = item.getAmount || 0;
+        const spentAmount = item.spentAmount || 0;
+        runningTotal += getAmount - spentAmount;
+        runningTotalMap.set(item.id, runningTotal);
+    })
+
     const commissionsWithTotal = filteredBySearch.map(item => {
-      const getAmount = item.getAmount || 0;
-      const spentAmount = item.spentAmount || 0;
-      runningTotal += getAmount - spentAmount;
-      return { ...item, runningTotal };
+      return { ...item, runningTotal: runningTotalMap.get(item.id) || 0 };
     });
 
     return commissionsWithTotal;
   }, [commissions, currentMonth, searchTerm]);
   
   const yearlyReport = useMemo(() => {
-    const start = startOfYear(currentYear);
-    const end = endOfYear(currentYear);
+    const year = currentYear.getFullYear();
 
-    const salesThisYear = sales.filter(sale => 
-        sale.dateStart && isWithinInterval(parseISO(sale.dateStart), { start, end })
-    );
-
-    const fullyPaidSalesThisYear = sales.filter(sale => {
-      const isFullyPaid = sale.paymentInstallments.every(p => p.isPaid);
-      if (!isFullyPaid) return false;
-  
-      const lastPaymentDateStr = sale.paymentInstallments.reduce((latest, current) => {
-        if (!current.lastPaymentDate) return latest;
-        if (!latest) return current.lastPaymentDate;
-        return new Date(current.lastPaymentDate) > new Date(latest) ? current.lastPaymentDate : latest;
-      }, null as string | null);
-  
-      if (!lastPaymentDateStr) return false;
-  
-      const lastPaymentDate = parseISO(lastPaymentDateStr);
-      return isWithinInterval(lastPaymentDate, { start, end });
+    const yearlyLedgerEntries = commissions.filter(c => {
+        try {
+            return parseISO(c.date).getFullYear() === year;
+        } catch(e) {
+            return false;
+        }
     });
-  
-    const yearlyLedgerEntries = commissions.filter(c =>
-      isWithinInterval(parseISO(c.date), { start, end })
-    );
-
+    
     const totalYearlyManualExpenses = yearlyLedgerEntries
       .reduce((acc, item) => acc + (item.spentAmount || 0), 0);
       
-    const totalYearlyManualIncome = yearlyLedgerEntries
-      .filter(item => !item.description.includes('Payment for') && !item.description.includes('Down payment for'))
+    const totalYearlyIncome = yearlyLedgerEntries
       .reduce((acc, item) => acc + (item.getAmount || 0), 0);
-
-    const totalExpenses = totalYearlyManualExpenses;
       
-    const yearlyNetProfitAfterDP = fullyPaidSalesThisYear.reduce((acc, sale) => {
-      return acc + (sale.commission - sale.downPayment);
-    }, 0);
-    
-    const totalDownPayments = salesThisYear.reduce((acc, sale) => acc + (sale.downPayment || 0), 0);
-    
-    const netYearlyIncome = yearlyNetProfitAfterDP - totalExpenses + totalYearlyManualIncome;
+    const netYearlyIncome = totalYearlyIncome - totalYearlyManualExpenses;
   
     return {
-      totalExpenses: totalExpenses,
-      netProfitAfterDP: yearlyNetProfitAfterDP,
-      totalDownPayments: totalDownPayments,
+      year,
+      totalExpenses: totalYearlyManualExpenses,
+      totalIncome: totalYearlyIncome,
       netYearlyIncome: netYearlyIncome,
     };
   }, [commissions, sales, currentYear]);
@@ -145,6 +168,34 @@ export default function CommissionsSection({ commissions, sales, loading, onData
       });
     }
   };
+
+  const handleArchiveReport = async () => {
+    if (!db) return;
+    setIsArchiving(true);
+    try {
+      const reportId = String(yearlyReport.year);
+      const reportRef = doc(db, "yearlyReports", reportId);
+      await setDoc(reportRef, yearlyReport);
+
+      toast({
+        title: "Report Archived!",
+        description: `The report for ${yearlyReport.year} has been successfully saved.`,
+      });
+      fetchArchivedReports(); // Refresh the list of archived reports
+    } catch (e: any) {
+      console.error("Error archiving report:", e);
+      toast({
+        variant: "destructive",
+        title: "Archive Error",
+        description: `Could not archive the report: ${e.message}`,
+      });
+    } finally {
+      setIsArchiving(false);
+    }
+  }
+
+  const isReportArchived = archivedReports.some(r => r.year === yearlyReport.year);
+
 
   return (
     <div className="space-y-8">
@@ -262,21 +313,73 @@ export default function CommissionsSection({ commissions, sales, loading, onData
         </CardHeader>
         <CardContent>
            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
-                <p className="text-sm text-muted-foreground text-center">Net Income (Commissions - DP - Expenses):</p>
+               <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
+                <p className="text-sm text-muted-foreground text-center">Net Income (Total Income - Total Expenses):</p>
                 <p className={`text-2xl font-bold mt-auto text-center ${yearlyReport.netYearlyIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>฿{yearlyReport.netYearlyIncome.toFixed(2)}</p>
               </div>
               <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
-                <p className="text-sm text-muted-foreground text-center">Total Expenses (Shipping + Manual):</p>
+                <p className="text-sm text-muted-foreground text-center">Total Yearly Expenses:</p>
                 <p className="text-2xl font-bold mt-auto text-center text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
               </div>
               <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
-                <p className="text-sm text-muted-foreground text-center">Total Down Payments (from sales):</p>
-                <p className={`text-2xl font-bold mt-auto text-center text-green-600`}>฿{yearlyReport.totalDownPayments.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground text-center">Total Yearly Income:</p>
+                <p className={`text-2xl font-bold mt-auto text-center text-green-600`}>฿{yearlyReport.totalIncome.toFixed(2)}</p>
               </div>
             </div>
+            <div className="mt-6 flex justify-center">
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                         <Button disabled={isArchiving || isReportArchived}>
+                           <Archive className="mr-2 h-4 w-4" />
+                           {isReportArchived ? `Report for ${yearlyReport.year} is Archived` : `Finalize & Archive ${yearlyReport.year} Report`}
+                         </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Finalize Yearly Report?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will save a permanent record of the {yearlyReport.year} report. You will not be able to change it after archiving.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleArchiveReport}>
+                            Yes, Archive Report
+                        </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
         </CardContent>
+      </Card>
+
+      <Card>
+          <CardHeader>
+             <div className="flex justify-between items-center">
+                <CardTitle>Archived Yearly Reports</CardTitle>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline">
+                           <History className="mr-2 h-4 w-4"/>
+                           View Archives
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        {loading && <DropdownMenuItem>Loading...</DropdownMenuItem>}
+                        {!loading && archivedReports.length === 0 && <DropdownMenuItem>No archived reports yet.</DropdownMenuItem>}
+                        {archivedReports.map(report => (
+                             <DropdownMenuItem key={report.year} onSelect={() => setCurrentYear(new Date(report.year, 1, 1))}>
+                                {report.year} Report
+                             </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+             </div>
+          </CardHeader>
       </Card>
     </div>
   );
 }
+
+
+    

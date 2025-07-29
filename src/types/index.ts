@@ -1,3 +1,4 @@
+
 export interface Installment {
   month: number;
   dueAmount: number;
@@ -38,3 +39,12 @@ export interface Commission {
   runningTotal?: number;
   saleId?: string;
 }
+
+export interface YearlyReport {
+  year: number;
+  totalIncome: number;
+  totalExpenses: number;
+  netYearlyIncome: number;
+}
+
+    
