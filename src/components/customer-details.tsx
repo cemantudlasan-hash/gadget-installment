@@ -13,14 +13,15 @@ import CustomerReceipt from './customer-receipt';
 
 interface CustomerDetailsProps {
     sale: Sale;
+    isOpen: boolean;
+    onToggle: () => void;
     onEditSale: (sale: Sale) => void;
     onDeleteSale: (sale: Sale) => void;
     onRecordPayment: (saleId: string, amount: number, date: string) => void;
     onEditPayment: (saleId: string, month: number, amount: number, date: string) => void;
 }
 
-export default function CustomerDetails({ sale, onEditSale, onDeleteSale, onRecordPayment, onEditPayment }: CustomerDetailsProps) {
-    const [isOpen, setIsOpen] = React.useState(false);
+export default function CustomerDetails({ sale, isOpen, onToggle, onEditSale, onDeleteSale, onRecordPayment, onEditPayment }: CustomerDetailsProps) {
     const [receiptData, setReceiptData] = React.useState<Sale | null>(null);
     const [showReceipt, setShowReceipt] = React.useState(false);
     
@@ -42,7 +43,7 @@ export default function CustomerDetails({ sale, onEditSale, onDeleteSale, onReco
                             <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => onDeleteSale(sale)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction></AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
-                          <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)}>
+                          <Button variant="ghost" size="icon" onClick={onToggle}>
                             <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                           </Button>
                    </div>

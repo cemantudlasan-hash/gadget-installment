@@ -34,6 +34,12 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState("");
   const [showSalesForm, setShowSalesForm] = useState(false);
+  const [expandedSaleId, setExpandedSaleId] = useState<string | null>(null);
+
+  const handleToggleSaleDetails = (saleId: string) => {
+    setExpandedSaleId(prevId => (prevId === saleId ? null : saleId));
+  };
+
 
   const handleSaveSale = async (saleData: Omit<Sale, "id">) => {
     if (!db) return;
@@ -304,6 +310,8 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
                 <CustomerDetails
                   key={sale.id}
                   sale={sale}
+                  isOpen={expandedSaleId === sale.id}
+                  onToggle={() => handleToggleSaleDetails(sale.id)}
                   onEditSale={handleEditSale}
                   onDeleteSale={handleDeleteSale}
                   onRecordPayment={handleRecordPayment}
