@@ -40,39 +40,43 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
     try {
       const commissionsCollectionRef = collection(db, "commissions");
       const batch = writeBatch(db);
+      const saleId = editingSale ? editingSale.id : doc(collection(db, "sales")).id;
 
       if (editingSale) {
-        const saleRef = doc(db, "sales", editingSale.id);
+        const saleRef = doc(db, "sales", saleId);
         batch.update(saleRef, saleData as any);
         toast({ title: "Success", description: "Sale updated successfully!" });
 
-        const dpQuery = query(commissionsCollectionRef, where("saleId", "==", editingSale.id), where("description", "like", "Down payment%"));
-        const shippingQuery = query(commissionsCollectionRef, where("saleId", "==", editingSale.id), where("description", "like", "Shipping%"));
+        const dpDesc = `Down payment for sale ${saleId}`;
+        const shippingDesc = `Shipping for sale ${saleId}`;
+
+        const dpQuery = query(commissionsCollectionRef, where("saleId", "==", saleId), where("description", "==", dpDesc));
+        const shippingQuery = query(commissionsCollectionRef, where("saleId", "==", saleId), where("description", "==", shippingDesc));
         
         const [dpDocs, shippingDocs] = await Promise.all([getDocs(dpQuery), getDocs(shippingQuery)]);
 
-        const dpDesc = `Down payment for ${saleData.gadget} (${saleData.customerName})`;
+        const newDpDesc = `Down payment for ${saleData.gadget} (${saleData.customerName})`;
         if (!dpDocs.empty) {
-            batch.update(dpDocs.docs[0].ref, { getAmount: saleData.downPayment, description: dpDesc, date: saleData.dateStart });
+            batch.update(dpDocs.docs[0].ref, { getAmount: saleData.downPayment, description: newDpDesc, date: saleData.dateStart });
         } else if (saleData.downPayment > 0) {
-            batch.set(doc(commissionsCollectionRef), { date: saleData.dateStart, description: dpDesc, getAmount: saleData.downPayment, spentAmount: 0, saleId: editingSale.id });
+            batch.set(doc(commissionsCollectionRef), { date: saleData.dateStart, description: newDpDesc, getAmount: saleData.downPayment, spentAmount: 0, saleId: saleId });
         }
 
-        const shippingDesc = `Shipping for ${saleData.gadget} (${saleData.customerName})`;
+        const newShippingDesc = `Shipping for ${saleData.gadget} (${saleData.customerName})`;
         if (!shippingDocs.empty) {
-            batch.update(shippingDocs.docs[0].ref, { spentAmount: saleData.shippingCost, description: shippingDesc, date: saleData.dateStart });
+            batch.update(shippingDocs.docs[0].ref, { spentAmount: saleData.shippingCost, description: newShippingDesc, date: saleData.dateStart });
         } else if (saleData.shippingCost > 0) {
-            batch.set(doc(commissionsCollectionRef), { date: saleData.dateStart, description: shippingDesc, getAmount: 0, spentAmount: saleData.shippingCost, saleId: editingSale.id });
+            batch.set(doc(commissionsCollectionRef), { date: saleData.dateStart, description: newShippingDesc, getAmount: 0, spentAmount: saleData.shippingCost, saleId: saleId });
         }
 
       } else {
-        const newSaleRef = doc(collection(db, "sales"));
+        const newSaleRef = doc(db, "sales", saleId);
         batch.set(newSaleRef, { ...saleData, id: newSaleRef.id });
         
         if (saleData.shippingCost > 0) {
           batch.set(doc(commissionsCollectionRef), {
             date: saleData.dateStart,
-            description: `Shipping for ${saleData.gadget} (${saleData.customerName})`,
+            description: `Shipping for sale ${saleId}`,
             getAmount: 0,
             spentAmount: saleData.shippingCost,
             saleId: newSaleRef.id,
@@ -81,7 +85,7 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
         if (saleData.downPayment > 0) {
           batch.set(doc(commissionsCollectionRef), {
             date: saleData.dateStart,
-            description: `Down payment for ${saleData.gadget} (${saleData.customerName})`,
+            description: `Down payment for sale ${saleId}`,
             getAmount: saleData.downPayment,
             spentAmount: 0,
             saleId: newSaleRef.id,
@@ -227,7 +231,7 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
   };
 
   const groupedSales = useMemo(() => {
-    const normalizeName = (name: string) => name.replace(/\s/g, "").toLowerCase();
+    const normalizeName = (name: string) => (name || '').replace(/\s+/g, ' ').trim().toLowerCase();
     
     const groups: { [key: string]: Sale[] } = {};
     sales.forEach(sale => {
@@ -262,13 +266,18 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
     setShowSalesForm(true);
   };
 
+  const handleAddNewCustomer = () => {
+    setEditingSale(null);
+    setShowSalesForm(true);
+  }
+
   return (
     <div className="space-y-8">
       {showSalesForm ? (
         <SalesForm onSave={handleSaveSale} initialData={editingSale} onCancel={() => { setEditingSale(null); setShowSalesForm(false); }} />
       ) : (
         <div className="text-center py-4">
-          <Button onClick={() => setShowSalesForm(true)} size="lg">
+          <Button onClick={handleAddNewCustomer} size="lg">
             <PlusCircle className="mr-2 h-5 w-5" /> Add New Customer
           </Button>
         </div>
@@ -329,5 +338,3 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
     </div>
   );
 }
-
-    
