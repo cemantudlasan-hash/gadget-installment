@@ -276,12 +276,12 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
             <Label>Filter by Customer</Label>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full md:w-1/2 justify-between">
+                <Button variant="outline" className="w-full md:w-auto justify-between">
                   {selectedCustomer || "All Customers"}
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-full md:w-1/2">
+              <DropdownMenuContent className="w-full md:w-auto">
                 <DropdownMenuItem onSelect={() => setSelectedCustomer("")}>
                   All Customers
                 </DropdownMenuItem>
