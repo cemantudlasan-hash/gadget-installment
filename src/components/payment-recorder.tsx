@@ -39,10 +39,7 @@ export default function PaymentRecorder({ sale, onRecordPayment, onEditPayment }
       toast({ variant: 'destructive', title: 'Invalid Amount', description: 'Please enter a valid positive amount.' });
       return;
     }
-    if (isDateWarning) {
-      toast({ variant: 'destructive', title: 'Date Conflict', description: 'A payment is already recorded for this date. To modify, please edit the main sale entry.' });
-      return;
-    }
+    
     onRecordPayment(sale.id, amount, paymentDate);
     setAmountPaid('');
   };
@@ -131,7 +128,7 @@ export default function PaymentRecorder({ sale, onRecordPayment, onEditPayment }
               <label htmlFor={`date-${sale.id}`} className="text-sm font-medium">Payment Date</label>
               <Input id={`date-${sale.id}`} type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} />
             </div>
-            <Button type="submit" disabled={isDateWarning}>Record Payment</Button>
+            <Button type="submit">Record Payment</Button>
           </form>
           {isDateWarning && <p className="text-red-500 text-xs text-center">A payment has already been recorded for this date.</p>}
 
@@ -176,3 +173,4 @@ export default function PaymentRecorder({ sale, onRecordPayment, onEditPayment }
     </>
   );
 }
+ 

@@ -122,14 +122,26 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
   const handleDeleteSale = async (saleToDelete: Sale) => {
     if (!db) return;
     try {
-      // Only delete the sale document, associated ledger entries will remain for historical accuracy.
-      await deleteDoc(doc(db, "sales", saleToDelete.id));
-      
-      toast({ title: "Success", description: "Sale record deleted successfully! Financial records have been preserved." });
-      onDataChange();
+        const batch = writeBatch(db);
+        
+        // Delete the sale document
+        const saleRef = doc(db, "sales", saleToDelete.id);
+        batch.delete(saleRef);
+
+        // Find and delete associated commission ledger entries
+        const commissionsQuery = query(collection(db, "commissions"), where("saleId", "==", saleToDelete.id));
+        const commissionDocs = await getDocs(commissionsQuery);
+        commissionDocs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+        
+        toast({ title: "Success", description: "Sale and associated ledger entries deleted successfully!" });
+        onDataChange();
     } catch (e: any) {
-      console.error("Error deleting sale:", e);
-      toast({ variant: "destructive", title: "Error", description: `Error deleting sale: ${e.message}` });
+        console.error("Error deleting sale:", e);
+        toast({ variant: "destructive", title: "Error", description: `Error deleting sale: ${e.message}` });
     }
   };
 
@@ -195,11 +207,6 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
         return;
       };
 
-      // Find original paid amount for the month to calculate the difference
-      const originalInstallment = saleDoc.paymentInstallments.find(inst => inst.month === month);
-      const originalAmount = originalInstallment ? originalInstallment.paidAmount : 0;
-      const difference = amount - originalAmount;
-
       const updatedInstallments = saleDoc.paymentInstallments.map(inst => {
         if (inst.month === month) {
           return {
@@ -213,30 +220,14 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
       });
 
       const newTotalPaid = updatedInstallments.reduce((sum, inst) => sum + inst.paidAmount, 0);
-
-      const batch = writeBatch(db);
       
-      batch.update(saleRef, {
+      await updateDoc(saleRef, {
         paymentInstallments: updatedInstallments,
         totalPaidAmount: newTotalPaid,
         remainingBalance: saleDoc.totalAmountDue - newTotalPaid,
       });
-
-      // Add a ledger entry for the difference
-      if (Math.abs(difference) > 0.01) {
-          const ledgerRef = doc(collection(db, "commissions"));
-          batch.set(ledgerRef, {
-              date: date,
-              description: `Correction for ${saleDoc.gadget} (${saleDoc.customerName}), Month ${month}`,
-              getAmount: difference > 0 ? difference : 0,
-              spentAmount: difference < 0 ? -difference : 0,
-              saleId: saleId,
-          });
-      }
       
-      await batch.commit();
-
-      toast({ title: "Success", description: "Payment updated successfully and ledger corrected." });
+      toast({ title: "Success", description: "Payment updated successfully." });
       onDataChange();
     } catch (e: any) {
       console.error("Error editing payment:", e);
@@ -315,7 +306,7 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
                             <AlertDialog>
                               <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
                               <AlertDialogContent>
-                                <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the installment plan for {sale.customerName}. The associated financial records will be kept for historical reporting.</AlertDialogDescription></AlertDialogHeader>
+                                <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the installment plan for {sale.customerName} and its associated financial records from the ledger. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
                                 <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteSale(sale)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction></AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
@@ -342,3 +333,4 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
     </div>
   );
 }
+ 
