@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useFirebase } from "@/lib/firebase/context";
 import { collection, addDoc, doc, deleteDoc, setDoc, getDocs, query, orderBy } from "firebase/firestore";
 import CommissionForm from "./commission-form";
@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { Commission, Sale, YearlyReport } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Trash2, ChevronLeft, ChevronRight, Search, Archive, History } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, Search, Archive, History, FileX2 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, isWithinInterval, addMonths, subMonths, parseISO, startOfYear, endOfYear, addYears, subYears } from "date-fns";
 import { Input } from "@/components/ui/input";
 import {
@@ -57,10 +57,9 @@ export default function CommissionsSection({ commissions, sales, loading, onData
     }
   }, [db, toast]);
 
-  // Fetch archives on initial component load
-  useState(() => {
+  useEffect(() => {
     fetchArchivedReports();
-  });
+  }, [fetchArchivedReports]);
 
 
   const monthlyCommissions = useMemo(() => {
@@ -90,7 +89,6 @@ export default function CommissionsSection({ commissions, sales, loading, onData
 
     let runningTotal = 0;
     
-    // Calculate running total based on ALL historical commissions, not just the filtered view
     const allCommissionsSorted = [...commissions].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     const runningTotalMap = new Map<string, number>();
     allCommissionsSorted.forEach(item => {
@@ -192,7 +190,7 @@ export default function CommissionsSection({ commissions, sales, loading, onData
         title: "Report Archived!",
         description: `The report for ${yearlyReport.year} has been successfully saved.`,
       });
-      fetchArchivedReports(); // Refresh the list of archived reports
+      fetchArchivedReports(); 
     } catch (e: any) {
       console.error("Error archiving report:", e);
       toast({
@@ -204,6 +202,27 @@ export default function CommissionsSection({ commissions, sales, loading, onData
       setIsArchiving(false);
     }
   }
+
+  const handleDeleteArchive = async (year: number) => {
+     if (!db) return;
+    try {
+      const reportId = String(year);
+      await deleteDoc(doc(db, "yearlyReports", reportId));
+      toast({
+        title: "Archive Deleted",
+        description: `The archived report for ${year} has been deleted.`,
+      });
+      fetchArchivedReports();
+    } catch (e: any) {
+      console.error("Error deleting archive:", e);
+      toast({
+        variant: "destructive",
+        title: "Deletion Error",
+        description: `Could not delete the archived report: ${e.message}`,
+      });
+    }
+  };
+
 
   const isReportArchived = archivedReports.some(r => r.year === yearlyReport.year);
 
@@ -341,8 +360,8 @@ export default function CommissionsSection({ commissions, sales, loading, onData
                 <p className={`text-2xl font-bold mt-auto text-center text-yellow-500`}>฿{yearlyReport.totalDownPayments.toFixed(2)}</p>
               </div>
             </div>
-            <div className="mt-6 flex justify-center">
-                <AlertDialog>
+            <div className="mt-6 flex justify-center gap-2">
+                 <AlertDialog>
                     <AlertDialogTrigger asChild>
                          <Button disabled={isArchiving || isReportArchived}>
                            <Archive className="mr-2 h-4 w-4" />
@@ -364,6 +383,30 @@ export default function CommissionsSection({ commissions, sales, loading, onData
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
+                 {isReportArchived && (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" disabled={isArchiving}>
+                                <FileX2 className="mr-2 h-4 w-4" />
+                                Delete Archive
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Archived Report?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Are you sure you want to delete the archived report for {yearlyReport.year}? This action cannot be undone.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteArchive(yearlyReport.year)} className="bg-destructive hover:bg-destructive/90">
+                                Yes, Delete Archive
+                            </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
             </div>
         </CardContent>
       </Card>
