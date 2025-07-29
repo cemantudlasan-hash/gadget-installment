@@ -230,35 +230,15 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
     }
   };
 
-  const groupedSales = useMemo(() => {
-    const normalizeName = (name: string) => (name || '').replace(/\s+/g, ' ').trim().toLowerCase();
-    
-    const groups: { [key: string]: Sale[] } = {};
-    sales.forEach(sale => {
-      const normalized = normalizeName(sale.customerName);
-      if (!groups[normalized]) {
-        groups[normalized] = [];
-      }
-      groups[normalized].push(sale);
-    });
-    
-    return Object.values(groups).sort((a, b) => {
-      const nameA = normalizeName(a[0].customerName);
-      const nameB = normalizeName(b[0].customerName);
-      if (nameA < nameB) return -1;
-      if (nameA > nameB) return 1;
-      return 0;
-    });
-  }, [sales]);
 
   const customerNames = useMemo(() => {
     const uniqueNames = new Set(sales.map(s => s.customerName));
     return [...uniqueNames].sort((a, b) => a.localeCompare(b));
   }, [sales]);
 
-  const filteredGroups = selectedCustomer 
-    ? groupedSales.filter(group => group[0].customerName === selectedCustomer) 
-    : groupedSales;
+  const filteredSales = selectedCustomer 
+    ? sales.filter(sale => sale.customerName === selectedCustomer) 
+    : sales;
 
 
   const handleEditSale = (sale: Sale) => {
@@ -316,15 +296,14 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-24 w-full" />
             </div>
-          ) : filteredGroups.length === 0 ? (
+          ) : filteredSales.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No sales records found.</p>
           ) : (
             <div className="space-y-6">
-              {filteredGroups.map((group) => (
+              {filteredSales.map((sale) => (
                 <CustomerDetails
-                  key={group[0].customerName}
-                  customerName={group[0].customerName}
-                  sales={group}
+                  key={sale.id}
+                  sale={sale}
                   onEditSale={handleEditSale}
                   onDeleteSale={handleDeleteSale}
                   onRecordPayment={handleRecordPayment}

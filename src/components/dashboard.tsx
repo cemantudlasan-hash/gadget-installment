@@ -42,24 +42,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       // Fetch sales
       const salesCollectionRef = collection(db, "sales");
-      const salesSnapshot = await getDocs(salesCollectionRef);
+      const salesQuery = query(salesCollectionRef, orderBy("dateStart", "desc"));
+      const salesSnapshot = await getDocs(salesQuery);
       let salesData = salesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Sale[];
       salesData = salesData.filter(sale => sale.dateStart);
       
-      const normalizeName = (name: string) => {
-        // Aggressively remove all whitespace and convert to lower case
-        return name.replace(/\s/g, "").toLowerCase();
-      };
-
-      // Sort by customer name (case-insensitive, whitespace-insensitive), then by date
-      salesData.sort((a, b) => {
-        const nameA = normalizeName(a.customerName);
-        const nameB = normalizeName(b.customerName);
-        if (nameA < nameB) return -1;
-        if (nameA > nameB) return 1;
-        return new Date(b.dateStart).getTime() - new Date(a.dateStart).getTime();
-      });
-
       setSales(salesData);
 
     } catch (err: any) {
