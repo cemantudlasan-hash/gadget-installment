@@ -237,7 +237,7 @@ export default function CommissionsSection({ commissions, sales, loading, onData
       ) : (
          <div className="text-center py-4">
           <Button onClick={() => setShowCommissionForm(true)} size="lg">
-             Add Manual Ledger Entry
+             Add New Ledger Entry
           </Button>
         </div>
       )}
@@ -281,9 +281,9 @@ export default function CommissionsSection({ commissions, sales, loading, onData
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Income (฿)</TableHead>
+                  <TableHead className="text-right">Received (฿)</TableHead>
                   <TableHead className="text-right">Expense (฿)</TableHead>
-                  <TableHead className="text-right">Running Total (฿)</TableHead>
+                  <TableHead className="text-right">Balance (฿)</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -292,8 +292,8 @@ export default function CommissionsSection({ commissions, sales, loading, onData
                   <TableRow key={item.id}>
                     <TableCell>{item.date}</TableCell>
                     <TableCell>{item.description}</TableCell>
-                    <TableCell className="text-right font-medium text-green-600">{item.getAmount?.toFixed(2)}</TableCell>
-                    <TableCell className="text-right font-medium text-red-600">{item.spentAmount?.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-medium text-green-500">{item.getAmount?.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-medium text-red-500">{item.spentAmount?.toFixed(2)}</TableCell>
                     <TableCell className="text-right font-semibold">{item.runningTotal?.toFixed(2)}</TableCell>
                     <TableCell>
                       <AlertDialog>
@@ -344,16 +344,16 @@ export default function CommissionsSection({ commissions, sales, loading, onData
         <CardContent>
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
-                <p className="text-sm text-muted-foreground text-center">Total Yearly Income (from Ledger):</p>
-                <p className={`text-2xl font-bold mt-auto text-center text-green-600`}>฿{yearlyReport.totalIncome.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground text-center">Total Yearly Received (from Ledger):</p>
+                <p className={`text-2xl font-bold mt-auto text-center text-green-500`}>฿{yearlyReport.totalIncome.toFixed(2)}</p>
               </div>
               <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
                 <p className="text-sm text-muted-foreground text-center">Total Yearly Expenses (from Ledger):</p>
-                <p className="text-2xl font-bold mt-auto text-center text-red-600">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
+                <p className="text-2xl font-bold mt-auto text-center text-red-500">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
               </div>
               <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
-                <p className="text-sm text-muted-foreground text-center">Net Income (Total Income - Total Expenses):</p>
-                <p className={`text-2xl font-bold mt-auto text-center ${yearlyReport.netYearlyIncome >= 0 ? 'text-blue-600' : 'text-red-600'}`}>฿{yearlyReport.netYearlyIncome.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground text-center">Net Income (Total Received - Total Expenses):</p>
+                <p className={`text-2xl font-bold mt-auto text-center ${yearlyReport.netYearlyIncome >= 0 ? 'text-blue-500' : 'text-red-500'}`}>฿{yearlyReport.netYearlyIncome.toFixed(2)}</p>
               </div>
               <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
                 <p className="text-sm text-muted-foreground text-center">Total Down Payments (from Sales):</p>
