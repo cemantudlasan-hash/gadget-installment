@@ -45,7 +45,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       const salesSnapshot = await getDocs(salesCollectionRef);
       let salesData = salesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Sale[];
       salesData = salesData.filter(sale => sale.dateStart);
-      salesData.sort((a, b) => new Date(b.dateStart).getTime() - new Date(a.dateStart).getTime());
+      
+      // Sort by customer name, then by date
+      salesData.sort((a, b) => {
+        if (a.customerName < b.customerName) return -1;
+        if (a.customerName > b.customerName) return 1;
+        return new Date(b.dateStart).getTime() - new Date(a.dateStart).getTime();
+      });
+
       setSales(salesData);
 
     } catch (err: any) {
