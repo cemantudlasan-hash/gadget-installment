@@ -76,14 +76,18 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
         }
         
         // Update the sale itself
-        batch.update(doc(db, "sales", editingSale.id), saleData);
+        const saleRef = doc(db, "sales", editingSale.id);
+        batch.update(saleRef, saleData as any);
         toast({ title: "Success", description: "Sale updated successfully!" });
+
       } else {
         const newSaleRef = doc(collection(db, "sales"));
+        // Set the sale data, including the generated ID.
         await setDoc(newSaleRef, { ...saleData, id: newSaleRef.id });
 
         toast({ title: "Success", description: "Sale added successfully!" });
-
+        // Now that the sale is created, create ledger entries in a batch.
+        
         if (saleData.shippingCost > 0) {
           const shippingRef = doc(commissionsCollectionRef);
           batch.set(shippingRef, {
@@ -351,5 +355,3 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
     </div>
   );
 }
-
-    
