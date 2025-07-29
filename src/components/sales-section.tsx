@@ -277,8 +277,8 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="w-full md:w-[200px] justify-between">
-                  {selectedCustomer || "All Customers"}
-                  <ChevronDown className="ml-2 h-4 w-4" />
+                  <span className="truncate">{selectedCustomer || "All Customers"}</span>
+                  <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-[200px]">
