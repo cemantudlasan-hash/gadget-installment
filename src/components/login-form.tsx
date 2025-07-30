@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, type FormEvent } from "react";
@@ -15,6 +16,45 @@ const FuturisticFrame = () => (
       preserveAspectRatio="xMidYMid meet"
     >
       <defs>
+        <style>{`
+          @keyframes draw {
+            to {
+              stroke-dashoffset: 0;
+            }
+          }
+          @keyframes fadeIn {
+            to {
+              opacity: 1;
+            }
+          }
+          .draw-path {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: draw 2s ease-out forwards;
+          }
+          .fade-in {
+            opacity: 0;
+            animation: fadeIn 1.5s ease-in forwards;
+          }
+          .draw-path:nth-of-type(1) { animation-delay: 0s; }
+          .draw-path:nth-of-type(2) { animation-delay: 0.1s; }
+          .draw-path:nth-of-type(3) { animation-delay: 0.2s; }
+          .draw-path:nth-of-type(4) { animation-delay: 0.3s; }
+          .draw-path:nth-of-type(5) { animation-delay: 0.4s; }
+          .draw-path:nth-of-type(6) { animation-delay: 0.5s; }
+          .draw-path:nth-of-type(7) { animation-delay: 0.6s; }
+          .draw-path:nth-of-type(8) { animation-delay: 0.7s; }
+          .draw-path:nth-of-type(9) { animation-delay: 0.8s; }
+          .draw-path:nth-of-type(10) { animation-delay: 0.9s; }
+          .draw-path:nth-of-type(11) { animation-delay: 1s; }
+          .draw-path:nth-of-type(12) { animation-delay: 1.1s; }
+          .dot {
+            animation-delay: 2.2s;
+          }
+          .frame-fill {
+             animation-delay: 1.5s;
+          }
+        `}</style>
         <linearGradient id="glow-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" style={{ stopColor: 'rgba(0, 191, 255, 0.8)', stopOpacity: 1 }} />
           <stop offset="100%" style={{ stopColor: 'rgba(0, 111, 255, 0.9)', stopOpacity: 1 }} />
@@ -35,49 +75,49 @@ const FuturisticFrame = () => (
 
       <g stroke="url(#glow-gradient)" strokeWidth="2" fill="none">
         {/* Main Frame */}
-        <path d="M 100,50 L 150,50 L 160,40 H 250 L 260,50 H 540 L 550,40 H 640 L 650,50 H 700 L 750,100 V 500 L 700,550 H 650 L 640,560 H 550 L 540,550 H 260 L 250,560 H 160 L 150,550 H 100 L 50,500 V 100 Z" />
+        <path className="draw-path" d="M 100,50 L 150,50 L 160,40 H 250 L 260,50 H 540 L 550,40 H 640 L 650,50 H 700 L 750,100 V 500 L 700,550 H 650 L 640,560 H 550 L 540,550 H 260 L 250,560 H 160 L 150,550 H 100 L 50,500 V 100 Z" />
 
         {/* Top Left Details */}
-        <path d="M 160,40 L 155,35 H 135" />
-        <path d="M 260,50 L 265,55 V 75" />
+        <path className="draw-path" d="M 160,40 L 155,35 H 135" />
+        <path className="draw-path" d="M 260,50 L 265,55 V 75" />
         
         {/* Top Right Details */}
-        <path d="M 640,40 L 645,35 H 665" />
-        <path d="M 540,50 L 535,55 V 75" />
+        <path className="draw-path" d="M 640,40 L 645,35 H 665" />
+        <path className="draw-path" d="M 540,50 L 535,55 V 75" />
 
         {/* Bottom Left Details */}
-        <path d="M 160,560 L 155,565 H 135" />
-        <path d="M 260,550 L 265,545 V 525" />
+        <path className="draw-path" d="M 160,560 L 155,565 H 135" />
+        <path className="draw-path" d="M 260,550 L 265,545 V 525" />
         
         {/* Bottom Right Details */}
-        <path d="M 640,560 L 645,565 H 665" />
-        <path d="M 540,550 L 535,545 V 525" />
+        <path className="draw-path" d="M 640,560 L 645,565 H 665" />
+        <path className="draw-path" d="M 540,550 L 535,545 V 525" />
         
         {/* Side Details Left */}
-        <path d="M 50,150 H 40 L 30,160 V 200" />
-        <path d="M 50,450 H 40 L 30,440 V 400" />
-        <path d="M 80,100 L 80,90" />
-        <path d="M 80,500 L 80,510" />
+        <path className="draw-path" d="M 50,150 H 40 L 30,160 V 200" />
+        <path className="draw-path" d="M 50,450 H 40 L 30,440 V 400" />
+        <path className="draw-path" d="M 80,100 L 80,90" />
+        <path className="draw-path" d="M 80,500 L 80,510" />
 
         {/* Side Details Right */}
-        <path d="M 750,150 H 760 L 770,160 V 200" />
-        <path d="M 750,450 H 760 L 770,440 V 400" />
-        <path d="M 720,100 L 720,90" />
-        <path d="M 720,500 L 720,510" />
+        <path className="draw-path" d="M 750,150 H 760 L 770,160 V 200" />
+        <path className="draw-path" d="M 750,450 H 760 L 770,440 V 400" />
+        <path className="draw-path" d="M 720,100 L 720,90" />
+        <path className="draw-path" d="M 720,500 L 720,510" />
 
         {/* Glowing Dots */}
-        <circle cx="120" cy="35" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
-        <circle cx="275" cy="35" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
-        <circle cx="525" cy="35" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
-        <circle cx="680" cy="35" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
-        <circle cx="20" cy="220" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
-        <circle cx="20" cy="380" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
-        <circle cx="780" cy="220" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
-        <circle cx="780" cy="380" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
-        <circle cx="120" cy="565" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
-        <circle cx="275" cy="565" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
-        <circle cx="525" cy="565" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
-        <circle cx="680" cy="565" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)"/>
+        <circle cx="120" cy="35" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)" className="fade-in dot"/>
+        <circle cx="275" cy="35" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)" className="fade-in dot"/>
+        <circle cx="525" cy="35" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)" className="fade-in dot"/>
+        <circle cx="680" cy="35" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)" className="fade-in dot"/>
+        <circle cx="20" cy="220" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)" className="fade-in dot"/>
+        <circle cx="20" cy="380" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)" className="fade-in dot"/>
+        <circle cx="780" cy="220" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)" className="fade-in dot"/>
+        <circle cx="780" cy="380" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)" className="fade-in dot"/>
+        <circle cx="120" cy="565" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)" className="fade-in dot"/>
+        <circle cx="275" cy="565" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)" className="fade-in dot"/>
+        <circle cx="525" cy="565" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)" className="fade-in dot"/>
+        <circle cx="680" cy="565" r="5" fill="url(#dot-glow)" stroke="none" filter="url(#glow)" className="fade-in dot"/>
       </g>
       
        <path
@@ -85,9 +125,14 @@ const FuturisticFrame = () => (
         fill="rgba(10, 25, 47, 0.5)"
         stroke="rgba(0, 191, 255, 0.5)"
         strokeWidth="1"
+        className="fade-in frame-fill"
       />
     </svg>
   );
+
+interface LoginFormProps {
+  onLoginSuccess: () => void;
+}
 
 export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const [username, setUsername] = useState("");
