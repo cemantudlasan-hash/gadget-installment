@@ -30,7 +30,7 @@ export default function CustomerDetails({ sale, isOpen, onToggle, onEditSale, on
     
     return (
         <Card className="bg-slate-800/30 border-slate-700">
-            <CardHeader className={cn(isSpecialCustomer && 'bg-white rounded-t-lg')}>
+            <CardHeader className={cn(isSpecialCustomer && 'bg-green-200 rounded-t-lg')}>
                 <div className="flex justify-between items-center">
                     <div>
                         <CardTitle className={cn("text-xl", isSpecialCustomer ? 'text-slate-900' : 'text-cyan-300')}>{sale.customerName}</CardTitle>
