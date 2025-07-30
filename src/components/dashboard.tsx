@@ -92,7 +92,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         {user && (
           <div className="flex items-center justify-center gap-3 text-sm text-slate-400 mt-4">
              <Avatar>
-              <AvatarImage src="https://images.unsplash.com/photo-1585238836994-61f1c2dfe761?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMXx8dGVjaHl8ZW58MHx8fHwxNzUzODk2MzMyfDA&ixlib=rb-4.1.0&q=80&w=1080" alt="User Avatar" data-ai-hint="person user" />
+              <AvatarImage src="https://images.unsplash.com/photo-1596629040517-2f0b5b853834?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxiYWJ5JTIwYm95fGVufDB8fHx8MTc1Mzg5Njg3Mnww&ixlib=rb-4.1.0&q=80&w=1080" alt="User Avatar" data-ai-hint="person user" />
               <AvatarFallback>CT</AvatarFallback>
             </Avatar>
             <span>Logged in as: <span className="bg-cyan-900/50 px-2 py-1 rounded-md text-cyan-300 font-semibold">Cirannakorn Tudlasan</span></span>
