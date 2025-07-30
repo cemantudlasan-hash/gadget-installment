@@ -30,13 +30,13 @@ export default function CustomerDetails({ sale, isOpen, onToggle, onEditSale, on
     
     return (
         <Card className="bg-slate-800/30 border-slate-700">
-            <CardHeader className={cn(isSpecialCustomer && 'bg-red-500/30 rounded-t-lg')}>
+            <CardHeader className={cn(isSpecialCustomer && 'bg-white rounded-t-lg')}>
                 <div className="flex justify-between items-center">
                     <div>
-                        <CardTitle className="text-xl text-cyan-300">{sale.customerName}</CardTitle>
-                        <CardDescription>{sale.gadget} ({sale.pieces} pcs)</CardDescription>
+                        <CardTitle className={cn("text-xl", isSpecialCustomer ? 'text-slate-900' : 'text-cyan-300')}>{sale.customerName}</CardTitle>
+                        <CardDescription className={cn(isSpecialCustomer ? 'text-slate-600' : '')}>{sale.gadget} ({sale.pieces} pcs)</CardDescription>
                     </div>
-                     <div className="flex items-center">
+                     <div className={cn("flex items-center", isSpecialCustomer ? "text-slate-900" : "")}>
                         <Button variant="ghost" size="icon" onClick={() => onEditSale(sale)}><Edit className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => { setReceiptData(sale); setShowReceipt(true); }}><Receipt className="h-4 w-4" /></Button>
                         <AlertDialog>
