@@ -26,7 +26,7 @@ export default function CustomerDetails({ sale, isOpen, onToggle, onEditSale, on
     const [receiptData, setReceiptData] = React.useState<Sale | null>(null);
     const [showReceipt, setShowReceipt] = React.useState(false);
 
-    const isSpecialCustomer = sale.customerName.toLowerCase().includes('daddy');
+    const isSpecialCustomer = sale.customerName.toLowerCase().includes('daddy') || (sale.customerNote && sale.customerNote.toLowerCase().includes('daddy'));
     
     return (
         <Card className="bg-slate-800/30 border-slate-700">
