@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Edit, Trash2, Receipt, ChevronDown } from "lucide-react";
 import PaymentRecorder from './payment-recorder';
 import CustomerReceipt from './customer-receipt';
+import { cn } from '@/lib/utils';
 
 interface CustomerDetailsProps {
     sale: Sale;
@@ -24,10 +25,12 @@ interface CustomerDetailsProps {
 export default function CustomerDetails({ sale, isOpen, onToggle, onEditSale, onDeleteSale, onRecordPayment, onEditPayment }: CustomerDetailsProps) {
     const [receiptData, setReceiptData] = React.useState<Sale | null>(null);
     const [showReceipt, setShowReceipt] = React.useState(false);
+
+    const isSpecialCustomer = sale.customerName.toLowerCase().includes('daddy');
     
     return (
         <Card className="bg-slate-800/30 border-slate-700">
-            <CardHeader>
+            <CardHeader className={cn(isSpecialCustomer && 'bg-red-500/30 rounded-t-lg')}>
                 <div className="flex justify-between items-center">
                     <div>
                         <CardTitle className="text-xl text-cyan-300">{sale.customerName}</CardTitle>
