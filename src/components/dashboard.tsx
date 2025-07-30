@@ -14,6 +14,7 @@ import { LogOut } from "lucide-react";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import type { Commission, Sale } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface DashboardProps {
   onLogout: () => void;
@@ -89,8 +90,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           Gadget Installment Management
         </h1>
         {user && (
-          <div className="text-center text-sm text-slate-400 mt-4">
-            Logged in as: <span className="bg-cyan-900/50 px-2 py-1 rounded-md text-cyan-300 font-semibold">Cirannakorn Tudlasan</span>
+          <div className="flex items-center justify-center gap-3 text-sm text-slate-400 mt-4">
+             <Avatar>
+              <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="person user" />
+              <AvatarFallback>CT</AvatarFallback>
+            </Avatar>
+            <span>Logged in as: <span className="bg-cyan-900/50 px-2 py-1 rounded-md text-cyan-300 font-semibold">Cirannakorn Tudlasan</span></span>
           </div>
         )}
         <Button onClick={onLogout} variant="outline" size="icon" className="absolute top-0 right-0 bg-transparent border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-slate-900">
