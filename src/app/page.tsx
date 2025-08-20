@@ -1,17 +1,37 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LoginForm from "@/components/login-form";
 import Dashboard from "@/components/dashboard";
 import { FirebaseProvider } from "@/lib/firebase/context";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
 
   const handleLogout = () => {
     setIsLoggedIn(false);
   };
+
+  if (!isClient) {
+     return (
+        <div className="flex items-center justify-center min-h-screen bg-background">
+            <div className="w-full max-w-md space-y-4 p-8">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-12 w-full mt-4" />
+            </div>
+        </div>
+     )
+  }
 
   return (
     <FirebaseProvider>
