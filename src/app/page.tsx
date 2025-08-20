@@ -23,15 +23,19 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    // This effect runs only on the client, after the initial render.
     setIsClient(true);
   }, []);
 
   const handleLogout = () => {
     setIsLoggedIn(false);
   };
-
+  
+  // During server-side rendering and the initial client-side render,
+  // isClient will be false, so we render a static skeleton.
+  // This ensures the server and client have the same initial output.
   if (!isClient) {
-     return SKELETON;
+    return SKELETON;
   }
 
   return (
