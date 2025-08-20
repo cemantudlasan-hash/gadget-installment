@@ -17,7 +17,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} h-full`}>
-      <body className="font-sans antialiased h-full bg-background">
+      <body className="font-sans antialiased h-full">
         {children}
         <Toaster />
       </body>

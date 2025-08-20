@@ -15,24 +15,25 @@ export default function Home() {
 
   return (
     <FirebaseProvider>
-      <main
-        className={cn(
-          "min-h-screen font-sans",
-          isLoggedIn ? "dark dashboard-bg" : ""
-        )}
-      >
-        {isLoggedIn ? (
-          <div 
-            className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden p-4 sm:p-6"
-          >
-            <div className="relative z-10 w-full">
-                <Dashboard onLogout={handleLogout} />
+      <div className={cn("h-full", isLoggedIn ? "dark dashboard-bg" : "bg-background")}>
+        <main
+          className={cn(
+            "min-h-screen font-sans",
+          )}
+        >
+          {isLoggedIn ? (
+            <div 
+              className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden p-4 sm:p-6"
+            >
+              <div className="relative z-10 w-full">
+                  <Dashboard onLogout={handleLogout} />
+              </div>
             </div>
-          </div>
-        ) : (
-          <LoginForm onLoginSuccess={() => setIsLoggedIn(true)} />
-        )}
-      </main>
+          ) : (
+            <LoginForm onLoginSuccess={() => setIsLoggedIn(true)} />
+          )}
+        </main>
+      </div>
     </FirebaseProvider>
   );
 }
