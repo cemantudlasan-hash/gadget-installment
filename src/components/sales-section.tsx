@@ -25,9 +25,10 @@ interface SalesSectionProps {
   sales: Sale[];
   loading: boolean;
   onDataChange: () => void;
+  onUpdateSale: (saleId: string, updatedData: Partial<Sale>) => Promise<void>;
 }
 
-export default function SalesSection({ sales, loading, onDataChange }: SalesSectionProps) {
+export default function SalesSection({ sales, loading, onDataChange, onUpdateSale }: SalesSectionProps) {
   const { db } = useFirebase();
   const { toast } = useToast();
   
@@ -49,31 +50,28 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
       const saleId = editingSale ? editingSale.id : doc(collection(db, "sales")).id;
 
       if (editingSale) {
-        const saleRef = doc(db, "sales", saleId);
-        batch.update(saleRef, saleData as any);
+        await onUpdateSale(saleId, saleData as Partial<Sale>);
         toast({ title: "Success", description: "Sale updated successfully!" });
-
+        
+        // This part handles the associated ledger entries
         const dpDesc = `Down payment for sale ${saleId}`;
         const shippingDesc = `Shipping for sale ${saleId}`;
-
         const dpQuery = query(commissionsCollectionRef, where("saleId", "==", saleId), where("description", "==", dpDesc));
         const shippingQuery = query(commissionsCollectionRef, where("saleId", "==", saleId), where("description", "==", shippingDesc));
-        
         const [dpDocs, shippingDocs] = await Promise.all([getDocs(dpQuery), getDocs(shippingQuery)]);
-
         const newDpDesc = `Down payment for ${saleData.gadget} (${saleData.customerName})`;
         if (!dpDocs.empty) {
             batch.update(dpDocs.docs[0].ref, { getAmount: saleData.downPayment, description: newDpDesc, date: saleData.dateStart });
         } else if (saleData.downPayment > 0) {
             batch.set(doc(commissionsCollectionRef), { date: saleData.dateStart, description: newDpDesc, getAmount: saleData.downPayment, spentAmount: 0, saleId: saleId });
         }
-
         const newShippingDesc = `Shipping for ${saleData.gadget} (${saleData.customerName})`;
         if (!shippingDocs.empty) {
             batch.update(shippingDocs.docs[0].ref, { spentAmount: saleData.shippingCost, description: newShippingDesc, date: saleData.dateStart });
         } else if (saleData.shippingCost > 0) {
             batch.set(doc(commissionsCollectionRef), { date: saleData.dateStart, description: newShippingDesc, getAmount: 0, spentAmount: saleData.shippingCost, saleId: saleId });
         }
+
 
       } else {
         const newSaleRef = doc(db, "sales", saleId);
@@ -82,7 +80,7 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
         if (saleData.shippingCost > 0) {
           batch.set(doc(commissionsCollectionRef), {
             date: saleData.dateStart,
-            description: `Shipping for sale ${saleId}`,
+            description: `Shipping for ${saleData.gadget} (${saleData.customerName})`,
             getAmount: 0,
             spentAmount: saleData.shippingCost,
             saleId: newSaleRef.id,
@@ -91,7 +89,7 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
         if (saleData.downPayment > 0) {
           batch.set(doc(commissionsCollectionRef), {
             date: saleData.dateStart,
-            description: `Down payment for sale ${saleId}`,
+            description: `Down payment for ${saleData.gadget} (${saleData.customerName})`,
             getAmount: saleData.downPayment,
             spentAmount: 0,
             saleId: newSaleRef.id,
@@ -136,7 +134,6 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
   const handleRecordPayment = async (saleId: string, amountPaid: number, paymentDate: string) => {
     if (!db) return;
     try {
-      const saleRef = doc(db, "sales", saleId);
       const saleDoc = sales.find(s => s.id === saleId);
       if (!saleDoc || !saleDoc.paymentInstallments) {
         toast({ variant: "destructive", title: "Error", description: "Could not find sale details to record payment." });
@@ -167,7 +164,8 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
       const isNowFullyPaid = updatedInstallments.every(inst => inst.isPaid);
 
       const batch = writeBatch(db);
-
+      
+      const saleRef = doc(db, "sales", saleId);
       batch.update(saleRef, {
         paymentInstallments: updatedInstallments,
         totalPaidAmount: newTotalPaid,
@@ -201,7 +199,6 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
   const handleEditPayment = async (saleId: string, month: number, amount: number, date: string) => {
      if (!db) return;
     try {
-      const saleRef = doc(db, "sales", saleId);
       const saleDoc = sales.find(s => s.id === saleId);
       if (!saleDoc || !saleDoc.paymentInstallments) {
         toast({ variant: "destructive", title: "Error", description: "Could not find sale details to edit payment." });
@@ -222,14 +219,13 @@ export default function SalesSection({ sales, loading, onDataChange }: SalesSect
 
       const newTotalPaid = updatedInstallments.reduce((sum, inst) => sum + inst.paidAmount, 0);
       
-      await updateDoc(saleRef, {
+      await onUpdateSale(saleId, {
         paymentInstallments: updatedInstallments,
         totalPaidAmount: newTotalPaid,
         remainingBalance: saleDoc.totalAmountDue - newTotalPaid,
       });
       
       toast({ title: "Success", description: "Payment updated successfully." });
-      onDataChange();
     } catch (e: any) {
       console.error("Error editing payment:", e);
       toast({ variant: "destructive", title: "Error", description: `Error editing payment: ${e.message}` });

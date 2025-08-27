@@ -11,7 +11,7 @@ import { useFirebase } from "@/lib/firebase/context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, getDocs, orderBy, query, doc, updateDoc } from "firebase/firestore";
 import type { Commission, Sale } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -69,6 +69,24 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       fetchAllData();
     }
   }, [user, fetchAllData]);
+  
+  const handleUpdateSale = async (saleId: string, updatedData: Partial<Sale>) => {
+    if (!db) return;
+    try {
+      const saleRef = doc(db, "sales", saleId);
+      await updateDoc(saleRef, updatedData);
+      // Not showing toast here to avoid clutter, can be added if needed
+      onDataChange();
+    } catch (e: any) {
+      console.error("Error updating sale:", e);
+      toast({
+        variant: "destructive",
+        title: "Update Error",
+        description: `Could not update sale: ${e.message}`,
+      });
+    }
+  };
+
 
   if (userLoading) {
     return (
@@ -120,7 +138,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <TabsContent value="sales">
             <div className={futuristicBgClasses}>
                 <div className="relative z-10">
-                    <SalesSection sales={sales} loading={loadingData} onDataChange={fetchAllData} />
+                    <SalesSection sales={sales} loading={loadingData} onDataChange={fetchAllData} onUpdateSale={handleUpdateSale} />
                 </div>
             </div>
         </TabsContent>
@@ -141,7 +159,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <TabsContent value="reminders">
             <div className={futuristicBgClasses}>
                 <div className="relative z-10">
-                    <RemindersSection sales={sales} loading={loadingData} />
+                    <RemindersSection sales={sales} loading={loadingData} onDataChange={fetchAllData} onUpdateSale={handleUpdateSale} />
                 </div>
             </div>
         </TabsContent>
