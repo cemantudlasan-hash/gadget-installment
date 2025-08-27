@@ -73,5 +73,8 @@
 }
 
 .dark.dashboard-bg {
-    background: radial-gradient(ellipse at top right, #4c2889, #1e293b, #0f172a);
+    background-image: url('https://images.unsplash.com/photo-1531297484001-80022131f5a1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmdXR1cmlzdGljJTIwY2l0eXxlbnwwfHx8fDE3NTM5OTQ2ODR8MA&ixlib=rb-4.1.0&q=80&w=1080');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
