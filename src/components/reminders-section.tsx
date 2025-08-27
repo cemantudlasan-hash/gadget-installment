@@ -7,13 +7,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Sale, Commission } from "@/types";
 import { addMonths, differenceInMonths, endOfMonth, format, isAfter, isBefore, parseISO, startOfMonth } from "date-fns";
-import { UserX, AlertTriangle, History } from "lucide-react";
+import { UserX, AlertTriangle, History, Trash2, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useFirebase } from "@/lib/firebase/context";
-import { doc, updateDoc, writeBatch, collection } from "firebase/firestore";
+import { doc, updateDoc, writeBatch, collection, deleteDoc } from "firebase/firestore";
 import {
   Select,
   SelectContent,
@@ -22,7 +22,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+
 
 interface RemindersSectionProps {
   sales: Sale[];
@@ -44,7 +46,9 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
   const [selectedSaleId, setSelectedSaleId] = useState<string>("");
   const [penaltyAmount, setPenaltyAmount] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [editingPenalty, setEditingPenalty] = useState<Commission | null>(null);
+  const [editedPenaltyAmount, setEditedPenaltyAmount] = useState<number>(0);
+
   const overdueCustomers = useMemo(() => {
     const today = new Date();
     const reminders: OverdueCustomer[] = [];
@@ -150,6 +154,71 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleEditPenalty = async () => {
+    if (!editingPenalty || editedPenaltyAmount < 0 || !db) return;
+    setIsSubmitting(true);
+    try {
+        const saleToUpdate = sales.find(s => s.id === editingPenalty.saleId);
+        if (!saleToUpdate) throw new Error("Associated sale not found.");
+
+        const batch = writeBatch(db);
+        const originalAmount = editingPenalty.getAmount;
+        const difference = editedPenaltyAmount - originalAmount;
+
+        // Update sale balance
+        const saleRef = doc(db, "sales", editingPenalty.saleId!);
+        batch.update(saleRef, {
+            totalAmountDue: saleToUpdate.totalAmountDue + difference,
+            remainingBalance: saleToUpdate.remainingBalance + difference
+        });
+
+        // Update commission entry
+        const commissionRef = doc(db, "commissions", editingPenalty.id);
+        batch.update(commissionRef, { getAmount: editedPenaltyAmount });
+
+        await batch.commit();
+        toast({ title: "Success", description: "Penalty updated successfully." });
+        onDataChange();
+        setEditingPenalty(null);
+    } catch(e: any) {
+        console.error("Error editing penalty:", e);
+        toast({ variant: "destructive", title: "Error", description: `Could not edit penalty: ${e.message}` });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
+  const handleDeletePenalty = async (penalty: Commission) => {
+     if (!db || !penalty.saleId) return;
+     setIsSubmitting(true);
+     try {
+        const saleToUpdate = sales.find(s => s.id === penalty.saleId);
+        if (!saleToUpdate) throw new Error("Associated sale not found.");
+        
+        const batch = writeBatch(db);
+
+        // Revert sale balance
+        const saleRef = doc(db, "sales", penalty.saleId);
+        batch.update(saleRef, {
+            totalAmountDue: saleToUpdate.totalAmountDue - penalty.getAmount,
+            remainingBalance: saleToUpdate.remainingBalance - penalty.getAmount
+        });
+
+        // Delete commission entry
+        const commissionRef = doc(db, "commissions", penalty.id);
+        batch.delete(commissionRef);
+
+        await batch.commit();
+        toast({ title: "Success", description: "Penalty deleted successfully." });
+        onDataChange();
+    } catch(e: any) {
+        console.error("Error deleting penalty:", e);
+        toast({ variant: "destructive", title: "Error", description: `Could not delete penalty: ${e.message}` });
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
@@ -287,6 +356,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                         <TableHead>Customer</TableHead>
                         <TableHead>Gadget</TableHead>
                         <TableHead className="text-right">Penalty (฿)</TableHead>
+                        <TableHead>Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -296,6 +366,32 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                             <TableCell>{item.customerName}</TableCell>
                             <TableCell>{item.gadget}</TableCell>
                             <TableCell className="text-right font-medium text-amber-500">{item.getAmount?.toFixed(2)}</TableCell>
+                            <TableCell className="flex items-center justify-end gap-2">
+                                <Button variant="ghost" size="icon" onClick={() => { setEditingPenalty(item); setEditedPenaltyAmount(item.getAmount); }}>
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                        <AlertDialogTitle>Delete Penalty?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will permanently delete the penalty of ฿{item.getAmount.toFixed(2)} for {item.customerName} and adjust their balance. This action cannot be undone.
+                                        </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDeletePenalty(item)} disabled={isSubmitting} className="bg-destructive hover:bg-destructive/90">
+                                            {isSubmitting ? 'Deleting...' : 'Delete'}
+                                        </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </TableCell>
                         </TableRow>
                         ))}
                     </TableBody>
@@ -304,6 +400,35 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
             </div>
         </CardContent>
       </Card>
+      
+      <Dialog open={!!editingPenalty} onOpenChange={() => setEditingPenalty(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Penalty for {editingPenalty?.customerName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-penalty-amount">New Penalty Amount (฿)</Label>
+              <Input
+                id="edit-penalty-amount"
+                type="number"
+                value={editedPenaltyAmount}
+                onChange={(e) => setEditedPenaltyAmount(parseFloat(e.target.value) || 0)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="secondary">
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button onClick={handleEditPenalty} disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

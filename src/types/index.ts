@@ -39,6 +39,7 @@ export interface Commission {
   spentAmount: number;
   runningTotal?: number;
   saleId?: string;
+  penaltyAmount?: number;
 }
 
 export interface YearlyReport {
