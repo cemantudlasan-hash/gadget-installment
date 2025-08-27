@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import LoginForm from "@/components/login-form";
 import Dashboard from "@/components/dashboard";
 import LogoutOverlay from "@/components/logout-overlay";
+import LoginOverlay from "@/components/login-overlay";
 import { FirebaseProvider } from "@/lib/firebase/context";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,12 +22,21 @@ const SKELETON = (
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const handleLoginSuccess = () => {
+    setIsLoggingIn(true);
+    setTimeout(() => {
+      setIsLoggedIn(true);
+      setIsLoggingIn(false);
+    }, 2500); // Match animation duration
+  };
 
   const handleLogout = () => {
     setIsLoggingOut(true);
@@ -39,21 +49,25 @@ export default function Home() {
   if (!isClient) {
     return SKELETON;
   }
+  
+  const showDashboard = isLoggedIn && !isLoggingIn && !isLoggingOut;
+  const showLogin = !isLoggedIn && !isLoggingIn && !isLoggingOut;
 
   return (
     <FirebaseProvider>
-      <main className={cn("min-h-screen font-sans", isLoggedIn && !isLoggingOut ? "dark dashboard-bg" : "bg-background")}>
+      <main className={cn("min-h-screen font-sans", showDashboard ? "dark dashboard-bg" : "bg-background")}>
         {isLoggingOut && <LogoutOverlay />}
+        {isLoggingIn && <LoginOverlay />}
         
-        <div style={{ display: isLoggingOut ? 'none' : 'block' }}>
-          {isLoggedIn ? (
+        <div style={{ display: isLoggingIn || isLoggingOut ? 'none' : 'block' }}>
+          {showDashboard ? (
             <div className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden p-4 sm:p-6">
               <div className="relative z-10 w-full">
                 <Dashboard onLogout={handleLogout} />
               </div>
             </div>
           ) : (
-            <LoginForm onLoginSuccess={() => setIsLoggedIn(true)} />
+             <LoginForm onLoginSuccess={handleLoginSuccess} />
           )}
         </div>
       </main>
