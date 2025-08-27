@@ -27,7 +27,7 @@ export default function LoginOverlay() {
       <div className="absolute bottom-10 w-full max-w-3xl px-4">
         <div className="h-2 bg-cyan-900/50 rounded overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-cyan-400 to-purple-500 animate-[fadeOut_2.5s_ease-out_forwards]"
+            className="h-full bg-gradient-to-r from-cyan-400 to-purple-500 animate-[fadeOut_1.5s_ease-out_forwards]"
             style={{ width: '100%', animationName: 'load-in' }}
           />
         </div>
@@ -39,7 +39,7 @@ export default function LoginOverlay() {
           to { width: 100%; }
         }
         div[style*="animation-name: 'load-in'"] {
-          animation-duration: 2s;
+          animation-duration: 1.2s;
           animation-timing-function: ease-out;
           animation-fill-mode: forwards;
         }

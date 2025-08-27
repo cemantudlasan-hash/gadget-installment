@@ -24,7 +24,7 @@ export default function LogoutOverlay() {
       <div className="absolute bottom-10 w-full max-w-3xl px-4">
         <div className="h-2 bg-green-900/50 rounded overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-green-500 to-cyan-400 animate-[fadeOut_2.5s_ease-out_forwards]"
+            className="h-full bg-gradient-to-r from-green-500 to-cyan-400 animate-[fadeOut_1.5s_ease-out_forwards]"
             style={{ width: '100%' }}
           />
         </div>

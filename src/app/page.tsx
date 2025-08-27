@@ -35,7 +35,7 @@ export default function Home() {
     setTimeout(() => {
       setIsLoggedIn(true);
       setIsLoggingIn(false);
-    }, 2500); // Match animation duration
+    }, 1500); // Match animation duration
   };
 
   const handleLogout = () => {
@@ -43,7 +43,7 @@ export default function Home() {
     setTimeout(() => {
       setIsLoggedIn(false);
       setIsLoggingOut(false);
-    }, 2500); // Match animation duration
+    }, 1500); // Match animation duration
   };
 
   if (!isClient) {
