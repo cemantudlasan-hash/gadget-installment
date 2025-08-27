@@ -5,9 +5,9 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { Sale } from "@/types";
+import type { Sale, Commission } from "@/types";
 import { addMonths, differenceInMonths, endOfMonth, format, isAfter, isBefore, parseISO, startOfMonth } from "date-fns";
-import { UserX, AlertTriangle } from "lucide-react";
+import { UserX, AlertTriangle, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,9 +22,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Separator } from "@/components/ui/separator";
 
 interface RemindersSectionProps {
   sales: Sale[];
+  commissions: Commission[];
   loading: boolean;
   onDataChange: () => void;
   onUpdateSale: (saleId: string, updatedData: Partial<Sale>) => Promise<void>;
@@ -36,7 +38,7 @@ interface OverdueCustomer {
   monthlyPayment: number;
 }
 
-export default function RemindersSection({ sales, loading, onDataChange, onUpdateSale }: RemindersSectionProps) {
+export default function RemindersSection({ sales, commissions, loading, onDataChange, onUpdateSale }: RemindersSectionProps) {
   const { db } = useFirebase();
   const { toast } = useToast();
   const [selectedSaleId, setSelectedSaleId] = useState<string>("");
@@ -73,6 +75,20 @@ export default function RemindersSection({ sales, loading, onDataChange, onUpdat
 
     return uniqueReminders.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
   }, [sales]);
+
+  const penaltyHistory = useMemo(() => {
+    return commissions
+      .filter(c => c.description.toLowerCase().includes('penalty for'))
+      .map(c => {
+        const sale = sales.find(s => s.id === c.saleId);
+        return {
+          ...c,
+          customerName: sale?.customerName || 'N/A',
+          gadget: sale?.gadget || 'N/A',
+        };
+      })
+      .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
+  }, [commissions, sales]);
 
   const ongoingSales = useMemo(() => {
     return sales
@@ -252,6 +268,40 @@ export default function RemindersSection({ sales, loading, onDataChange, onUpdat
               </AlertDialog>
              </div>
            )}
+          <Separator className="my-6" />
+
+          <div>
+            <h4 className="text-md font-semibold mb-2 flex items-center"><History className="mr-2 h-5 w-5" /> Penalty History</h4>
+            {loading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+            ) : penaltyHistory.length === 0 ? (
+                <p className="text-center text-muted-foreground py-4">No penalties have been applied yet.</p>
+            ) : (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Gadget</TableHead>
+                        <TableHead className="text-right">Penalty (฿)</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {penaltyHistory.map((item) => (
+                        <TableRow key={item.id}>
+                            <TableCell>{format(parseISO(item.date), "yyyy-MM-dd")}</TableCell>
+                            <TableCell>{item.customerName}</TableCell>
+                            <TableCell>{item.gadget}</TableCell>
+                            <TableCell className="text-right font-medium text-amber-500">{item.getAmount?.toFixed(2)}</TableCell>
+                        </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            )}
+            </div>
         </CardContent>
       </Card>
     </div>
