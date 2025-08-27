@@ -180,7 +180,18 @@ export default function SalesForm({ onSave, initialData, onCancel }: SalesFormPr
               <FormField name="numberOfInstallments" control={form.control} render={({ field }) => (
                   <FormItem><FormLabel>Number of Installments</FormLabel><Select onValueChange={field.onChange} defaultValue={String(field.value)}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Select months" /></SelectTrigger></FormControl>
-                      <SelectContent><SelectItem value="3">3 Months</SelectItem><SelectItem value="6">6 Months</SelectItem><SelectItem value="10">10 Months</SelectItem><SelectItem value="12">12 Months</SelectItem></SelectContent>
+                      <SelectContent>
+                        <SelectItem value="2">2 Months</SelectItem>
+                        <SelectItem value="3">3 Months</SelectItem>
+                        <SelectItem value="4">4 Months</SelectItem>
+                        <SelectItem value="5">5 Months</SelectItem>
+                        <SelectItem value="6">6 Months</SelectItem>
+                        <SelectItem value="7">7 Months</SelectItem>
+                        <SelectItem value="8">8 Months</SelectItem>
+                        <SelectItem value="9">9 Months</SelectItem>
+                        <SelectItem value="10">10 Months</SelectItem>
+                        <SelectItem value="12">12 Months</SelectItem>
+                      </SelectContent>
                   </Select><FormMessage /></FormItem>
               )}/>
               <FormField name="paymentType" control={form.control} render={({ field }) => (
