@@ -24,6 +24,7 @@ import {
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 
 
 interface RemindersSectionProps {
@@ -45,9 +46,11 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
   const { toast } = useToast();
   const [selectedSaleId, setSelectedSaleId] = useState<string>("");
   const [penaltyAmount, setPenaltyAmount] = useState<number>(0);
+  const [penaltyComment, setPenaltyComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingPenalty, setEditingPenalty] = useState<Commission | null>(null);
   const [editedPenaltyAmount, setEditedPenaltyAmount] = useState<number>(0);
+  const [editedPenaltyComment, setEditedPenaltyComment] = useState("");
 
   const overdueCustomers = useMemo(() => {
     const today = new Date();
@@ -133,6 +136,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
         getAmount: penaltyAmount,
         spentAmount: 0,
         saleId: selectedSaleId,
+        comment: penaltyComment,
       });
 
       await batch.commit();
@@ -143,6 +147,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
       });
       setSelectedSaleId("");
       setPenaltyAmount(0);
+      setPenaltyComment("");
       onDataChange();
 
     } catch (e: any) {
@@ -177,7 +182,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
 
         // Update commission entry
         const commissionRef = doc(db, "commissions", editingPenalty.id);
-        batch.update(commissionRef, { getAmount: editedPenaltyAmount });
+        batch.update(commissionRef, { getAmount: editedPenaltyAmount, comment: editedPenaltyComment });
 
         await batch.commit();
         toast({ title: "Success", description: "Penalty updated successfully." });
@@ -220,6 +225,12 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
     } finally {
         setIsSubmitting(false);
     }
+  };
+
+  const handleEditClick = (penalty: Commission) => {
+    setEditingPenalty(penalty);
+    setEditedPenaltyAmount(penalty.getAmount);
+    setEditedPenaltyComment(penalty.comment || "");
   };
 
 
@@ -281,60 +292,71 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
         </CardHeader>
         <CardContent className="space-y-4">
            {loading ? (
-             <Skeleton className="h-24 w-full" />
+             <Skeleton className="h-40 w-full" />
            ) : (
-             <div className="flex flex-col sm:flex-row items-end gap-4">
-               <div className="w-full sm:w-1/2 space-y-2">
-                 <Label htmlFor="customer-select">Customer</Label>
-                 <Select value={selectedSaleId} onValueChange={setSelectedSaleId}>
-                   <SelectTrigger id="customer-select">
-                     <SelectValue placeholder="Select a customer..." />
-                   </SelectTrigger>
-                   <SelectContent>
-                     {ongoingSales.map(sale => (
-                       <SelectItem key={sale.id} value={sale.id}>
-                         {sale.customerName} - {sale.gadget} (Balance: ฿{sale.remainingBalance.toFixed(2)})
-                       </SelectItem>
-                     ))}
-                   </SelectContent>
-                 </Select>
-               </div>
-               <div className="w-full sm:w-1/4 space-y-2">
-                 <Label htmlFor="penalty-amount">Penalty Amount (฿)</Label>
-                 <Input 
-                   id="penalty-amount" 
-                   type="number" 
-                   value={penaltyAmount} 
-                   onChange={(e) => setPenaltyAmount(parseFloat(e.target.value) || 0)}
-                   placeholder="e.g. 100" 
-                   step="1"
-                 />
-               </div>
-               <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      disabled={isSubmitting || !selectedSaleId || penaltyAmount <= 0}
-                      className="w-full sm:w-auto"
-                    >
-                      <AlertTriangle className="mr-2 h-4 w-4" />
-                      Apply Penalty
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will add a penalty of ฿{penaltyAmount.toFixed(2)} to the selected customer's balance. This action will be recorded and cannot be easily undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleAddPenalty} disabled={isSubmitting}>
-                        {isSubmitting ? 'Submitting...' : 'Yes, Add Penalty'}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-              </AlertDialog>
+             <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row items-end gap-4">
+                    <div className="w-full sm:w-1/2 space-y-2">
+                        <Label htmlFor="customer-select">Customer</Label>
+                        <Select value={selectedSaleId} onValueChange={setSelectedSaleId}>
+                        <SelectTrigger id="customer-select">
+                            <SelectValue placeholder="Select a customer..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {ongoingSales.map(sale => (
+                            <SelectItem key={sale.id} value={sale.id}>
+                                {sale.customerName} - {sale.gadget} (Balance: ฿{sale.remainingBalance.toFixed(2)})
+                            </SelectItem>
+                            ))}
+                        </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="w-full sm:w-1/4 space-y-2">
+                        <Label htmlFor="penalty-amount">Penalty Amount (฿)</Label>
+                        <Input 
+                        id="penalty-amount" 
+                        type="number" 
+                        value={penaltyAmount} 
+                        onChange={(e) => setPenaltyAmount(parseFloat(e.target.value) || 0)}
+                        placeholder="e.g. 100" 
+                        step="1"
+                        />
+                    </div>
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button 
+                            disabled={isSubmitting || !selectedSaleId || penaltyAmount <= 0}
+                            className="w-full sm:w-auto"
+                            >
+                            <AlertTriangle className="mr-2 h-4 w-4" />
+                            Apply Penalty
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will add a penalty of ฿{penaltyAmount.toFixed(2)} to the selected customer's balance. This action will be recorded and cannot be easily undone.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleAddPenalty} disabled={isSubmitting}>
+                                {isSubmitting ? 'Submitting...' : 'Yes, Add Penalty'}
+                            </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+                <div className="w-full space-y-2">
+                    <Label htmlFor="penalty-comment">Comment (Optional)</Label>
+                    <Textarea 
+                        id="penalty-comment"
+                        value={penaltyComment}
+                        onChange={(e) => setPenaltyComment(e.target.value)}
+                        placeholder="e.g., Late payment fee for June"
+                    />
+                </div>
              </div>
            )}
           <Separator className="my-6" />
@@ -354,7 +376,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                         <TableRow>
                         <TableHead>Date</TableHead>
                         <TableHead>Customer</TableHead>
-                        <TableHead>Gadget</TableHead>
+                        <TableHead>Details</TableHead>
                         <TableHead className="text-right">Penalty (฿)</TableHead>
                         <TableHead>Actions</TableHead>
                         </TableRow>
@@ -364,10 +386,13 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                         <TableRow key={item.id}>
                             <TableCell>{format(parseISO(item.date), "yyyy-MM-dd")}</TableCell>
                             <TableCell>{item.customerName}</TableCell>
-                            <TableCell>{item.gadget}</TableCell>
+                            <TableCell>
+                                <div className="font-medium">{item.gadget}</div>
+                                {item.comment && <div className="text-xs text-muted-foreground">{item.comment}</div>}
+                            </TableCell>
                             <TableCell className="text-right font-medium text-amber-500">{item.getAmount?.toFixed(2)}</TableCell>
                             <TableCell className="flex items-center justify-end gap-2">
-                                <Button variant="ghost" size="icon" onClick={() => { setEditingPenalty(item); setEditedPenaltyAmount(item.getAmount); }}>
+                                <Button variant="ghost" size="icon" onClick={() => handleEditClick(item)}>
                                     <Edit className="h-4 w-4" />
                                 </Button>
                                 <AlertDialog>
@@ -414,6 +439,14 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                 type="number"
                 value={editedPenaltyAmount}
                 onChange={(e) => setEditedPenaltyAmount(parseFloat(e.target.value) || 0)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-penalty-comment">Comment</Label>
+              <Textarea
+                id="edit-penalty-comment"
+                value={editedPenaltyComment}
+                onChange={(e) => setEditedPenaltyComment(e.target.value)}
               />
             </div>
           </div>
