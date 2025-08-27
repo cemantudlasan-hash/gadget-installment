@@ -27,7 +27,7 @@ export default function LoginOverlay() {
       <div className="absolute bottom-10 w-full max-w-3xl px-4">
         <div className="h-2 bg-cyan-900/50 rounded overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-cyan-400 to-purple-500 animate-[fadeOut_1.5s_ease-out_forwards]"
+            className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 animate-[fadeOut_1.5s_ease-out_forwards]"
             style={{ width: '100%', animationName: 'load-in' }}
           />
         </div>
