@@ -30,7 +30,7 @@ export default function Home() {
   const handleLogout = () => {
     setIsLoggedIn(false);
   };
-  
+
   // During server-side rendering and the initial client-side render,
   // isClient will be false, so we render a static skeleton.
   // This ensures the server and client have the same initial output.
@@ -40,8 +40,7 @@ export default function Home() {
 
   return (
     <FirebaseProvider>
-      <div className={cn("h-full", isLoggedIn ? "dark dashboard-bg" : "bg-background")}>
-        <main className={cn("min-h-screen font-sans")}>
+        <main className={cn("min-h-screen font-sans", isLoggedIn ? "dark dashboard-bg" : "bg-background")}>
           {isLoggedIn ? (
             <div className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden p-4 sm:p-6">
               <div className="relative z-10 w-full">
@@ -52,7 +51,6 @@ export default function Home() {
             <LoginForm onLoginSuccess={() => setIsLoggedIn(true)} />
           )}
         </main>
-      </div>
     </FirebaseProvider>
   );
 }
