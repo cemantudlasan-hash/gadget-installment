@@ -75,7 +75,9 @@ export default function RemindersSection({ sales, loading, onDataChange, onUpdat
   }, [sales]);
 
   const ongoingSales = useMemo(() => {
-    return sales.filter(s => s.remainingBalance > 0);
+    return sales
+      .filter(s => s.remainingBalance > 0)
+      .sort((a, b) => a.customerName.localeCompare(b.customerName));
   }, [sales]);
 
   const handleAddPenalty = async () => {
