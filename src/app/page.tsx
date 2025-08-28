@@ -58,9 +58,9 @@ export default function Home() {
         {isLoggingOut && <LogoutOverlay />}
         {isLoggingIn && <LoginOverlay />}
         
-        <div style={{ display: isLoggingIn || isLoggingOut ? 'none' : 'block' }}>
+        <div className={cn("transition-opacity duration-500", (isLoggingIn || isLoggingOut) ? 'opacity-0' : 'opacity-100')}>
           {showDashboard ? (
-            <div className="relative z-20 flex flex-col items-center justify-center min-h-screen overflow-y-auto p-4 sm:p-6">
+            <div className="relative z-10 flex flex-col items-center min-h-screen overflow-y-auto p-4 sm:p-6">
                <Dashboard onLogout={handleLogout} />
             </div>
           ) : (
