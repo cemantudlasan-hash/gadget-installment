@@ -102,7 +102,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const futuristicBgClasses = "relative overflow-hidden bg-transparent font-sans p-0 rounded-2xl";
 
   return (
-    <div className="max-w-7xl mx-auto bg-transparent p-0">
+    <div className="max-w-7xl mx-auto bg-transparent p-0 w-full">
       <div className="text-center mb-8 relative">
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-wider bg-gradient-to-r from-purple-400 to-cyan-300 bg-clip-text text-transparent">
           Gadget Installment Management

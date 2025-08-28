@@ -51,7 +51,6 @@ export default function Home() {
   }
   
   const showDashboard = isLoggedIn && !isLoggingIn && !isLoggingOut;
-  const showLogin = !isLoggedIn && !isLoggingIn && !isLoggingOut;
 
   return (
     <FirebaseProvider>
@@ -61,10 +60,8 @@ export default function Home() {
         
         <div style={{ display: isLoggingIn || isLoggingOut ? 'none' : 'block' }}>
           {showDashboard ? (
-            <div className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden p-4 sm:p-6">
-              <div className="relative z-10 w-full">
-                <Dashboard onLogout={handleLogout} />
-              </div>
+            <div className="relative z-20 flex flex-col items-center justify-center min-h-screen overflow-y-auto p-4 sm:p-6">
+               <Dashboard onLogout={handleLogout} />
             </div>
           ) : (
              <LoginForm onLoginSuccess={handleLoginSuccess} />
