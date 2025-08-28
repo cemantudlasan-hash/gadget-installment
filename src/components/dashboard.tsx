@@ -76,7 +76,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       const saleRef = doc(db, "sales", saleId);
       await updateDoc(saleRef, updatedData);
       // Not showing toast here to avoid clutter, can be added if needed
-      onDataChange();
+      fetchAllData();
     } catch (e: any) {
       console.error("Error updating sale:", e);
       toast({
@@ -159,7 +159,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <TabsContent value="reminders">
             <div className={futuristicBgClasses}>
                 <div className="relative z-10">
-                    <RemindersSection sales={sales} commissions={commissions} loading={loadingData} onDataChange={onDataChange} onUpdateSale={handleUpdateSale} />
+                    <RemindersSection sales={sales} commissions={commissions} loading={loadingData} onDataChange={fetchAllData} onUpdateSale={handleUpdateSale} />
                 </div>
             </div>
         </TabsContent>
