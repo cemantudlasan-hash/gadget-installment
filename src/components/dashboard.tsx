@@ -122,7 +122,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </Button>
       </div>
 
-      <div className="text-center text-xs text-slate-500 mb-8">
+      <div className="text-center text-xs text-slate-400 mb-8">
             <p>AI powered @Firebase</p>
             <p>Created and Idea by: Ceman Dejamo Tudlasan</p>
       </div>
@@ -159,7 +159,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <TabsContent value="reminders">
             <div className={futuristicBgClasses}>
                 <div className="relative z-10">
-                    <RemindersSection sales={sales} commissions={commissions} loading={loadingData} onDataChange={fetchAllData} onUpdateSale={handleUpdateSale} />
+                    <RemindersSection sales={sales} commissions={commissions} loading={loadingData} onDataChange={onDataChange} onUpdateSale={handleUpdateSale} />
                 </div>
             </div>
         </TabsContent>
