@@ -1,13 +1,13 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Sale, Commission } from "@/types";
 import { addMonths, differenceInMonths, endOfMonth, format, isAfter, isBefore, parseISO, startOfMonth } from "date-fns";
-import { UserX, AlertTriangle, History, Trash2, Edit, CheckCircle } from "lucide-react";
+import { UserX, AlertTriangle, History, Trash2, Edit, CheckCircle, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,8 +53,19 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
   const [editedPenaltyComment, setEditedPenaltyComment] = useState("");
   const [dismissedReminders, setDismissedReminders] = useState<string[]>([]);
 
+  useEffect(() => {
+    // Load dismissed reminders from sessionStorage on component mount
+    const storedDismissed = sessionStorage.getItem('dismissedReminders');
+    if (storedDismissed) {
+      setDismissedReminders(JSON.parse(storedDismissed));
+    }
+  }, []);
+
   const handleDismissReminder = (saleId: string) => {
-    setDismissedReminders(prev => [...prev, saleId]);
+    const updatedDismissed = [...dismissedReminders, saleId];
+    setDismissedReminders(updatedDismissed);
+    // Save to sessionStorage
+    sessionStorage.setItem('dismissedReminders', JSON.stringify(updatedDismissed));
   };
 
   const overdueCustomers = useMemo(() => {
@@ -249,7 +260,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
         <CardHeader>
           <CardTitle>Overdue Payments</CardTitle>
           <CardDescription>
-            This list shows customers with overdue monthly payments. The list is cleared automatically once a payment is recorded.
+            This list shows customers with overdue monthly payments. You can dismiss a reminder for your current session.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -287,8 +298,8 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                     </TableCell>
                     <TableCell className="text-center">
                       <Button variant="outline" size="sm" onClick={() => handleDismissReminder(sale.id)}>
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Mark as Paid
+                        <BellOff className="mr-2 h-4 w-4" />
+                        Dismiss
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -481,3 +492,4 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
     </div>
   );
 }
+
