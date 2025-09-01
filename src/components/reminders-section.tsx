@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Sale, Commission } from "@/types";
 import { addMonths, differenceInMonths, endOfMonth, format, isAfter, isBefore, parseISO, startOfMonth } from "date-fns";
-import { UserX, AlertTriangle, History, Trash2, Edit } from "lucide-react";
+import { UserX, AlertTriangle, History, Trash2, Edit, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,12 +51,21 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
   const [editingPenalty, setEditingPenalty] = useState<Commission | null>(null);
   const [editedPenaltyAmount, setEditedPenaltyAmount] = useState<number>(0);
   const [editedPenaltyComment, setEditedPenaltyComment] = useState("");
+  const [dismissedReminders, setDismissedReminders] = useState<string[]>([]);
+
+  const handleDismissReminder = (saleId: string) => {
+    setDismissedReminders(prev => [...prev, saleId]);
+  };
 
   const overdueCustomers = useMemo(() => {
     const today = new Date();
     const reminders: OverdueCustomer[] = [];
 
     sales.forEach((sale) => {
+      if (dismissedReminders.includes(sale.id)) {
+        return;
+      }
+      
       if (sale.remainingBalance <= 0 || (sale.paymentInstallments?.every(p => p.isPaid))) {
         return;
       }
@@ -81,7 +90,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
     const uniqueReminders = Array.from(new Map(reminders.map(r => [r.sale.id, r])).values());
 
     return uniqueReminders.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
-  }, [sales]);
+  }, [sales, dismissedReminders]);
 
   const penaltyHistory = useMemo(() => {
     return commissions
@@ -264,6 +273,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                   <TableHead>Gadget</TableHead>
                   <TableHead>Last Due Date</TableHead>
                   <TableHead className="text-right">Amount Due (฿)</TableHead>
+                  <TableHead className="text-center">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -274,6 +284,12 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                     <TableCell>{format(dueDate, "MMMM dd, yyyy")}</TableCell>
                     <TableCell className="text-right font-bold text-red-600 dark:text-red-400">
                       {monthlyPayment.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button variant="outline" size="sm" onClick={() => handleDismissReminder(sale.id)}>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Mark as Paid
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
