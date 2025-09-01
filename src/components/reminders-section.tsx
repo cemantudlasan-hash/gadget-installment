@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Sale, Commission } from "@/types";
 import { addMonths, differenceInMonths, endOfMonth, format, isAfter, isBefore, parseISO, startOfMonth } from "date-fns";
-import { UserX, AlertTriangle, History, Trash2, Edit, CheckCircle, BellOff } from "lucide-react";
+import { UserX, AlertTriangle, History, Trash2, Edit, CheckCircle, BellOff, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,29 +51,32 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
   const [editingPenalty, setEditingPenalty] = useState<Commission | null>(null);
   const [editedPenaltyAmount, setEditedPenaltyAmount] = useState<number>(0);
   const [editedPenaltyComment, setEditedPenaltyComment] = useState("");
-  const [dismissedReminders, setDismissedReminders] = useState<string[]>([]);
 
-  useEffect(() => {
-    // Load dismissed reminders from sessionStorage on component mount
-    const storedDismissed = sessionStorage.getItem('dismissedReminders');
-    if (storedDismissed) {
-      setDismissedReminders(JSON.parse(storedDismissed));
+  const handleDismissReminder = async (saleId: string) => {
+    try {
+      await onUpdateSale(saleId, { reminderDismissed: true });
+      toast({ title: "Reminder Dismissed", description: "The customer has been removed from the overdue list." });
+    } catch(e: any) {
+       toast({ variant: 'destructive', title: "Error", description: `Could not dismiss reminder: ${e.message}` });
     }
-  }, []);
-
-  const handleDismissReminder = (saleId: string) => {
-    const updatedDismissed = [...dismissedReminders, saleId];
-    setDismissedReminders(updatedDismissed);
-    // Save to sessionStorage
-    sessionStorage.setItem('dismissedReminders', JSON.stringify(updatedDismissed));
   };
+  
+  const handleRestoreReminder = async (saleId: string) => {
+     try {
+      await onUpdateSale(saleId, { reminderDismissed: false });
+      toast({ title: "Reminder Restored", description: "The customer has been added back to the overdue list if applicable." });
+    } catch(e: any) {
+       toast({ variant: 'destructive', title: "Error", description: `Could not restore reminder: ${e.message}` });
+    }
+  }
+
 
   const overdueCustomers = useMemo(() => {
     const today = new Date();
     const reminders: OverdueCustomer[] = [];
 
     sales.forEach((sale) => {
-      if (dismissedReminders.includes(sale.id)) {
+      if (sale.reminderDismissed) {
         return;
       }
       
@@ -101,7 +104,12 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
     const uniqueReminders = Array.from(new Map(reminders.map(r => [r.sale.id, r])).values());
 
     return uniqueReminders.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
-  }, [sales, dismissedReminders]);
+  }, [sales]);
+  
+  const dismissedAndPaidSales = useMemo(() => {
+    return sales.filter(s => s.reminderDismissed && s.remainingBalance <= 0);
+  }, [sales]);
+
 
   const penaltyHistory = useMemo(() => {
     return commissions
@@ -260,7 +268,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
         <CardHeader>
           <CardTitle>Overdue Payments</CardTitle>
           <CardDescription>
-            This list shows customers with overdue monthly payments. You can dismiss a reminder for your current session.
+            This list shows customers with overdue monthly payments. You can dismiss a reminder to remove them from this list.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -450,6 +458,43 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                 </Table>
             )}
             </div>
+            
+            <Separator className="my-6" />
+
+             <div>
+                <h4 className="text-md font-semibold mb-2 flex items-center"><CheckCircle className="mr-2 h-5 w-5" /> Dismissed & Paid Off</h4>
+                {loading ? (
+                    <div className="space-y-2">
+                    <Skeleton className="h-10 w-full" />
+                    </div>
+                ) : dismissedAndPaidSales.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-4">No customers have been dismissed from reminders yet.</p>
+                ) : (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                            <TableHead>Customer</TableHead>
+                            <TableHead>Gadget</TableHead>
+                            <TableHead className="text-center">Action</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {dismissedAndPaidSales.map((sale) => (
+                            <TableRow key={sale.id} className="bg-green-50/50 dark:bg-green-900/20">
+                                <TableCell>{sale.customerName}</TableCell>
+                                <TableCell>{sale.gadget}</TableCell>
+                                <TableCell className="text-center">
+                                 <Button variant="outline" size="sm" onClick={() => handleRestoreReminder(sale.id)}>
+                                    <RefreshCw className="mr-2 h-4 w-4" />
+                                    Restore
+                                 </Button>
+                                </TableCell>
+                            </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
+            </div>
         </CardContent>
       </Card>
       
@@ -492,4 +537,3 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
     </div>
   );
 }
-

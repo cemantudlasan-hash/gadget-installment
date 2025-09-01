@@ -29,6 +29,7 @@ export interface Sale {
   paymentType?: string;
   customerNote?: string;
   passportID?: string;
+  reminderDismissed?: boolean;
 }
 
 export interface Commission {
@@ -50,7 +51,3 @@ export interface YearlyReport {
   totalDownPayments: number;
   totalCommission: number;
 }
-
-    
-
-    
