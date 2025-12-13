@@ -3,7 +3,6 @@
 
 import { useRef, useState, useEffect } from "react";
 import html2canvas from "html2canvas";
-import { Packer } from "html-to-docx";
 import { saveAs } from "file-saver";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
@@ -73,6 +72,7 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
 
   const exportToWord = async () => {
     if (contractRef.current) {
+      const htmlToDocx = (await import('html-to-docx')).default;
       const htmlString = `
         <!DOCTYPE html>
         <html>
@@ -92,8 +92,8 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
       `;
 
       try {
-        const fileBuffer = await Packer.toBuffer(htmlString);
-        saveAs(new Blob([fileBuffer]), `agreement-${formData.customerName}.docx`);
+        const fileBuffer = await htmlToDocx(htmlString);
+        saveAs(fileBuffer as Blob, `agreement-${formData.customerName}.docx`);
         toast({ title: "Success", description: "Agreement exported as DOCX." });
       } catch (e) {
         console.error("Error exporting to Word:", e);
