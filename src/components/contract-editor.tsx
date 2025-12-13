@@ -48,7 +48,7 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
         remainingBalance: (sale.sellPrice - sale.downPayment).toFixed(2) || "0.00",
         numberOfInstallments: String(sale.numberOfInstallments) || "0",
         monthlyPayment: sale.monthlyPayment?.toFixed(2) || "0.00",
-        downPaymentDate: sale.dateStart || "",
+        downPaymentDate: sale.dateStart || new Date().toISOString().split("T")[0],
       });
     }
   }, [sale]);
@@ -72,7 +72,7 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
 
   if (!sale) return null;
   
-  const inputClasses = "inline-block bg-transparent border-0 border-b border-dotted border-black rounded-none h-6 px-1 text-center";
+  const inputUnderline = "bg-transparent border-0 border-b-2 border-dotted border-black rounded-none h-6 px-1 focus-visible:ring-0 focus-visible:ring-offset-0";
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -91,40 +91,40 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
           <div className="space-y-2 mb-6">
             <div className="flex items-center">
               <label className="w-32 shrink-0">Name:</label>
-              <Input name="customerName" value={formData.customerName} onChange={handleInputChange} className="flex-1 border-b border-black rounded-none" />
+              <Input name="customerName" value={formData.customerName} onChange={handleInputChange} className={cn(inputUnderline, "flex-1")} />
             </div>
             <div className="flex items-center">
               <label className="w-32 shrink-0">Contact Number:</label>
-              <Input name="contactNumber" value={formData.contactNumber} onChange={handleInputChange} className="flex-1 border-b border-black rounded-none" />
+              <Input name="contactNumber" value={formData.contactNumber} onChange={handleInputChange} className={cn(inputUnderline, "flex-1")} />
             </div>
             <div className="flex items-center">
               <label className="w-32 shrink-0">Address:</label>
-              <Input name="address" value={formData.address} onChange={handleInputChange} className="flex-1 border-b border-black rounded-none" />
+              <Input name="address" value={formData.address} onChange={handleInputChange} className={cn(inputUnderline, "flex-1")} />
             </div>
           </div>
           
-          <hr className="my-6" />
+          <hr className="my-6 border-black" />
 
           <h3 className="text-center font-bold mb-4">Proof and Agreement</h3>
 
           <div className="text-justify leading-relaxed space-y-4">
-            <div>
+            <div className="flex flex-wrap items-end">
               This letter of agreement is made for Ms/Mr
-              <Input name="customerName" value={formData.customerName} onChange={handleInputChange} className={cn(inputClasses, "w-48")} /> 
+              <Input name="customerName" value={formData.customerName} onChange={handleInputChange} className={cn(inputUnderline, "flex-grow min-w-[150px] mx-1 text-center")} /> 
               for she/he has made a cash instalment for gadget which is gadget:
-              <Input name="gadget" value={formData.gadget} onChange={handleInputChange} className={cn(inputClasses, "w-32")} />
+              <Input name="gadget" value={formData.gadget} onChange={handleInputChange} className={cn(inputUnderline, "flex-grow min-w-[100px] mx-1 text-center")} />
               Worth
-              <Input name="totalAmount" value={formData.totalAmount} onChange={handleInputChange} className={cn(inputClasses, "w-24")} /> 
+              <Input name="totalAmount" value={formData.totalAmount} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1 text-center")} /> 
               baht, She/he paid
-              <Input name="downPayment" value={formData.downPayment} onChange={handleInputChange} className={cn(inputClasses, "w-24")} />
+              <Input name="downPayment" value={formData.downPayment} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1 text-center")} />
               baht as an initial payment with the total amount of
-              <Input name="remainingBalance" value={formData.remainingBalance} onChange={handleInputChange} className={cn(inputClasses, "w-24")} />
+              <Input name="remainingBalance" value={formData.remainingBalance} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1 text-center")} />
               and she/he promised to pay the remaining balance
-              <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className={cn(inputClasses, "w-24")} />
+              <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1 text-center")} />
               thb every month for
-              <Input name="numberOfInstallments" value={formData.numberOfInstallments} onChange={handleInputChange} className={cn(inputClasses, "w-16")} />
+              <Input name="numberOfInstallments" value={formData.numberOfInstallments} onChange={handleInputChange} className={cn(inputUnderline, "w-16 mx-1 text-center")} />
               months. Which cost 
-              <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className={cn(inputClasses, "w-24")} />
+              <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1 text-center")} />
               thb monthly. If ever the buyer doesn't pay the remaining balance within months, we will use the letter and her/his documents to post online and also, for police reporting or we will get back the laptop and hold it in our shop until she/he will pay the payment
             </div>
             <p>
@@ -134,7 +134,7 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
           
           <div className="flex items-center mt-6">
             <label className="w-40 shrink-0">Date of Downpayment:</label>
-            <Input name="downPaymentDate" value={formData.downPaymentDate} onChange={handleInputChange} className="border-b border-black rounded-none" />
+            <Input name="downPaymentDate" value={formData.downPaymentDate} onChange={handleInputChange} className={cn(inputUnderline, "flex-1")} type="date"/>
           </div>
 
           <div className="flex justify-between mt-16 pt-8">
@@ -161,3 +161,5 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
     </Dialog>
   );
 }
+
+    
