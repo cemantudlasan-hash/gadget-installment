@@ -79,7 +79,7 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
           <DialogTitle>Contract Agreement Editor</DialogTitle>
         </DialogHeader>
 
-        <div ref={contractRef} className="p-8 bg-white text-black">
+        <div ref={contractRef} className="p-8 bg-white text-black text-sm">
           <div className="text-center mb-4">
             <h2 className="text-lg font-bold">Saowakon Noycumlee</h2>
             <p className="text-sm">Buengkan, Thailand</p>
@@ -89,15 +89,15 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
           <div className="space-y-2 mb-6">
             <div className="flex items-center">
               <label className="w-32">Name:</label>
-              <Input name="customerName" value={formData.customerName} onChange={handleInputChange} className="border-b border-black rounded-none" />
+              <Input name="customerName" value={formData.customerName} onChange={handleInputChange} className="border-b border-black rounded-none flex-1" />
             </div>
             <div className="flex items-center">
               <label className="w-32">Contact Number:</label>
-              <Input name="contactNumber" value={formData.contactNumber} onChange={handleInputChange} className="border-b border-black rounded-none" />
+              <Input name="contactNumber" value={formData.contactNumber} onChange={handleInputChange} className="border-b border-black rounded-none flex-1" />
             </div>
             <div className="flex items-center">
               <label className="w-32">Address:</label>
-              <Input name="address" value={formData.address} onChange={handleInputChange} className="border-b border-black rounded-none" />
+              <Input name="address" value={formData.address} onChange={handleInputChange} className="border-b border-black rounded-none flex-1" />
             </div>
           </div>
           
@@ -105,28 +105,30 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
 
           <h3 className="text-center font-bold mb-4">Proof and Agreement</h3>
 
-          <p className="text-justify leading-relaxed">
-            This letter of agreement is made for Ms/Mr 
-            <Input name="customerName" value={formData.customerName} onChange={handleInputChange} className="inline-block w-48 mx-1 px-1 border-b border-black rounded-none h-6" /> 
-            for she/he has made a cash instalment for gadget which is gadget:
-            <Input name="gadget" value={formData.gadget} onChange={handleInputChange} className="inline-block w-48 mx-1 px-1 border-b border-black rounded-none h-6" />
-            Worth
-            <Input name="totalAmount" value={formData.totalAmount} onChange={handleInputChange} className="inline-block w-24 mx-1 px-1 border-b border-black rounded-none h-6" /> 
-            baht, She/he paid
-            <Input name="downPayment" value={formData.downPayment} onChange={handleInputChange} className="inline-block w-24 mx-1 px-1 border-b border-black rounded-none h-6" />
-            baht as an initial payment with the total amount of
-            <Input name="remainingBalance" value={formData.remainingBalance} onChange={handleInputChange} className="inline-block w-24 mx-1 px-1 border-b border-black rounded-none h-6" />
-            and she/he promised to pay the remaining balance
-            <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className="inline-block w-24 mx-1 px-1 border-b border-black rounded-none h-6" />
-            thb every month for
-            <Input name="numberOfInstallments" value={formData.numberOfInstallments} onChange={handleInputChange} className="inline-block w-16 mx-1 px-1 border-b border-black rounded-none h-6" />
-            months. Which cost 
-            <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className="inline-block w-24 mx-1 px-1 border-b border-black rounded-none h-6" />
-            thb monthly. If ever the buyer doesn't pay the remaining balance within months, we will use the letter and her/his documents to post online and also, for police reporting or we will get back the laptop and hold it in our shop until she/he will pay the payment.
-          </p>
-          <p className="text-justify leading-relaxed mt-4">
-            If the buyer is delayed to his/her payment every end of the month until the 6th day of the new month, the remaining days he/she will pay a penalty with an amount of 40 baht per day until he/she can pay including his/her monthly payment.
-          </p>
+          <div className="text-justify leading-relaxed space-y-4">
+            <div>
+              This letter of agreement is made for Ms/Mr
+              <Input name="customerName" value={formData.customerName} onChange={handleInputChange} className="inline-block w-48 mx-1 px-1 border-b border-black rounded-none h-6" /> 
+              for she/he has made a cash instalment for gadget which is gadget:
+              <Input name="gadget" value={formData.gadget} onChange={handleInputChange} className="inline-block w-48 mx-1 px-1 border-b border-black rounded-none h-6" />
+              Worth
+              <Input name="totalAmount" value={formData.totalAmount} onChange={handleInputChange} className="inline-block w-24 mx-1 px-1 border-b border-black rounded-none h-6" /> 
+              baht, She/he paid
+              <Input name="downPayment" value={formData.downPayment} onChange={handleInputChange} className="inline-block w-24 mx-1 px-1 border-b border-black rounded-none h-6" />
+              baht as an initial payment with the total amount of
+              <Input name="remainingBalance" value={formData.remainingBalance} onChange={handleInputChange} className="inline-block w-24 mx-1 px-1 border-b border-black rounded-none h-6" />
+              and she/he promised to pay the remaining balance
+              <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className="inline-block w-24 mx-1 px-1 border-b border-black rounded-none h-6" />
+              thb every month for
+              <Input name="numberOfInstallments" value={formData.numberOfInstallments} onChange={handleInputChange} className="inline-block w-16 mx-1 px-1 border-b border-black rounded-none h-6" />
+              months. Which cost 
+              <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className="inline-block w-24 mx-1 px-1 border-b border-black rounded-none h-6" />
+              thb monthly. If ever the buyer doesn't pay the remaining balance within months, we will use the letter and her/his documents to post online and also, for police reporting or we will get back the laptop and hold it in our shop until she/he will pay the payment.
+            </div>
+            <p>
+              If the buyer is delayed to his/her payment every end of the month until the 6th day of the new month, the remaining days he/she will pay a penalty with an amount of 40 baht per day until he/she can pay including his/her monthly payment.
+            </p>
+          </div>
           
           <div className="flex items-center mt-6">
             <label className="w-40">Date of Downpayment:</label>
@@ -157,3 +159,4 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
     </Dialog>
   );
 }
+
