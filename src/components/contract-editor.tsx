@@ -60,15 +60,32 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
 
   const exportToJpg = () => {
     if (contractRef.current) {
-      html2canvas(contractRef.current, { scale: 2 }).then(canvas => {
+        const inputs = contractRef.current.querySelectorAll('input');
+        inputs.forEach(input => {
+            const span = document.createElement('span');
+            span.className = 'text-center font-semibold';
+            span.textContent = input.value;
+            input.parentNode?.replaceChild(span, input);
+        });
+
+      html2canvas(contractRef.current, { scale: 2, useCORS: true }).then(canvas => {
         const link = document.createElement("a");
         link.download = `agreement-${formData.customerName}.jpg`;
         link.href = canvas.toDataURL("image/jpeg");
         link.click();
         toast({ title: "Success", description: "Agreement exported as JPG." });
-      });
+        onClose(); // Close the dialog after export
+      }).catch(err => {
+        console.error('Error exporting to JPG:', err);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Could not export the agreement.',
+        });
+      })
     }
   };
+
 
   if (!sale) return null;
   
@@ -108,9 +125,9 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
           <h3 className="text-center font-bold mb-4">Proof and Agreement</h3>
 
           <div className="text-justify leading-relaxed space-y-4">
-            <div className="flex flex-wrap items-end">
+            <p>
               This letter of agreement is made for Ms/Mr
-              <Input name="customerName" value={formData.customerName} onChange={handleInputChange} className={cn(inputUnderline, "flex-grow min-w-[150px] mx-1 text-center")} /> 
+              <Input name="customerName" value={formData.customerName} onChange={handleInputChange} className={cn(inputUnderline, "w-48 mx-1 text-center")} /> 
               for she/he has made a cash instalment for gadget which is gadget:
               <Input name="gadget" value={formData.gadget} onChange={handleInputChange} className={cn(inputUnderline, "flex-grow min-w-[100px] mx-1 text-center")} />
               Worth
@@ -124,9 +141,9 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
               thb every month for
               <Input name="numberOfInstallments" value={formData.numberOfInstallments} onChange={handleInputChange} className={cn(inputUnderline, "w-16 mx-1 text-center")} />
               months. Which cost 
-              <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1 text-center")} />
+              <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1 text-center")} readOnly />
               thb monthly. If ever the buyer doesn't pay the remaining balance within months, we will use the letter and her/his documents to post online and also, for police reporting or we will get back the laptop and hold it in our shop until she/he will pay the payment
-            </div>
+            </p>
             <p>
               If the buyer is delayed to his/her payment every end of the month until the 6th day of the new month, the remaining days he/she will pay a penalty with an amount of 40 baht per day until he/she can pay including his/her monthly payment.
             </p>
@@ -162,4 +179,3 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
   );
 }
 
-    
