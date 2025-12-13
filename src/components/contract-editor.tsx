@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import type { Sale } from "@/types";
-import { X, Download, FileText, Image as ImageIcon } from "lucide-react";
+import { X, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ContractEditorProps {
@@ -67,38 +67,6 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
         link.click();
         toast({ title: "Success", description: "Agreement exported as JPG." });
       });
-    }
-  };
-
-  const exportToWord = async () => {
-    if (contractRef.current) {
-      const htmlToDocx = (await import('html-to-docx')).default;
-      const htmlString = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; }
-            p { margin: 0 0 10px 0; }
-            .header, .footer { text-align: center; }
-            .content { text-align: justify; }
-            .signature { margin-top: 50px; text-align: right; }
-          </style>
-        </head>
-        <body>
-          ${contractRef.current.innerHTML}
-        </body>
-        </html>
-      `;
-
-      try {
-        const fileBuffer = await htmlToDocx(htmlString);
-        saveAs(fileBuffer as Blob, `agreement-${formData.customerName}.docx`);
-        toast({ title: "Success", description: "Agreement exported as DOCX." });
-      } catch (e) {
-        console.error("Error exporting to Word:", e);
-        toast({ variant: "destructive", title: "Error", description: "Could not export to Word." });
-      }
     }
   };
 
@@ -183,9 +151,6 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
           </Button>
           <Button onClick={exportToJpg} className="bg-blue-600 hover:bg-blue-700">
             <ImageIcon className="mr-2 h-4 w-4" /> Export as JPG
-          </Button>
-          <Button onClick={exportToWord} className="bg-green-600 hover:bg-green-700">
-            <FileText className="mr-2 h-4 w-4" /> Export as Word
           </Button>
         </DialogFooter>
       </DialogContent>
