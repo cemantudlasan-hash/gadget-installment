@@ -60,20 +60,20 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
 
   const exportToJpg = () => {
     if (contractRef.current) {
-      const inputs = contractRef.current.querySelectorAll('input');
+      const inputs = Array.from(contractRef.current.querySelectorAll('input'));
       const spans: HTMLElement[] = [];
       
       inputs.forEach(input => {
           const span = document.createElement('span');
-          span.className = 'text-center font-semibold inline-block';
+          span.className = 'text-center font-semibold inline-block border-b border-dotted border-black';
           span.textContent = input.value;
           
-          // Match the width of the input to keep the layout consistent
-          span.style.width = `${input.offsetWidth}px`;
-          span.style.borderBottom = '1px dotted black';
-          span.style.padding = '0 1px';
+          span.style.minWidth = `${input.offsetWidth}px`;
+          span.style.padding = '0 2px';
+          span.style.display = 'inline-block';
 
-          input.parentNode?.replaceChild(span, input);
+          input.style.display = 'none'; // Hide the input
+          input.parentNode?.insertBefore(span, input.nextSibling); // Insert span after input
           spans.push(span);
       });
 
@@ -84,10 +84,8 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
         link.click();
         toast({ title: "Success", description: "Agreement exported as JPG." });
         
-        // Restore inputs after capturing
-        spans.forEach((span, index) => {
-           span.parentNode?.replaceChild(inputs[index], span);
-        });
+        spans.forEach(span => span.remove());
+        inputs.forEach(input => input.style.display = 'inline-block');
 
         onClose();
       }).catch(err => {
@@ -98,13 +96,12 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
           description: 'Could not export the agreement.',
         });
         
-         // Restore inputs if export fails
-        spans.forEach((span, index) => {
-           span.parentNode?.replaceChild(inputs[index], span);
-        });
+        spans.forEach(span => span.remove());
+        inputs.forEach(input => input.style.display = 'inline-block');
       })
     }
   };
+
 
   if (!sale) return null;
   
@@ -144,7 +141,7 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
           <h3 className="text-center font-bold mb-4">Proof and Agreement</h3>
 
           <div className="text-justify leading-relaxed space-y-4">
-            <p className="flex flex-wrap items-baseline">
+             <div className="flex flex-wrap items-baseline">
                 <span>This letter of agreement is made for Ms/Mr</span>
                 <Input name="customerName" value={formData.customerName} onChange={handleInputChange} className={cn(inputUnderline, "w-48 mx-1")} /> 
                 <span>for she/he has made a cash instalment for gadget which is gadget:</span>
@@ -162,7 +159,7 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
                 <span>months. Which cost </span> 
                 <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1")} readOnly />
                 <span>thb monthly. If ever the buyer doesn't pay the remaining balance within months, we will use the letter and her/his documents to post online and also, for police reporting or we will get back the laptop and hold it in our shop until she/he will pay the payment.</span>
-            </p>
+            </div>
             <p>
               If the buyer is delayed to his/her payment every end of the month until the 6th day of the new month, the remaining days he/she will pay a penalty with an amount of 40 baht per day until he/she can pay including his/her monthly payment.
             </p>
@@ -197,5 +194,3 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
     </Dialog>
   );
 }
-
-    
