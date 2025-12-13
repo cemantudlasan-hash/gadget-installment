@@ -261,6 +261,26 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
     });
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+
+    // Auto-adjust column widths
+    const objectMaxLength: number[] = [];
+    dataToExport.forEach(obj => {
+        Object.values(obj).forEach((value, i) => {
+            const val = value ? String(value) : '';
+            objectMaxLength[i] = objectMaxLength[i] >= val.length ? objectMaxLength[i] : val.length;
+        });
+    });
+
+    const headers = Object.keys(dataToExport[0]);
+    const colWidths = headers.map((header, i) => {
+        const headerLength = header ? header.length : 0;
+        const maxLength = Math.max(headerLength, objectMaxLength[i] || 0);
+        return { wch: maxLength + 2 }; // +2 for a little padding
+    });
+    
+    worksheet["!cols"] = colWidths;
+
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Sales Data");
     XLSX.writeFile(workbook, "Gadget_Installment_Report.xlsx");
