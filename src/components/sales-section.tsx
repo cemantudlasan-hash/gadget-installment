@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import { useState, useMemo } from "react";
+import * as XLSX from "xlsx";
 import { useFirebase } from "@/lib/firebase/context";
 import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs, query, where, writeBatch } from "firebase/firestore";
 import SalesForm from "./sales-form";
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { Sale } from "@/types";
-import { PlusCircle, ChevronDown } from "lucide-react";
+import { PlusCircle, ChevronDown, FileSpreadsheet } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import CustomerDetails from "./customer-details"; // Import the new component
 import {
@@ -232,6 +233,54 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
     }
   };
 
+  const handleExcelExport = () => {
+    const dataToExport = sales.flatMap(sale => {
+      const baseInfo = {
+        'Customer Name': sale.customerName,
+        'Gadget': sale.gadget,
+        'Pieces': sale.pieces,
+        'Sell Price': sale.sellPrice,
+        'Down Payment': sale.downPayment,
+        'Total Amount Due': sale.totalAmountDue,
+        'Total Paid': sale.totalPaidAmount,
+        'Remaining Balance': sale.remainingBalance,
+        'Start Date': sale.dateStart,
+        '# of Installments': sale.numberOfInstallments,
+        'Monthly Payment': sale.monthlyPayment,
+        'Sale Status': sale.remainingBalance <= 0 ? 'Paid' : 'Ongoing',
+      };
+
+      if (sale.paymentInstallments.length === 0) {
+        return [{...baseInfo, 
+          'Installment Month': 'N/A',
+          'Due Amount': 'N/A',
+          'Paid Amount': 'N/A',
+          'Payment Status': 'N/A',
+          'Last Payment Date': 'N/A',
+        }];
+      }
+
+      return sale.paymentInstallments.map(inst => ({
+        ...baseInfo,
+        'Installment Month': inst.month,
+        'Due Amount': inst.dueAmount,
+        'Paid Amount': inst.paidAmount,
+        'Payment Status': inst.isPaid ? 'Paid' : 'Pending',
+        'Last Payment Date': inst.lastPaymentDate || '',
+      }));
+    });
+    
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sales Data");
+    XLSX.writeFile(workbook, "Gadget_Installment_Report.xlsx");
+
+    toast({
+      title: "Export Successful",
+      description: "Your sales data has been downloaded as an Excel file.",
+    });
+  };
+
 
   const customerNames = useMemo(() => {
     const uniqueNames = new Set(sales.map(s => s.customerName));
@@ -267,7 +316,13 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
 
       <Card>
         <CardHeader>
-          <CardTitle>Existing Installment Plans</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Existing Installment Plans</CardTitle>
+            <Button variant="outline" onClick={handleExcelExport} disabled={sales.length === 0}>
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Download Excel
+            </Button>
+          </div>
           <div className="pt-4 flex items-center gap-4">
             <Label>Filter by Customer</Label>
             <DropdownMenu>
