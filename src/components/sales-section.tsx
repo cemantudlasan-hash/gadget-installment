@@ -234,7 +234,9 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
   };
 
   const handleExcelExport = () => {
-    const dataToExport = sales.map(sale => {
+    const sortedSales = [...sales].sort((a, b) => a.customerName.localeCompare(b.customerName));
+    
+    const dataToExport = sortedSales.map(sale => {
       const row: { [key: string]: any } = {
         'Customer Name': sale.customerName,
         'Gadget': sale.gadget,
