@@ -234,8 +234,8 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
   };
 
   const handleExcelExport = () => {
-    const dataToExport = sales.flatMap(sale => {
-      const baseInfo = {
+    const dataToExport = sales.map(sale => {
+      const row: { [key: string]: any } = {
         'Customer Name': sale.customerName,
         'Gadget': sale.gadget,
         'Pieces': sale.pieces,
@@ -249,27 +249,17 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
         'Monthly Payment': sale.monthlyPayment,
         'Sale Status': sale.remainingBalance <= 0 ? 'Paid' : 'Ongoing',
       };
-
-      if (sale.paymentInstallments.length === 0) {
-        return [{...baseInfo, 
-          'Installment Month': 'N/A',
-          'Due Amount': 'N/A',
-          'Paid Amount': 'N/A',
-          'Payment Status': 'N/A',
-          'Last Payment Date': 'N/A',
-        }];
-      }
-
-      return sale.paymentInstallments.map(inst => ({
-        ...baseInfo,
-        'Installment Month': inst.month,
-        'Due Amount': inst.dueAmount,
-        'Paid Amount': inst.paidAmount,
-        'Payment Status': inst.isPaid ? 'Paid' : 'Pending',
-        'Last Payment Date': inst.lastPaymentDate || '',
-      }));
+  
+      sale.paymentInstallments.forEach(inst => {
+        row[`Month ${inst.month} Due`] = inst.dueAmount;
+        row[`Month ${inst.month} Paid`] = inst.paidAmount;
+        row[`Month ${inst.month} Status`] = inst.isPaid ? 'Paid' : 'Pending';
+        row[`Month ${inst.month} Date`] = inst.lastPaymentDate || '';
+      });
+  
+      return row;
     });
-    
+
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Sales Data");
