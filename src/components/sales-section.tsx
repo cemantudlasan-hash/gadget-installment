@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { Sale } from "@/types";
-import { PlusCircle, ChevronDown, FileSpreadsheet } from "lucide-react";
+import { PlusCircle, ChevronDown, FileSpreadsheet, FileText } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import CustomerDetails from "./customer-details"; // Import the new component
 import {
@@ -21,6 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import ContractEditor from "./contract-editor";
 
 interface SalesSectionProps {
   sales: Sale[];
@@ -37,6 +38,7 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
   const [selectedCustomer, setSelectedCustomer] = useState("");
   const [showSalesForm, setShowSalesForm] = useState(false);
   const [expandedSaleId, setExpandedSaleId] = useState<string | null>(null);
+  const [contractSale, setContractSale] = useState<Sale | null>(null);
 
   const handleToggleSaleDetails = (saleId: string) => {
     setExpandedSaleId(prevId => (prevId === saleId ? null : saleId));
@@ -309,6 +311,11 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
     setShowSalesForm(true);
   };
 
+  const handleOpenContract = (sale: Sale) => {
+    setContractSale(sale);
+  };
+
+
   const handleAddNewCustomer = () => {
     setEditingSale(null);
     setShowSalesForm(true);
@@ -324,6 +331,14 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
             <PlusCircle className="mr-2 h-5 w-5" /> Add New Customer
           </Button>
         </div>
+      )}
+
+      {contractSale && (
+        <ContractEditor
+          sale={contractSale}
+          isOpen={!!contractSale}
+          onClose={() => setContractSale(null)}
+        />
       )}
 
       <Card>
@@ -379,6 +394,7 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
                   onDeleteSale={handleDeleteSale}
                   onRecordPayment={handleRecordPayment}
                   onEditPayment={handleEditPayment}
+                  onOpenContract={handleOpenContract}
                 />
               ))}
             </div>

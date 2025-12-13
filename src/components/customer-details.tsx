@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Edit, Trash2, Receipt, ChevronDown } from "lucide-react";
+import { Edit, Trash2, Receipt, ChevronDown, FileText } from "lucide-react";
 import PaymentRecorder from './payment-recorder';
 import CustomerReceipt from './customer-receipt';
 import { cn } from '@/lib/utils';
@@ -20,9 +20,10 @@ interface CustomerDetailsProps {
     onDeleteSale: (sale: Sale) => void;
     onRecordPayment: (saleId: string, amount: number, date: string) => void;
     onEditPayment: (saleId: string, month: number, amount: number, date: string) => void;
+    onOpenContract: (sale: Sale) => void;
 }
 
-export default function CustomerDetails({ sale, isOpen, onToggle, onEditSale, onDeleteSale, onRecordPayment, onEditPayment }: CustomerDetailsProps) {
+export default function CustomerDetails({ sale, isOpen, onToggle, onEditSale, onDeleteSale, onRecordPayment, onEditPayment, onOpenContract }: CustomerDetailsProps) {
     const [receiptData, setReceiptData] = React.useState<Sale | null>(null);
     const [showReceipt, setShowReceipt] = React.useState(false);
 
@@ -39,6 +40,7 @@ export default function CustomerDetails({ sale, isOpen, onToggle, onEditSale, on
                      <div className={cn("flex items-center", isSpecialCustomer ? "text-slate-900" : "")}>
                         <Button variant="ghost" size="icon" onClick={() => onEditSale(sale)}><Edit className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => { setReceiptData(sale); setShowReceipt(true); }}><Receipt className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => onOpenContract(sale)}><FileText className="h-4 w-4" /></Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
                           <AlertDialogContent>
