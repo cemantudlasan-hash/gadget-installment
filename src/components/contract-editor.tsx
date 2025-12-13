@@ -60,21 +60,36 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
 
   const exportToJpg = () => {
     if (contractRef.current) {
-        const inputs = contractRef.current.querySelectorAll('input');
-        inputs.forEach(input => {
-            const span = document.createElement('span');
-            span.className = 'text-center font-semibold';
-            span.textContent = input.value;
-            input.parentNode?.replaceChild(span, input);
-        });
+      const inputs = contractRef.current.querySelectorAll('input');
+      const spans: HTMLElement[] = [];
+      
+      inputs.forEach(input => {
+          const span = document.createElement('span');
+          span.className = 'text-center font-semibold inline-block';
+          span.textContent = input.value;
+          
+          // Match the width of the input to keep the layout consistent
+          span.style.width = `${input.offsetWidth}px`;
+          span.style.borderBottom = '1px dotted black';
+          span.style.padding = '0 1px';
 
-      html2canvas(contractRef.current, { scale: 2, useCORS: true }).then(canvas => {
+          input.parentNode?.replaceChild(span, input);
+          spans.push(span);
+      });
+
+      html2canvas(contractRef.current, { scale: 2.5, useCORS: true }).then(canvas => {
         const link = document.createElement("a");
         link.download = `agreement-${formData.customerName}.jpg`;
-        link.href = canvas.toDataURL("image/jpeg");
+        link.href = canvas.toDataURL("image/jpeg", 1.0);
         link.click();
         toast({ title: "Success", description: "Agreement exported as JPG." });
-        onClose(); // Close the dialog after export
+        
+        // Restore inputs after capturing
+        spans.forEach((span, index) => {
+           span.parentNode?.replaceChild(inputs[index], span);
+        });
+
+        onClose();
       }).catch(err => {
         console.error('Error exporting to JPG:', err);
         toast({
@@ -82,14 +97,18 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
           title: 'Error',
           description: 'Could not export the agreement.',
         });
+        
+         // Restore inputs if export fails
+        spans.forEach((span, index) => {
+           span.parentNode?.replaceChild(inputs[index], span);
+        });
       })
     }
   };
 
-
   if (!sale) return null;
   
-  const inputUnderline = "bg-transparent border-0 border-b-2 border-dotted border-black rounded-none h-6 px-1 focus-visible:ring-0 focus-visible:ring-offset-0";
+  const inputUnderline = "bg-transparent border-0 border-b border-dotted border-black rounded-none h-6 px-1 text-center focus-visible:ring-0 focus-visible:ring-offset-0";
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -125,24 +144,24 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
           <h3 className="text-center font-bold mb-4">Proof and Agreement</h3>
 
           <div className="text-justify leading-relaxed space-y-4">
-            <p>
-              This letter of agreement is made for Ms/Mr
-              <Input name="customerName" value={formData.customerName} onChange={handleInputChange} className={cn(inputUnderline, "w-48 mx-1 text-center")} /> 
-              for she/he has made a cash instalment for gadget which is gadget:
-              <Input name="gadget" value={formData.gadget} onChange={handleInputChange} className={cn(inputUnderline, "flex-grow min-w-[100px] mx-1 text-center")} />
-              Worth
-              <Input name="totalAmount" value={formData.totalAmount} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1 text-center")} /> 
-              baht, She/he paid
-              <Input name="downPayment" value={formData.downPayment} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1 text-center")} />
-              baht as an initial payment with the total amount of
-              <Input name="remainingBalance" value={formData.remainingBalance} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1 text-center")} />
-              and she/he promised to pay the remaining balance
-              <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1 text-center")} />
-              thb every month for
-              <Input name="numberOfInstallments" value={formData.numberOfInstallments} onChange={handleInputChange} className={cn(inputUnderline, "w-16 mx-1 text-center")} />
-              months. Which cost 
-              <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1 text-center")} readOnly />
-              thb monthly. If ever the buyer doesn't pay the remaining balance within months, we will use the letter and her/his documents to post online and also, for police reporting or we will get back the laptop and hold it in our shop until she/he will pay the payment
+            <p className="flex flex-wrap items-baseline">
+                <span>This letter of agreement is made for Ms/Mr</span>
+                <Input name="customerName" value={formData.customerName} onChange={handleInputChange} className={cn(inputUnderline, "w-48 mx-1")} /> 
+                <span>for she/he has made a cash instalment for gadget which is gadget:</span>
+                <Input name="gadget" value={formData.gadget} onChange={handleInputChange} className={cn(inputUnderline, "flex-grow min-w-[100px] mx-1")} />
+                <span>Worth</span>
+                <Input name="totalAmount" value={formData.totalAmount} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1")} /> 
+                <span>baht, She/he paid</span>
+                <Input name="downPayment" value={formData.downPayment} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1")} />
+                <span>baht as an initial payment with the total amount of</span>
+                <Input name="remainingBalance" value={formData.remainingBalance} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1")} />
+                <span>and she/he promised to pay the remaining balance</span>
+                <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1")} />
+                <span>thb every month for</span>
+                <Input name="numberOfInstallments" value={formData.numberOfInstallments} onChange={handleInputChange} className={cn(inputUnderline, "w-16 mx-1")} />
+                <span>months. Which cost </span> 
+                <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className={cn(inputUnderline, "w-24 mx-1")} readOnly />
+                <span>thb monthly. If ever the buyer doesn't pay the remaining balance within months, we will use the letter and her/his documents to post online and also, for police reporting or we will get back the laptop and hold it in our shop until she/he will pay the payment.</span>
             </p>
             <p>
               If the buyer is delayed to his/her payment every end of the month until the 6th day of the new month, the remaining days he/she will pay a penalty with an amount of 40 baht per day until he/she can pay including his/her monthly payment.
@@ -179,3 +198,4 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
   );
 }
 
+    
