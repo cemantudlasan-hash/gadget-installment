@@ -7,11 +7,11 @@ import { saveAs } from "file-saver";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import type { Sale } from "@/types";
 import { X, Image as ImageIcon, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { exportToWord as exportToWordAction } from "@/app/actions/export-to-word";
 
 interface ContractEditorProps {
   sale: Sale | null;
@@ -58,76 +58,72 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const getContractHTML = () => {
+    return `
+      <div class="p-8 bg-white text-black text-sm font-serif" style="width: 800px; font-family: 'Times New Roman', serif;">
+          <div style="text-align: center; margin-bottom: 1.5rem;">
+              <h2 style="font-size: 1.125rem; font-weight: bold;">Saowakon Noycumlee</h2>
+              <p style="font-size: 0.875rem;">Buengkan, Thailand</p>
+              <p style="font-size: 0.875rem;">Pharmacist/Businesswoman</p>
+          </div>
+          <div style="margin-bottom: 1.5rem; line-height: 1.75;">
+              <p>Name: <span style="font-weight: bold;">${formData.customerName}</span></p>
+              <p>Contact Number: <span style="font-weight: bold;">${formData.contactNumber}</span></p>
+              <p>Address: <span style="font-weight: bold;">${formData.address}</span></p>
+          </div>
+          <hr style="margin: 1.5rem 0; border-top: 1px solid black;" />
+          <h3 style="text-align: center; font-weight: bold; margin-bottom: 1rem;">Proof and Agreement</h3>
+          <div style="text-align: justify; line-height: 1.625; margin-bottom: 1.5rem;">
+              <p style="margin-bottom: 1rem;">
+                  This letter of agreement is made for Ms/Mr <span style="font-weight: bold;">${formData.customerName}</span> for she/he has made a cash instalment for gadget which is item: <span style="font-weight: bold;">${formData.gadget}</span>.
+              </p>
+              <p style="margin-bottom: 1rem;">
+                  Worth <span style="font-weight: bold;">${formData.totalAmount}</span> baht, She/he paid <span style="font-weight: bold;">${formData.downPayment}</span> baht as an initial payment with the total amount of <span style="font-weight: bold;">${formData.remainingBalance}</span> and she/he promised to pay the remaining balance <span style="font-weight: bold;">${formData.monthlyPayment}</span> thb every month for <span style="font-weight: bold;">${formData.numberOfInstallments}</span> months. Which cost <span style="font-weight: bold;">${formData.monthlyPayment}</span> thb monthly. If ever the buyer doesn't pay the remaining balance within months, we will use the letter and her/his documents to post online and also, for police reporting or we will get back the item and hold it in our shop until she/he will pay the payment.
+              </p>
+              <p>
+                If the buyer is delayed to his/her payment every end of the month until the 6th day of the new month, the remaining days he/she will pay a penalty with an amount of 40 baht per day until he/she can pay including his/her monthly payment.
+              </p>
+          </div>
+          <div style="margin-top: 1.5rem;">
+              <p>Date of Downpayment: <span style="font-weight: bold;">${formData.downPaymentDate}</span></p>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-top: 4rem; padding-top: 2rem;">
+              <div style="text-align: center;">
+                  <p style="font-weight: bold; border-top: 1px solid black; padding: 0 2rem;">Saowakon Noycumlee</p>
+                  <p style="font-size: 0.875rem;">Businesswoman/Pharmacist</p>
+              </div>
+              <div style="text-align: center;">
+                  <div style="border-top: 1px solid black; width: 12rem; margin-bottom: 0.25rem;"></div>
+                  <p style="font-size: 0.875rem;">Buyer's Signature</p>
+              </div>
+          </div>
+      </div>
+    `;
+  };
+
   const exportToJpg = () => {
-    if (contractRef.current) {
-        // Create a new container for the printable version
-        const printable = document.createElement('div');
-        printable.className = "p-8 bg-white text-black text-sm font-serif";
-        printable.style.width = contractRef.current.offsetWidth + 'px';
-        printable.style.position = 'absolute';
-        printable.style.left = '-9999px'; // Render off-screen
+    const printableElement = document.createElement('div');
+    printableElement.innerHTML = getContractHTML();
+    document.body.appendChild(printableElement);
 
-        // Manually reconstruct the content with bold spans instead of inputs
-        printable.innerHTML = `
-            <div class="text-center mb-6">
-                <h2 class="text-lg font-bold">Saowakon Noycumlee</h2>
-                <p class="text-sm">Buengkan, Thailand</p>
-                <p class="text-sm">Pharmacist/Businesswoman</p>
-            </div>
-            <div class="space-y-2 mb-6">
-                <p>Name: <span class="font-bold">${formData.customerName}</span></p>
-                <p>Contact Number: <span class="font-bold">${formData.contactNumber}</span></p>
-                <p>Address: <span class="font-bold">${formData.address}</span></p>
-            </div>
-            <hr class="my-6 border-black" />
-            <h3 class="text-center font-bold mb-4">Proof and Agreement</h3>
-            <div class="text-justify leading-relaxed space-y-4">
-                <p>
-                    This letter of agreement is made for Ms/Mr <span class="font-bold">${formData.customerName}</span> for she/he has made a cash instalment for gadget which is gadget: <span class="font-bold">${formData.gadget}</span>.
-                </p>
-                <p>
-                    Worth <span class="font-bold">${formData.totalAmount}</span> baht, She/he paid <span class="font-bold">${formData.downPayment}</span> baht as an initial payment with the total amount of <span class="font-bold">${formData.remainingBalance}</span> and she/he promised to pay the remaining balance <span class="font-bold">${formData.monthlyPayment}</span> thb every month for <span class="font-bold">${formData.numberOfInstallments}</span> months. Which cost <span class="font-bold">${formData.monthlyPayment}</span> thb monthly. If ever the buyer doesn't pay the remaining balance within months, we will use the letter and her/his documents to post online and also, for police reporting or we will get back the item and hold it in our shop until she/he will pay the payment.
-                </p>
-                <p>
-                  If the buyer is delayed to his/her payment every end of the month until the 6th day of the new month, the remaining days he/she will pay a penalty with an amount of 40 baht per day until he/she can pay including his/her monthly payment.
-                </p>
-            </div>
-            <div class="mt-6">
-                <p>Date of Downpayment: <span class="font-bold">${formData.downPaymentDate}</span></p>
-            </div>
-            <div class="flex justify-between mt-16 pt-8">
-                <div class="text-center">
-                    <p class="font-bold border-t border-black px-8">Saowakon Noycumlee</p>
-                    <p class="text-sm">Businesswoman/Pharmacist</p>
-                </div>
-                <div class="text-center">
-                    <div class="border-t border-black w-48 mb-1"></div>
-                    <p class="text-sm">Buyer's Signature</p>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(printable);
-
-        html2canvas(printable, { scale: 2.5, useCORS: true }).then(canvas => {
-            const link = document.createElement("a");
-            link.download = `agreement-${formData.customerName}.jpg`;
-            link.href = canvas.toDataURL("image/jpeg", 1.0);
-            link.click();
-            toast({ title: "Success", description: "Agreement exported as JPG." });
-            
-            document.body.removeChild(printable); // Clean up the temporary element
-            onClose();
-        }).catch(err => {
-            console.error('Error exporting to JPG:', err);
-            toast({
-              variant: 'destructive',
-              title: 'Error',
-              description: 'Could not export the agreement.',
-            });
-            document.body.removeChild(printable);
-        })
-    }
+    html2canvas(printableElement.firstElementChild as HTMLElement, { scale: 2.5, useCORS: true }).then(canvas => {
+        const link = document.createElement("a");
+        link.download = `agreement-${formData.customerName}.jpg`;
+        link.href = canvas.toDataURL("image/jpeg", 1.0);
+        link.click();
+        toast({ title: "Success", description: "Agreement exported as JPG." });
+        
+        document.body.removeChild(printableElement);
+        onClose();
+    }).catch(err => {
+        console.error('Error exporting to JPG:', err);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Could not export the agreement.',
+        });
+        document.body.removeChild(printableElement);
+    })
   };
   
   const exportToWord = async () => {
@@ -141,38 +137,18 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
     }
 
     try {
-        const htmlToDocx = (await import('html-to-docx')).default;
+        const htmlString = getContractHTML();
+        const fileBuffer = await exportToWordAction(htmlString);
         
-        // Temporarily replace inputs with styled spans for Word export
-        const inputs = Array.from(contractRef.current.querySelectorAll('input'));
-        const replacements: {input: HTMLInputElement, span: HTMLSpanElement}[] = [];
-
-        inputs.forEach(input => {
-            const span = document.createElement('span');
-            span.style.textDecoration = 'underline';
-            span.style.fontWeight = 'bold';
-            span.style.padding = '0 4px';
-            span.textContent = input.value || '__________';
-            input.style.display = 'none';
-            input.parentNode?.insertBefore(span, input);
-            replacements.push({input, span});
-        });
-
-        const fileBuffer = await htmlToDocx(contractRef.current.innerHTML, undefined, {
-            table: { row: { cantSplit: true } },
-            footer: true,
-            pageNumber: true,
-        });
+        if (fileBuffer) {
+          const blob = new Blob([fileBuffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+          saveAs(blob, `agreement-${formData.customerName}.docx`);
+          toast({ title: "Success", description: "Agreement exported as DOCX." });
+          onClose();
+        } else {
+           throw new Error("File buffer is empty.");
+        }
         
-        // Restore inputs
-        replacements.forEach(({input, span}) => {
-            span.parentNode?.removeChild(span);
-            input.style.display = 'inline-block';
-        });
-
-        saveAs(fileBuffer as Blob, `agreement-${formData.customerName}.docx`);
-        toast({ title: "Success", description: "Agreement exported as DOCX." });
-        onClose();
     } catch (err) {
         console.error('Error exporting to DOCX:', err);
         toast({
@@ -185,7 +161,7 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
 
   if (!sale) return null;
   
-  const inputStyle = "bg-transparent border-0 border-b border-dotted border-black rounded-none h-6 px-1 text-center focus-visible:ring-0 focus-visible:ring-offset-0 font-bold";
+  const inputStyle = "bg-transparent border-0 border-b-2 border-dotted border-black rounded-none h-6 px-1 text-center focus-visible:ring-0 focus-visible:ring-offset-0 font-bold";
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -201,16 +177,16 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
                 <p className="text-sm">Pharmacist/Businesswoman</p>
             </div>
 
-            <div className="space-y-2 mb-6">
-                <div className="flex items-center">
+            <div className="space-y-4 mb-6">
+                <div className="flex items-center gap-2">
                     <label className="w-32 shrink-0">Name:</label>
                     <Input name="customerName" value={formData.customerName} onChange={handleInputChange} className={cn(inputStyle, "flex-1")} />
                 </div>
-                <div className="flex items-center">
+                <div className="flex items-center gap-2">
                     <label className="w-32 shrink-0">Contact Number:</label>
                     <Input name="contactNumber" value={formData.contactNumber} onChange={handleInputChange} className={cn(inputStyle, "flex-1")} />
                 </div>
-                <div className="flex items-center">
+                <div className="flex items-center gap-2">
                     <label className="w-32 shrink-0">Address:</label>
                     <Input name="address" value={formData.address} onChange={handleInputChange} className={cn(inputStyle, "flex-1")} />
                 </div>
@@ -221,8 +197,12 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
             <h3 className="text-center font-bold mb-4">Proof and Agreement</h3>
 
             <div className="text-justify leading-relaxed space-y-4">
-                 <p>This letter of agreement is made for Ms/Mr <Input name="customerName" value={formData.customerName} onChange={handleInputChange} className={cn(inputStyle, "w-48 mx-1")} /> for she/he has made a cash instalment for gadget which is gadget: <Input name="gadget" value={formData.gadget} onChange={handleInputChange} className={cn(inputStyle, "flex-grow min-w-[100px] mx-1")} />.</p>
-                 <p>Worth <Input name="totalAmount" value={formData.totalAmount} onChange={handleInputChange} className={cn(inputStyle, "w-24 mx-1")} /> baht, She/he paid <Input name="downPayment" value={formData.downPayment} onChange={handleInputChange} className={cn(inputStyle, "w-24 mx-1")} /> baht as an initial payment with the total amount of <Input name="remainingBalance" value={formData.remainingBalance} onChange={handleInputChange} className={cn(inputStyle, "w-24 mx-1")} /> and she/he promised to pay the remaining balance <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className={cn(inputStyle, "w-24 mx-1")} /> thb every month for <Input name="numberOfInstallments" value={formData.numberOfInstallments} onChange={handleInputChange} className={cn(inputStyle, "w-16 mx-1")} /> months. Which cost <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className={cn(inputStyle, "w-24 mx-1")} readOnly /> thb monthly. If ever the buyer doesn't pay the remaining balance within months, we will use the letter and her/his documents to post online and also, for police reporting or we will get back the item and hold it in our shop until she/he will pay the payment.</p>
+                 <p>
+                  This letter of agreement is made for Ms/Mr <Input name="customerName" value={formData.customerName} onChange={handleInputChange} className={cn(inputStyle, "w-48 mx-1")} /> for she/he has made a cash instalment for gadget which is item: <Input name="gadget" value={formData.gadget} onChange={handleInputChange} className={cn(inputStyle, "w-32 mx-1")} />.
+                 </p>
+                 <p>
+                  Worth <Input name="totalAmount" value={formData.totalAmount} onChange={handleInputChange} className={cn(inputStyle, "w-24 mx-1")} /> baht, She/he paid <Input name="downPayment" value={formData.downPayment} onChange={handleInputChange} className={cn(inputStyle, "w-24 mx-1")} /> baht as an initial payment with the total amount of <Input name="remainingBalance" value={formData.remainingBalance} onChange={handleInputChange} className={cn(inputStyle, "w-24 mx-1")} /> and she/he promised to pay the remaining balance <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className={cn(inputStyle, "w-24 mx-1")} /> thb every month for <Input name="numberOfInstallments" value={formData.numberOfInstallments} onChange={handleInputChange} className={cn(inputStyle, "w-16 mx-1")} /> months. Which cost <Input name="monthlyPayment" value={formData.monthlyPayment} onChange={handleInputChange} className={cn(inputStyle, "w-24 mx-1")} readOnly /> thb monthly. If ever the buyer doesn't pay the remaining balance within months, we will use the letter and her/his documents to post online and also, for police reporting or we will get back the item and hold it in our shop until she/he will pay the payment.
+                 </p>
                 <p>
                   If the buyer is delayed to his/her payment every end of the month until the 6th day of the new month, the remaining days he/she will pay a penalty with an amount of 40 baht per day until he/she can pay including his/her monthly payment.
                 </p>
@@ -230,7 +210,7 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
           
             <div className="flex items-center mt-6">
                 <label className="w-40 shrink-0">Date of Downpayment:</label>
-                <Input name="downPaymentDate" value={formData.downPaymentDate} onChange={handleInputChange} className={cn(inputStyle, "flex-1")} type="date"/>
+                <Input name="downPaymentDate" value={formData.downPaymentDate} onChange={handleInputChange} className={cn(inputStyle, "w-32")} type="date"/>
             </div>
 
             <div className="flex justify-between mt-16 pt-8">
@@ -260,5 +240,3 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
     </Dialog>
   );
 }
-
-    
