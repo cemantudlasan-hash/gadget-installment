@@ -20,12 +20,16 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    return [
-      {
-        source: '/.well-known/acme-challenge/:path*',
-        destination: '/:path*',
-      },
-    ];
+    return {
+      beforeFiles: [
+        {
+          source: '/.well-known/acme-challenge/:path*',
+          destination: '/:path*',
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
   },
 };
 
