@@ -59,7 +59,7 @@ export default function CommissionsSection({ commissions, sales, loading, onData
 
   useEffect(() => {
     fetchArchivedReports();
-  }, [fetchArchivedReports]);
+  }, [db]);
 
 
   const monthlyCommissions = useMemo(() => {
@@ -432,5 +432,7 @@ export default function CommissionsSection({ commissions, sales, loading, onData
     
 
 
+
+    
 
     
