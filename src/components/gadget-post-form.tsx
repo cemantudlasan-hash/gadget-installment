@@ -1,22 +1,23 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import type { GadgetPost } from "@/types";
-import { useFirebase } from "@/lib/firebase/context";
-import { collection, addDoc, doc, updateDoc, query, where, getDocs, serverTimestamp } from "firebase/firestore";
-import { Loader2 } from "lucide-react";
-import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { App } from "firebase-admin/app";
+import type { GadgetPost } from "@/types";
+import { suggestCustomerNote } from "@/ai/flows/customer-note-suggestions";
+import { Sparkles, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { useFirebase } from "@/lib/firebase/context";
+import { collection, addDoc, doc, updateDoc, serverTimestamp, getDocs, query, where } from "firebase/firestore";
 
 const postSchema = z.object({
   productNumber: z.string().min(1, "Product Number is required"),
@@ -64,12 +65,7 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
     
     try {
       const postData = {
-          productNumber: values.productNumber,
-          productName: values.productName,
-          adminName: values.adminName,
-          contactNumber: values.contactNumber,
-          socialMedia: values.socialMedia,
-          imageUrl: values.imageUrl,
+          ...values,
       };
 
       if (initialData) {
