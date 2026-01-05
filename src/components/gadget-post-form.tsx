@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -61,28 +60,33 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
   const handleSubmit = async (values: PostFormValues) => {
     if (!app) return;
     setIsUploading(true);
-
+  
     const storage = getStorage(app);
-    const uploadedUrls: string[] = [];
-
-    for (const file of Array.from(values.imageFiles)) {
-      const imageRef = storageRef(storage, `gadget_posts/${values.productNumber}/${file.name}`);
-      await uploadBytes(imageRef, file);
-      const url = await getDownloadURL(imageRef);
-      uploadedUrls.push(url);
+    
+    try {
+      const uploadPromises = Array.from(values.imageFiles).map(async (file) => {
+        const imageRef = storageRef(storage, `gadget_posts/${values.productNumber}/${file.name}`);
+        await uploadBytes(imageRef, file);
+        return getDownloadURL(imageRef);
+      });
+  
+      const uploadedUrls = await Promise.all(uploadPromises);
+  
+      const postData = {
+        productNumber: values.productNumber,
+        productName: values.productName,
+        adminName: values.adminName,
+        contactNumber: values.contactNumber,
+        socialMedia: values.socialMedia,
+        imageUrls: uploadedUrls,
+      };
+      
+      onSave(postData, !!initialData);
+    } catch (error) {
+      console.error("Error uploading images:", error);
+    } finally {
+      setIsUploading(false);
     }
-    
-    const postData = {
-      productNumber: values.productNumber,
-      productName: values.productName,
-      adminName: values.adminName,
-      contactNumber: values.contactNumber,
-      socialMedia: values.socialMedia,
-      imageUrls: uploadedUrls,
-    };
-    
-    onSave(postData, !!initialData);
-    setIsUploading(false);
   };
 
   return (
