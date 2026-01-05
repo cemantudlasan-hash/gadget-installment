@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { User, Lock, ArrowLeft } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const FuturisticFrame = () => (
     <svg
@@ -151,8 +152,7 @@ export default function LoginForm({ onLoginSuccess, onBack }: LoginFormProps) {
 
   return (
     <div 
-      className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden"
-      style={{ background: 'radial-gradient(ellipse at center, #0a203e 0%, #030a1a 70%)' }}
+      className={cn("dashboard-bg relative flex flex-col items-center justify-center min-h-screen overflow-hidden")}
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
       
