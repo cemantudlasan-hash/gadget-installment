@@ -21,6 +21,25 @@ interface GuestPageProps {
   onBack: () => void;
 }
 
+const ALLOWED_IMAGE_HOSTS = ['placehold.co', 'picsum.photos', 'tse3.mm.bing.net'];
+
+const getValidImageUrl = (url: string | undefined, productId: string) => {
+  if (url) {
+    try {
+      const urlObject = new URL(url);
+      if (ALLOWED_IMAGE_HOSTS.includes(urlObject.hostname)) {
+        return url;
+      }
+    } catch (e) {
+      // Invalid URL format, fall through to placeholder
+    }
+  }
+  // Use a consistent placeholder based on the product ID
+  const seed = productId.replace(/[^a-zA-Z0-9]/g, '') || 'default';
+  return `https://picsum.photos/seed/${seed}/400/300`;
+};
+
+
 export default function GuestPage({ onBack }: GuestPageProps) {
   const { db } = useFirebase();
   const { toast } = useToast();
@@ -175,10 +194,12 @@ export default function GuestPage({ onBack }: GuestPageProps) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {posts.map(post => (
+            {posts.map(post => {
+              const imageUrl = getValidImageUrl(post.imageUrl, post.productNumber);
+              return (
               <Card key={post.id} className="bg-slate-900/50 backdrop-blur-sm border-purple-500/30 overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300 shadow-lg hover:shadow-cyan-500/20">
                 <div className="relative w-full h-56">
-                    <Image src={post.imageUrl} alt={post.productName} layout="fill" objectFit="cover" className="bg-slate-800" />
+                    <Image src={imageUrl} alt={post.productName} layout="fill" objectFit="cover" className="bg-slate-800" />
                     {!post.isSold && <Badge className="absolute top-2 right-2 bg-cyan-500 text-black">Available</Badge>}
                 </div>
                 <CardHeader>
@@ -198,7 +219,8 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                     </Button>
                 </CardFooter>
               </Card>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
@@ -246,3 +268,5 @@ export default function GuestPage({ onBack }: GuestPageProps) {
     </div>
   );
 }
+
+    
