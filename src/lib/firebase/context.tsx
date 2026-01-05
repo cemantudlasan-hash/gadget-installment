@@ -4,12 +4,14 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInAnonymously, type Auth, type User } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
+import { getStorage, type FirebaseStorage } from "firebase/storage";
 import { firebaseConfig } from "./config";
 
 interface FirebaseContextType {
   app: FirebaseApp | null;
   auth: Auth | null;
   db: Firestore | null;
+  storage: FirebaseStorage | null;
   user: User | null;
   loading: boolean;
 }
@@ -20,6 +22,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   const [app, setApp] = useState<FirebaseApp | null>(null);
   const [auth, setAuth] = useState<Auth | null>(null);
   const [db, setDb] = useState<Firestore | null>(null);
+  const [storage, setStorage] = useState<FirebaseStorage | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -30,10 +33,12 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
         const firebaseApp = apps.length ? apps[0] : initializeApp(firebaseConfig);
         const firebaseAuth = getAuth(firebaseApp);
         const firestoreDb = getFirestore(firebaseApp);
+        const firebaseStorage = getStorage(firebaseApp);
 
         setApp(firebaseApp);
         setAuth(firebaseAuth);
         setDb(firestoreDb);
+        setStorage(firebaseStorage);
 
         await signInAnonymously(firebaseAuth);
 
@@ -52,7 +57,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
     initialize();
   }, []);
 
-  const value = { app, auth, db, user, loading };
+  const value = { app, auth, db, storage, user, loading };
 
   return (
     <FirebaseContext.Provider value={value}>
