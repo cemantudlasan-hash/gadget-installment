@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import type { GadgetPost } from "@/types";
 import { useFirebase } from "@/lib/firebase/context";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc, doc, updateDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, query, where, getDocs } from "firebase/firestore";
 import { Loader2, Upload } from "lucide-react";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
@@ -64,8 +64,9 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
   };
 
   const handleSubmit = async (values: PostFormValues) => {
+    // Critical: Ensure Firebase is initialized before proceeding
     if (!app || !db) {
-        toast({ variant: "destructive", title: "Firebase not initialized." });
+        toast({ variant: "destructive", title: "Firebase not ready", description: "Please wait a moment and try again." });
         return;
     }
     
@@ -74,7 +75,7 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
     try {
       let uploadedImageUrls: string[] = initialData?.imageUrls || [];
 
-      // 1. Handle Image Uploads
+      // 1. Handle Image Uploads if new files are selected
       if (values.imageFiles && values.imageFiles.length > 0) {
         const storage = getStorage(app);
         const uploadPromises = Array.from(values.imageFiles).map(file => {
@@ -84,9 +85,10 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
         uploadedImageUrls = await Promise.all(uploadPromises);
       }
       
+      // For new posts, at least one image is required.
       if (!initialData && uploadedImageUrls.length === 0) {
         form.setError("imageFiles", { type: "manual", message: "At least one image is required for a new post." });
-        return; // Early exit
+        throw new Error("Image required"); // This will be caught by the catch block below
       }
 
       // 2. Prepare Data for Firestore
@@ -106,13 +108,13 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
         await updateDoc(postRef, postData);
         toast({ title: "Success", description: "Post updated successfully!" });
       } else {
-        // Create new document
+        // Create new document, but check for duplicates first
         const postsRef = collection(db, "gadgetPosts");
         const q = query(postsRef, where("productNumber", "==", postData.productNumber));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
           toast({ variant: "destructive", title: "Duplicate Product Number", description: `A post with the number "${postData.productNumber}" already exists.` });
-          return;
+          throw new Error("Duplicate product number"); // Will be caught below
         }
 
         await addDoc(collection(db, "gadgetPosts"), {
@@ -127,9 +129,12 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
 
     } catch (error: any) {
       console.error("Error saving post:", error);
-      toast({ variant: "destructive", title: "Error", description: `Error saving post: ${error.message}` });
+      // Avoid showing a toast if it's a user error we already handled (like duplicates)
+      if (error.message !== "Image required" && error.message !== "Duplicate product number") {
+        toast({ variant: "destructive", title: "Error", description: `Error saving post: ${error.message}` });
+      }
     } finally {
-      // 4. THIS IS THE GUARANTEE: Reset submitting state no matter what.
+      // 4. GUARANTEE: This will run no matter what happens in the try/catch block.
       setIsSubmitting(false);
     }
   };
