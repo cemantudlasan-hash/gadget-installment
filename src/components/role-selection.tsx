@@ -1,3 +1,4 @@
+
 "use client";
 
 import { cn } from "@/lib/utils";
@@ -68,7 +69,7 @@ export default function RoleSelection({ onRoleSelect }: RoleSelectionProps) {
         <RoleCard
             icon={User}
             title="Guest"
-            description="View a read-only version of the dashboard and sales information."
+            description="Browse available gadgets and inquire about products."
             onClick={() => onRoleSelect('guest')}
         />
       </div>
