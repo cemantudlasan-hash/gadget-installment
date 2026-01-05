@@ -11,10 +11,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import type { GadgetPost } from "@/types";
 import { useFirebase } from "@/lib/firebase/context";
-import { collection, addDoc, doc, updateDoc, query, where, getDocs } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, query, where, getDocs, serverTimestamp } from "firebase/firestore";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { App } from "firebase-admin/app";
 
 const postSchema = z.object({
   productNumber: z.string().min(1, "Product Number is required"),
@@ -34,7 +36,7 @@ interface GadgetPostFormProps {
 }
 
 export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }: GadgetPostFormProps) {
-  const { db } = useFirebase();
+  const { db, app } = useFirebase();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -53,7 +55,7 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
   const imageUrl = form.watch("imageUrl");
 
   const handleSubmit = async (values: PostFormValues) => {
-    if (!db) {
+    if (!db || !app) {
         toast({ variant: "destructive", title: "Firebase not ready", description: "Please wait a moment and try again." });
         return;
     }
@@ -131,7 +133,7 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
             </div>
             
              <FormField name="imageUrl" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>Image URL</FormLabel><FormControl><Input {...field} placeholder="https://postimg.cc/your-image-link.jpg" /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Image URL</FormLabel><FormControl><Input {...field} placeholder="https://i.postimg.cc/your-image.jpg" /></FormControl><FormMessage /></FormItem>
             )}/>
               
               {imageUrl && (
@@ -139,7 +141,7 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
                     <FormLabel>Image Preview</FormLabel>
                     <div className="mt-2 relative w-full h-48">
                       <Image 
-                        src={imageUrl || "https://picsum.photos/seed/fallback/400/300"} 
+                        src={imageUrl ? imageUrl : "https://picsum.photos/seed/fallback/400/300"} 
                         alt="Preview" 
                         layout="fill" 
                         objectFit="cover" 
