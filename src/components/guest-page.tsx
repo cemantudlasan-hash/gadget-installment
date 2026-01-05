@@ -40,7 +40,10 @@ export default function GuestPage({ onBack }: GuestPageProps) {
       // Fetch all posts ordered by date first
       const q = query(postsRef, orderBy("createdAt", "desc"));
       const snapshot = await getDocs(q);
-      const allPosts = snapshot.docs.map(doc => doc.data() as GadgetPost);
+      const allPosts = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as GadgetPost));
       
       // Filter for unsold posts on the client
       const availablePosts = allPosts.filter(post => !post.isSold);
