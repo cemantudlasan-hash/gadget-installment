@@ -4,7 +4,7 @@
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { User, Lock } from "lucide-react";
+import { User, Lock, ArrowLeft } from "lucide-react";
 
 const FuturisticFrame = () => (
     <svg
@@ -132,9 +132,10 @@ const FuturisticFrame = () => (
 
 interface LoginFormProps {
   onLoginSuccess: () => void;
+  onBack: () => void;
 }
 
-export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
+export default function LoginForm({ onLoginSuccess, onBack }: LoginFormProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -159,7 +160,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
         <FuturisticFrame />
         <div className="relative z-20 w-full max-w-sm">
             <h2 className="mb-8 text-center text-3xl font-bold tracking-wider text-cyan-300 uppercase">
-                Login
+                Admin Login
             </h2>
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="relative">
@@ -189,12 +190,23 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
               {error && (
                 <p className="text-sm text-red-400 text-center bg-red-900/50 p-2 rounded-md border border-red-500/50">{error}</p>
               )}
-              <Button
-                type="submit"
-                className="w-full text-lg py-3 font-semibold bg-cyan-600/80 hover:bg-cyan-500/80 border border-cyan-500 text-cyan-50 rounded-md transition-all duration-300 shadow-[0_0_15px_rgba(0,255,255,0.3)] hover:shadow-[0_0_25px_rgba(0,255,255,0.6)]"
-              >
-                Access
-              </Button>
+               <div className="flex flex-col space-y-4">
+                <Button
+                    type="submit"
+                    className="w-full text-lg py-3 font-semibold bg-cyan-600/80 hover:bg-cyan-500/80 border border-cyan-500 text-cyan-50 rounded-md transition-all duration-300 shadow-[0_0_15px_rgba(0,255,255,0.3)] hover:shadow-[0_0_25px_rgba(0,255,255,0.6)]"
+                >
+                    Access
+                </Button>
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onBack}
+                    className="w-full text-lg py-3 font-semibold bg-transparent hover:bg-slate-700/50 border-slate-600 text-slate-300 rounded-md transition-all duration-300"
+                >
+                    <ArrowLeft className="mr-2 h-5 w-5" />
+                    Back
+                </Button>
+              </div>
             </form>
         </div>
       </div>

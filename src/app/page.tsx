@@ -55,6 +55,10 @@ export default function Home() {
       setUserRole(null); // Reset role on logout
     }, 1500); // Match animation duration
   };
+  
+  const handleBackToRoleSelection = () => {
+    setUserRole(null);
+  };
 
   if (!isClient) {
     return SKELETON;
@@ -74,7 +78,7 @@ export default function Home() {
       return <RoleSelection onRoleSelect={handleRoleSelect} />;
     }
     if (userRole === 'admin') {
-      return <LoginForm onLoginSuccess={handleLoginSuccess} />;
+      return <LoginForm onLoginSuccess={handleLoginSuccess} onBack={handleBackToRoleSelection} />;
     }
     // Guest role logs in automatically, so this state shouldn't be hit for long
     return null; 
