@@ -10,6 +10,7 @@ import { FirebaseProvider } from "@/lib/firebase/context";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import RoleSelection from "@/components/role-selection";
+import GuestPage from "@/components/guest-page";
 
 const SKELETON = (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -34,9 +35,6 @@ export default function Home() {
   
   const handleRoleSelect = (role: "admin" | "guest") => {
     setUserRole(role);
-    if (role === 'guest') {
-        handleLoginSuccess();
-    }
   };
 
   const handleLoginSuccess = () => {
@@ -64,7 +62,7 @@ export default function Home() {
     return SKELETON;
   }
   
-  const showDashboard = isLoggedIn && !isLoggingIn && !isLoggingOut;
+  const showDashboard = isLoggedIn && !isLoggingIn && !isLoggingOut && userRole === 'admin';
   
   const renderContent = () => {
     if (showDashboard) {
@@ -80,7 +78,9 @@ export default function Home() {
     if (userRole === 'admin') {
       return <LoginForm onLoginSuccess={handleLoginSuccess} onBack={handleBackToRoleSelection} />;
     }
-    // Guest role logs in automatically, so this state shouldn't be hit for long
+    if (userRole === 'guest') {
+        return <GuestPage onBack={handleBackToRoleSelection} />;
+    }
     return null; 
   };
 
