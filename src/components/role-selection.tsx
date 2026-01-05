@@ -42,7 +42,7 @@ export default function RoleSelection({ onRoleSelect }: RoleSelectionProps) {
       className="dark dashboard-bg relative flex flex-col items-center justify-center min-h-screen overflow-hidden"
     >
       <div className="relative z-10 text-center mb-16">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-wider">
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-wider bg-gradient-to-r from-purple-400 to-cyan-300 bg-clip-text text-transparent">
             Welcome to Gadget Management
         </h1>
         <p className="mt-4 text-lg text-slate-300">Please select your role to continue</p>
