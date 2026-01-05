@@ -27,7 +27,7 @@ const postSchema = z.object({
 type PostFormValues = z.infer<typeof postSchema>;
 
 interface GadgetPostFormProps {
-  onSave: (data: Omit<GadgetPost, "id" | "isSold" | "createdAt">, isEditing: boolean) => void;
+  onSave: (data: Omit<GadgetPost, "id" | "isSold" | "createdAt">, isEditing: boolean, onComplete: () => void) => void;
   initialData?: GadgetPost | null;
   onCancel: () => void;
 }
@@ -68,7 +68,6 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
     try {
         let uploadedImageUrls: string[] = initialData?.imageUrls || [];
 
-        // 1. Handle Image Uploads if new files are present
         if (values.imageFiles && values.imageFiles.length > 0) {
             const storage = getStorage(app);
             const uploadPromises = Array.from(values.imageFiles).map(file => {
@@ -78,14 +77,12 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
             uploadedImageUrls = await Promise.all(uploadPromises);
         }
 
-        // 2. Validate that there's at least one image for a new post
         if (!initialData && uploadedImageUrls.length === 0) {
             form.setError("imageFiles", { type: "manual", message: "At least one image is required for a new post." });
-            // Exit early, finally block will reset isUploading
+            setIsUploading(false); // Stop loading state on validation error
             return;
         }
 
-        // 3. Prepare data and save
         const postData = {
             productNumber: values.productNumber,
             productName: values.productName,
@@ -95,13 +92,14 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
             imageUrls: uploadedImageUrls,
         };
 
-        await onSave(postData, !!initialData);
+        // Pass a callback to be executed by onSave
+        onSave(postData, !!initialData, () => {
+            setIsUploading(false);
+        });
         
     } catch (error) {
-        console.error("Error saving post:", error);
-    } finally {
-        // 4. ALWAYS reset the loading state
-        setIsUploading(false);
+        console.error("Error preparing post data:", error);
+        setIsUploading(false); // Ensure loading state is reset on error
     }
 };
 
@@ -168,7 +166,7 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
 
 
             <div className="flex justify-end space-x-3 pt-4">
-              <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={onCancel} disabled={isUploading}>Cancel</Button>
               <Button type="submit" disabled={isUploading}>
                 {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {isUploading ? 'Saving...' : (initialData ? "Update Post" : "Create Post")}

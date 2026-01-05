@@ -14,6 +14,7 @@ import { PlusCircle, Edit, Trash2, PackageCheck, Package } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Image from "next/image";
 import { Badge } from "./ui/badge";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 interface GadgetPostsSectionProps {
   posts: GadgetPost[];
@@ -29,9 +30,10 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
   const [editingPost, setEditingPost] = useState<GadgetPost | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  const handleSavePost = async (postData: Omit<GadgetPost, "id" | "isSold" | "createdAt">, isEditing: boolean) => {
+  const handleSavePost = async (postData: Omit<GadgetPost, "id" | "isSold" | "createdAt">, isEditing: boolean, onComplete: () => void) => {
     if (!db || userRole !== 'admin') {
       toast({ variant: "destructive", title: "Permission Denied" });
+      onComplete(); // Ensure we always call the completion callback
       return;
     }
 
@@ -47,6 +49,7 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
           toast({ variant: "destructive", title: "Duplicate Product Number", description: `A post with the number "${postData.productNumber}" already exists.` });
+          onComplete(); // Stop execution
           return;
         }
 
@@ -63,6 +66,8 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
     } catch (e: any) {
       console.error("Error saving post:", e);
       toast({ variant: "destructive", title: "Error", description: `Error saving post: ${e.message}` });
+    } finally {
+      onComplete(); // ALWAYS call the completion callback
     }
   };
 
@@ -138,13 +143,31 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
                         {post.isSold ? "Sold" : "Available"}
                     </Badge>
                 </div>
-                <div className="relative w-full h-48 bg-muted">
-                  {post.imageUrls && post.imageUrls.length > 0 ? (
-                    <Image src={post.imageUrls[0]} alt={post.productName} layout="fill" objectFit="cover" />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">No Image</div>
-                  )}
-                </div>
+                 <Carousel className="w-full relative">
+                  <CarouselContent>
+                    {post.imageUrls && post.imageUrls.length > 0 ? (
+                      post.imageUrls.map((url, index) => (
+                        <CarouselItem key={index}>
+                          <div className="relative w-full h-48">
+                            <Image src={url} alt={`${post.productName} image ${index + 1}`} layout="fill" objectFit="cover" className="bg-muted" />
+                          </div>
+                        </CarouselItem>
+                      ))
+                    ) : (
+                      <CarouselItem>
+                        <div className="relative w-full h-48 bg-muted flex items-center justify-center">
+                          <p className="text-muted-foreground">No Image</p>
+                        </div>
+                      </CarouselItem>
+                    )}
+                  </CarouselContent>
+                   {post.imageUrls && post.imageUrls.length > 1 && (
+                      <>
+                        <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
+                        <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
+                      </>
+                   )}
+                </Carousel>
                 <div className="p-4 flex-grow flex flex-col">
                   <h3 className="font-bold text-lg">{post.productName}</h3>
                   <p className="text-xs text-muted-foreground mb-2">P/N: {post.productNumber}</p>
