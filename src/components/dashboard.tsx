@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -17,16 +18,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface DashboardProps {
   onLogout: () => void;
+  userRole: 'admin' | 'guest';
 }
 
-export default function Dashboard({ onLogout }: DashboardProps) {
+export default function Dashboard({ onLogout, userRole }: DashboardProps) {
   const { db, user, loading: userLoading } = useFirebase();
   const { toast } = useToast();
 
   const [sales, setSales] = useState<Sale[]>([]);
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [loadingData, setLoadingData] = useState(true);
-  const [userRole, setUserRole] = useState<'admin' | 'guest'>('admin'); // Default to admin, adjust if needed
 
   const fetchAllData = useCallback(async () => {
     if (!db) return;
@@ -65,14 +66,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [db, toast]);
 
   useEffect(() => {
-    // This is a simple way to distinguish. A real app would use auth claims.
-    if (user?.isAnonymous) {
-      setUserRole('guest');
-    } else {
-      setUserRole('admin');
-    }
     fetchAllData();
-  }, [user, fetchAllData]);
+  }, [fetchAllData]);
   
   const handleUpdateSale = async (saleId: string, updatedData: Partial<Sale>) => {
     if (!db) return;
@@ -110,14 +105,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const futuristicBgClasses = "relative overflow-hidden bg-transparent font-sans p-0 rounded-2xl";
 
   const getWelcomeMessage = () => {
-    if (userRole === 'admin' && !user?.isAnonymous) {
+    if (userRole === 'admin') {
         return "Cirannakorn Tudlasan";
     }
     return "Guest";
   };
   
   const getAvatarFallback = () => {
-    if (userRole === 'admin' && !user?.isAnonymous) {
+    if (userRole === 'admin') {
         return "CT";
     }
     return "G";
@@ -190,3 +185,5 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     </div>
   );
 }
+
+    

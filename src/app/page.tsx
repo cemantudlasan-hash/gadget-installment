@@ -68,7 +68,7 @@ export default function Home() {
     if (showDashboard) {
       return (
          <div className="relative z-10 flex flex-col items-center min-h-screen overflow-y-auto p-4 sm:p-6">
-           <Dashboard onLogout={handleLogout} />
+           <Dashboard onLogout={handleLogout} userRole="admin" />
         </div>
       );
     }
@@ -98,3 +98,5 @@ export default function Home() {
     </FirebaseProvider>
   );
 }
+
+    
