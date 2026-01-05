@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -64,45 +65,45 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
     if (!app) return;
     setIsUploading(true);
 
+    let finalImageUrls: string[] = initialData?.imageUrls || [];
+
     try {
-      let uploadedUrls: string[] = initialData?.imageUrls || [];
+        // Only upload new files if they are selected
+        if (values.imageFiles && values.imageFiles.length > 0) {
+            const storage = getStorage(app);
+            const uploadPromises = Array.from(values.imageFiles).map(file => {
+                const imageRef = storageRef(storage, `gadget_posts/${values.productNumber}/${Date.now()}_${file.name}`);
+                return uploadBytes(imageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
+            });
+            const newUrls = await Promise.all(uploadPromises);
+            finalImageUrls = newUrls; // Replace old URLs with new ones
+        }
 
-      // Only upload if new files are selected
-      if (values.imageFiles && values.imageFiles.length > 0) {
-        const storage = getStorage(app);
-        const uploadPromises = Array.from(values.imageFiles).map(file => {
-          const imageRef = storageRef(storage, `gadget_posts/${values.productNumber}/${Date.now()}_${file.name}`);
-          return uploadBytes(imageRef, file).then(() => getDownloadURL(imageRef));
-        });
+        // Ensure there's at least one image if creating a new post
+        if (!initialData && finalImageUrls.length === 0) {
+            form.setError("imageFiles", { type: "manual", message: "At least one image is required." });
+            setIsUploading(false);
+            return;
+        }
+
+        const postData = {
+            productNumber: values.productNumber,
+            productName: values.productName,
+            adminName: values.adminName,
+            contactNumber: values.contactNumber,
+            socialMedia: values.socialMedia,
+            imageUrls: finalImageUrls,
+        };
+
+        await onSave(postData, !!initialData);
         
-        const newUrls = await Promise.all(uploadPromises);
-        // When editing, you might want to replace or add to existing images.
-        // Here, we are replacing.
-        uploadedUrls = newUrls;
-      }
-      
-      if (uploadedUrls.length === 0) {
-          form.setError("imageFiles", { type: "manual", message: "At least one image is required." });
-          setIsUploading(false);
-          return;
-      }
-
-      const postData = {
-        productNumber: values.productNumber,
-        productName: values.productName,
-        adminName: values.adminName,
-        contactNumber: values.contactNumber,
-        socialMedia: values.socialMedia,
-        imageUrls: uploadedUrls,
-      };
-
-      await onSave(postData, !!initialData);
     } catch (error) {
-      console.error("Error saving post:", error);
+        console.error("Error saving post:", error);
     } finally {
-      setIsUploading(false);
+        setIsUploading(false);
     }
-  };
+};
+
 
   return (
     <Card className="max-w-3xl mx-auto">
