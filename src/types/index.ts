@@ -1,10 +1,4 @@
 
-
-
-
-
-
-
 export interface Installment {
   month: number;
   dueAmount: number;
@@ -67,6 +61,7 @@ export interface GadgetPost {
   imageUrl: string;
   isSold: boolean;
   createdAt: string;
+  externalLink?: string;
 }
 
 export interface Inquiry {

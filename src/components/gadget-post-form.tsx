@@ -26,6 +26,7 @@ const postSchema = z.object({
   contactNumber: z.string().min(1, "Contact number is required"),
   socialMedia: z.string().min(1, "Social media or email is required"),
   imageUrl: z.string().url("Please enter a valid URL for the image."),
+  externalLink: z.string().url("Please enter a valid URL for the external link.").optional().or(z.literal('')),
 });
 
 type PostFormValues = z.infer<typeof postSchema>;
@@ -50,6 +51,7 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
       contactNumber: initialData?.contactNumber || "",
       socialMedia: initialData?.socialMedia || "",
       imageUrl: initialData?.imageUrl || "",
+      externalLink: initialData?.externalLink || "",
     },
   });
 
@@ -130,6 +132,10 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
             
              <FormField name="imageUrl" control={form.control} render={({ field }) => (
                 <FormItem><FormLabel>Image URL</FormLabel><FormControl><Input {...field} placeholder="https://i.postimg.cc/your-image.jpg" /></FormControl><FormMessage /></FormItem>
+            )}/>
+
+             <FormField name="externalLink" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>External Link (Optional)</FormLabel><FormControl><Input {...field} placeholder="e.g., https://example.com/product-details" /></FormControl><FormMessage /></FormItem>
             )}/>
               
               {imageUrl && (

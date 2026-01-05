@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone, Loader2, Tag } from "lucide-react";
+import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone, Loader2, Tag, ExternalLink } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
@@ -199,10 +199,17 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                     <p className="flex items-center gap-2"><Mail className="w-5 h-5 text-cyan-400" /> <strong>Socials:</strong> {post.socialMedia}</p>
                   </div>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex flex-col sm:flex-row gap-2">
                     <Button className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold" onClick={() => handleInquireNow(post)}>
                         <Smartphone className="mr-2"/> Inquire Now
                     </Button>
+                    {post.externalLink && (
+                        <a href={post.externalLink} target="_blank" rel="noopener noreferrer" className="w-full">
+                            <Button variant="outline" className="w-full bg-transparent hover:bg-slate-700/50 border-slate-600 text-slate-300">
+                                <ExternalLink className="mr-2"/> View Details
+                            </Button>
+                        </a>
+                    )}
                 </CardFooter>
               </Card>
               )
