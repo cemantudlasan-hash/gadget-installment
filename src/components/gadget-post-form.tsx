@@ -36,7 +36,7 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
       adminName: "Saowakon Noycumlee",
       contactNumber: "",
       socialMedia: "",
-      imageUrl: "",
+      imageUrl: "https://picsum.photos/seed/gadget/600/400",
     },
   });
 
