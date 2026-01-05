@@ -9,12 +9,9 @@ interface RoleSelectionProps {
   onRoleSelect: (role: "admin" | "guest") => void;
 }
 
-const BackgroundOrbs = () => (
-    <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute top-[-50px] left-[-50px] w-72 h-72 bg-purple-500 rounded-full filter blur-3xl opacity-20 animate-blob"></div>
-        <div className="absolute top-[-20px] right-[20px] w-72 h-72 bg-blue-500 rounded-full filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-[-50px] left-[20%] w-72 h-72 bg-cyan-500 rounded-full filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
-        <div className="absolute bottom-[-20px] right-[-50px] w-72 h-72 bg-pink-500 rounded-full filter blur-3xl opacity-10 animate-blob animation-delay-6000"></div>
+const Background = () => (
+    <div className="absolute inset-0 z-0 overflow-hidden bg-slate-900">
+        <div className="absolute inset-0 z-10 bg-gradient-to-br from-slate-900 via-transparent to-slate-900"></div>
     </div>
 );
 
@@ -49,9 +46,9 @@ export default function RoleSelection({ onRoleSelect }: RoleSelectionProps) {
 
   return (
     <div 
-      className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden bg-slate-900"
+      className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden"
     >
-        <BackgroundOrbs />
+        <Background />
       <div className="relative z-10 text-center mb-16">
         <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-wider">
             Welcome to Gadget Management
@@ -73,20 +70,6 @@ export default function RoleSelection({ onRoleSelect }: RoleSelectionProps) {
             onClick={() => onRoleSelect('guest')}
         />
       </div>
-       <style jsx>{`
-        @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
-        }
-        .animate-blob {
-            animation: blob 7s infinite;
-        }
-        .animation-delay-2000 { animation-delay: 2s; }
-        .animation-delay-4000 { animation-delay: 4s; }
-        .animation-delay-6000 { animation-delay: 6s; }
-      `}</style>
     </div>
   );
 }
