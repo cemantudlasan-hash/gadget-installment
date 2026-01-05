@@ -154,8 +154,6 @@ export default function LoginForm({ onLoginSuccess, onBack }: LoginFormProps) {
     <div 
       className={cn("dashboard-bg relative flex flex-col items-center justify-center min-h-screen overflow-hidden")}
     >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-      
       <div className="relative z-10 w-full max-w-2xl h-[30rem] flex items-center justify-center p-8">
         <FuturisticFrame />
         <div className="relative z-20 w-full max-w-sm">
