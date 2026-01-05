@@ -3,6 +3,7 @@
 
 
 
+
 export interface Installment {
   month: number;
   dueAmount: number;
@@ -62,7 +63,7 @@ export interface GadgetPost {
   adminName: string;
   contactNumber: string;
   socialMedia: string;
-  imageUrl: string;
+  imageUrls: string[];
   isSold: boolean;
   createdAt: string;
 }

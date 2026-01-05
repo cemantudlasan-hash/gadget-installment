@@ -22,25 +22,6 @@ interface GadgetPostsSectionProps {
   userRole: 'admin' | 'guest';
 }
 
-const ALLOWED_IMAGE_HOSTS = ['placehold.co', 'picsum.photos', 'tse3.mm.bing.net'];
-
-const getValidImageUrl = (url: string | undefined, productId: string) => {
-  if (url) {
-    try {
-      const urlObject = new URL(url);
-      if (ALLOWED_IMAGE_HOSTS.includes(urlObject.hostname)) {
-        return url;
-      }
-    } catch (e) {
-      // Invalid URL format, fall through to placeholder
-    }
-  }
-  // Use a consistent placeholder based on the product ID
-  const seed = productId.replace(/[^a-zA-Z0-9]/g, '') || 'default';
-  return `https://picsum.photos/seed/${seed}/400/300`;
-};
-
-
 export default function GadgetPostsSection({ posts, loading, onDataChange, userRole }: GadgetPostsSectionProps) {
   const { db } = useFirebase();
   const { toast } = useToast();
@@ -152,16 +133,20 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.map((post) => {
-              const imageUrl = getValidImageUrl(post.imageUrl, post.productNumber);
-              return (
+            {posts.map((post) => (
               <Card key={post.id} className="overflow-hidden relative flex flex-col">
                 <div className="absolute top-2 right-2 z-10 flex gap-2">
                     <Badge variant={post.isSold ? "destructive" : "default"}>
                         {post.isSold ? "Sold" : "Available"}
                     </Badge>
                 </div>
-                <Image src={imageUrl} alt={post.productName} width={400} height={300} className="w-full h-48 object-cover bg-muted" />
+                <div className="relative w-full h-48 bg-muted">
+                  {post.imageUrls && post.imageUrls.length > 0 ? (
+                    <Image src={post.imageUrls[0]} alt={post.productName} layout="fill" objectFit="cover" />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">No Image</div>
+                  )}
+                </div>
                 <div className="p-4 flex-grow flex flex-col">
                   <h3 className="font-bold text-lg">{post.productName}</h3>
                   <p className="text-xs text-muted-foreground mb-2">P/N: {post.productNumber}</p>
@@ -191,7 +176,7 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
                   </div>
                 </div>
               </Card>
-            )})}
+            ))}
           </div>
         )}
       </CardContent>

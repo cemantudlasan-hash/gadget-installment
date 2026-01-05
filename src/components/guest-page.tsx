@@ -16,28 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
-
-interface GuestPageProps {
-  onBack: () => void;
-}
-
-const ALLOWED_IMAGE_HOSTS = ['placehold.co', 'picsum.photos', 'tse3.mm.bing.net'];
-
-const getValidImageUrl = (url: string | undefined, productId: string) => {
-  if (url) {
-    try {
-      const urlObject = new URL(url);
-      if (ALLOWED_IMAGE_HOSTS.includes(urlObject.hostname)) {
-        return url;
-      }
-    } catch (e) {
-      // Invalid URL format, fall through to placeholder
-    }
-  }
-  // Use a consistent placeholder based on the product ID
-  const seed = productId.replace(/[^a-zA-Z0-9]/g, '') || 'default';
-  return `https://picsum.photos/seed/${seed}/400/300`;
-};
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 
 export default function GuestPage({ onBack }: GuestPageProps) {
@@ -194,14 +173,34 @@ export default function GuestPage({ onBack }: GuestPageProps) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {posts.map(post => {
-              const imageUrl = getValidImageUrl(post.imageUrl, post.productNumber);
-              return (
+            {posts.map(post => (
               <Card key={post.id} className="bg-slate-900/50 backdrop-blur-sm border-purple-500/30 overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300 shadow-lg hover:shadow-cyan-500/20">
-                <div className="relative w-full h-56">
-                    <Image src={imageUrl} alt={post.productName} layout="fill" objectFit="cover" className="bg-slate-800" />
-                    {!post.isSold && <Badge className="absolute top-2 right-2 bg-cyan-500 text-black">Available</Badge>}
-                </div>
+                <Carousel className="w-full relative">
+                  <CarouselContent>
+                    {post.imageUrls && post.imageUrls.length > 0 ? (
+                      post.imageUrls.map((url, index) => (
+                        <CarouselItem key={index}>
+                          <div className="relative w-full h-56">
+                            <Image src={url} alt={`${post.productName} image ${index + 1}`} layout="fill" objectFit="cover" className="bg-slate-800" />
+                          </div>
+                        </CarouselItem>
+                      ))
+                    ) : (
+                      <CarouselItem>
+                        <div className="relative w-full h-56 bg-slate-800 flex items-center justify-center">
+                          <p className="text-slate-400">No Image Available</p>
+                        </div>
+                      </CarouselItem>
+                    )}
+                  </CarouselContent>
+                   {post.imageUrls && post.imageUrls.length > 1 && (
+                      <>
+                        <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
+                        <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
+                      </>
+                   )}
+                </Carousel>
+                {!post.isSold && <Badge className="absolute top-2 right-2 bg-cyan-500 text-black z-10">Available</Badge>}
                 <CardHeader>
                   <CardTitle className="text-cyan-300 text-xl">{post.productName}</CardTitle>
                   <p className="text-xs text-slate-400">P/N: {post.productNumber}</p>
@@ -220,7 +219,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                 </CardFooter>
               </Card>
               )
-            })}
+            )}
           </div>
         )}
       </div>
@@ -268,5 +267,3 @@ export default function GuestPage({ onBack }: GuestPageProps) {
     </div>
   );
 }
-
-    
