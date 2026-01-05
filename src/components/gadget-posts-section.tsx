@@ -36,8 +36,12 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
     }
 
     try {
-      // Uniqueness check for new posts
-      if (!isEditing) {
+      if (editingPost) {
+        const postRef = doc(db, "gadgetPosts", editingPost.id);
+        await updateDoc(postRef, postData as Partial<GadgetPost>);
+        toast({ title: "Success", description: "Post updated successfully!" });
+      } else {
+        // Uniqueness check for new posts
         const postsRef = collection(db, "gadgetPosts");
         const q = query(postsRef, where("productNumber", "==", postData.productNumber));
         const querySnapshot = await getDocs(q);
@@ -45,13 +49,7 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
           toast({ variant: "destructive", title: "Duplicate Product Number", description: `A post with the number "${postData.productNumber}" already exists.` });
           return;
         }
-      }
-      
-      if (editingPost) {
-        const postRef = doc(db, "gadgetPosts", editingPost.id);
-        await updateDoc(postRef, postData as Partial<GadgetPost>);
-        toast({ title: "Success", description: "Post updated successfully!" });
-      } else {
+
         await addDoc(collection(db, "gadgetPosts"), {
           ...postData,
           isSold: false,

@@ -20,7 +20,7 @@ const postSchema = z.object({
   adminName: z.string().min(1, "Your name is required"),
   contactNumber: z.string().min(1, "Contact number is required"),
   socialMedia: z.string().min(1, "Social media or email is required"),
-  imageFiles: z.custom<FileList>().refine(files => files.length > 0, "At least one image is required."),
+  imageFiles: z.custom<FileList>().optional(),
 });
 
 type PostFormValues = z.infer<typeof postSchema>;
@@ -44,34 +44,49 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
       adminName: initialData?.adminName || "Saowakon Noycumlee",
       contactNumber: initialData?.contactNumber || "",
       socialMedia: initialData?.socialMedia || "",
-      imageFiles: new DataTransfer().files,
     },
   });
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files) {
+    if (files && files.length > 0) {
       const newPreviews = Array.from(files).map(file => URL.createObjectURL(file));
       setImagePreviews(newPreviews);
       form.setValue("imageFiles", files);
+    } else {
+        // if user cancels file selection, revert to initial images if they exist
+        setImagePreviews(initialData?.imageUrls || []);
+        form.setValue("imageFiles", undefined);
     }
   };
 
   const handleSubmit = async (values: PostFormValues) => {
     if (!app) return;
     setIsUploading(true);
-  
-    const storage = getStorage(app);
-    
+
     try {
-      const uploadPromises = Array.from(values.imageFiles).map(async (file) => {
-        const imageRef = storageRef(storage, `gadget_posts/${values.productNumber}/${file.name}`);
-        await uploadBytes(imageRef, file);
-        return getDownloadURL(imageRef);
-      });
-  
-      const uploadedUrls = await Promise.all(uploadPromises);
-  
+      let uploadedUrls: string[] = initialData?.imageUrls || [];
+
+      // Only upload if new files are selected
+      if (values.imageFiles && values.imageFiles.length > 0) {
+        const storage = getStorage(app);
+        const uploadPromises = Array.from(values.imageFiles).map(file => {
+          const imageRef = storageRef(storage, `gadget_posts/${values.productNumber}/${Date.now()}_${file.name}`);
+          return uploadBytes(imageRef, file).then(() => getDownloadURL(imageRef));
+        });
+        
+        const newUrls = await Promise.all(uploadPromises);
+        // When editing, you might want to replace or add to existing images.
+        // Here, we are replacing.
+        uploadedUrls = newUrls;
+      }
+      
+      if (uploadedUrls.length === 0) {
+          form.setError("imageFiles", { type: "manual", message: "At least one image is required." });
+          setIsUploading(false);
+          return;
+      }
+
       const postData = {
         productNumber: values.productNumber,
         productName: values.productName,
@@ -80,10 +95,10 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
         socialMedia: values.socialMedia,
         imageUrls: uploadedUrls,
       };
-      
-      onSave(postData, !!initialData);
+
+      await onSave(postData, !!initialData);
     } catch (error) {
-      console.error("Error uploading images:", error);
+      console.error("Error saving post:", error);
     } finally {
       setIsUploading(false);
     }
@@ -128,9 +143,9 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
                             <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                            <p className="text-xs text-muted-foreground">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
+                            <p className="text-xs text-muted-foreground">You can select multiple images</p>
                           </div>
-                          <Input id="dropzone-file" type="file" className="hidden" multiple onChange={handleFileChange} />
+                          <Input id="dropzone-file" type="file" className="hidden" multiple onChange={handleFileChange} accept="image/png, image/jpeg, image/gif"/>
                         </label>
                       </div>
                     </FormControl>
