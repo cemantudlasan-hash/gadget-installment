@@ -199,7 +199,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                     {post.externalLink && (
                         <a href={post.externalLink} target="_blank" rel="noopener noreferrer" className="w-full">
                             <Button variant="outline" className="w-full bg-transparent hover:bg-slate-700/50 border-slate-600 text-slate-300">
-                                <ExternalLink className="mr-2"/> View Details
+                                <ExternalLink className="mr-2"/> View Photos
                             </Button>
                         </a>
                     )}
@@ -254,3 +254,5 @@ export default function GuestPage({ onBack }: GuestPageProps) {
     </div>
   );
 }
+
+    
