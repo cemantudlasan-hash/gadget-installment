@@ -37,7 +37,7 @@ interface GadgetPostFormProps {
 }
 
 export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }: GadgetPostFormProps) {
-  const { db, app } = useFirebase();
+  const { db } = useFirebase();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -55,7 +55,7 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
   });
 
   const handleSubmit = async (values: PostFormValues) => {
-    if (!db || !app) {
+    if (!db) {
         toast({ variant: "destructive", title: "Firebase not ready", description: "Please wait a moment and try again." });
         return;
     }
