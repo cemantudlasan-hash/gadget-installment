@@ -9,6 +9,7 @@ import LoginOverlay from "@/components/login-overlay";
 import { FirebaseProvider } from "@/lib/firebase/context";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import RoleSelection from "@/components/role-selection";
 
 const SKELETON = (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -25,10 +26,18 @@ export default function Home() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [userRole, setUserRole] = useState<"admin" | "guest" | null>(null);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+  
+  const handleRoleSelect = (role: "admin" | "guest") => {
+    setUserRole(role);
+    if (role === 'guest') {
+        handleLoginSuccess();
+    }
+  };
 
   const handleLoginSuccess = () => {
     setIsLoggingIn(true);
@@ -43,6 +52,7 @@ export default function Home() {
     setTimeout(() => {
       setIsLoggedIn(false);
       setIsLoggingOut(false);
+      setUserRole(null); // Reset role on logout
     }, 1500); // Match animation duration
   };
 
@@ -51,6 +61,25 @@ export default function Home() {
   }
   
   const showDashboard = isLoggedIn && !isLoggingIn && !isLoggingOut;
+  
+  const renderContent = () => {
+    if (showDashboard) {
+      return (
+         <div className="relative z-10 flex flex-col items-center min-h-screen overflow-y-auto p-4 sm:p-6">
+           <Dashboard onLogout={handleLogout} />
+        </div>
+      );
+    }
+    if (!userRole) {
+      return <RoleSelection onRoleSelect={handleRoleSelect} />;
+    }
+    if (userRole === 'admin') {
+      return <LoginForm onLoginSuccess={handleLoginSuccess} />;
+    }
+    // Guest role logs in automatically, so this state shouldn't be hit for long
+    return null; 
+  };
+
 
   return (
     <FirebaseProvider>
@@ -59,13 +88,7 @@ export default function Home() {
         {isLoggingIn && <LoginOverlay />}
         
         <div className={cn("transition-opacity duration-500", (isLoggingIn || isLoggingOut) ? 'opacity-0' : 'opacity-100')}>
-          {showDashboard ? (
-            <div className="relative z-10 flex flex-col items-center min-h-screen overflow-y-auto p-4 sm:p-6">
-               <Dashboard onLogout={handleLogout} />
-            </div>
-          ) : (
-             <LoginForm onLoginSuccess={handleLoginSuccess} />
-          )}
+          {renderContent()}
         </div>
       </main>
     </FirebaseProvider>

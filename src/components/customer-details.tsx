@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -11,6 +10,7 @@ import { Edit, Trash2, Receipt, ChevronDown, FileText } from "lucide-react";
 import PaymentRecorder from './payment-recorder';
 import CustomerReceipt from './customer-receipt';
 import { cn } from '@/lib/utils';
+import { useToast } from "@/hooks/use-toast";
 
 interface CustomerDetailsProps {
     sale: Sale;
@@ -21,13 +21,23 @@ interface CustomerDetailsProps {
     onRecordPayment: (saleId: string, amount: number, date: string) => void;
     onEditPayment: (saleId: string, month: number, amount: number, date: string) => void;
     onOpenContract: (sale: Sale) => void;
+    userRole: 'admin' | 'guest';
 }
 
-export default function CustomerDetails({ sale, isOpen, onToggle, onEditSale, onDeleteSale, onRecordPayment, onEditPayment, onOpenContract }: CustomerDetailsProps) {
+export default function CustomerDetails({ sale, isOpen, onToggle, onEditSale, onDeleteSale, onRecordPayment, onEditPayment, onOpenContract, userRole }: CustomerDetailsProps) {
     const [receiptData, setReceiptData] = React.useState<Sale | null>(null);
     const [showReceipt, setShowReceipt] = React.useState(false);
+    const { toast } = useToast();
 
     const isSpecialCustomer = sale.customerName.toLowerCase().includes('daddy') || (sale.customerNote && sale.customerNote.toLowerCase().includes('daddy'));
+    
+    const handleAction = (action: (sale: Sale) => void, sale: Sale) => {
+        if (userRole === 'guest') {
+            toast({ variant: 'destructive', title: 'Read-only Access', description: 'Guests cannot perform this action.' });
+            return;
+        }
+        action(sale);
+    }
     
     return (
         <Card className="bg-slate-800/30 border-slate-700">
@@ -38,11 +48,11 @@ export default function CustomerDetails({ sale, isOpen, onToggle, onEditSale, on
                         <CardDescription className={cn(isSpecialCustomer ? 'text-slate-600' : '')}>{sale.gadget} ({sale.pieces} pcs)</CardDescription>
                     </div>
                      <div className={cn("flex items-center", isSpecialCustomer ? "text-slate-900" : "")}>
-                        <Button variant="ghost" size="icon" onClick={() => onEditSale(sale)}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleAction(onEditSale, sale)}><Edit className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => { setReceiptData(sale); setShowReceipt(true); }}><Receipt className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => onOpenContract(sale)}><FileText className="h-4 w-4" /></Button>
                         <AlertDialog>
-                          <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                          <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={userRole === 'guest'}><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the installment plan for {sale.gadget} and its associated financial records. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
                             <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => onDeleteSale(sale)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction></AlertDialogFooter>
@@ -65,7 +75,7 @@ export default function CustomerDetails({ sale, isOpen, onToggle, onEditSale, on
                     </div>
                     {isOpen && (
                        <div className="pt-4">
-                         <PaymentRecorder sale={sale} onRecordPayment={onRecordPayment} onEditPayment={onEditPayment} />
+                         <PaymentRecorder sale={sale} onRecordPayment={onRecordPayment} onEditPayment={onEditPayment} userRole={userRole} />
                        </div>
                     )}
                 </CardContent>

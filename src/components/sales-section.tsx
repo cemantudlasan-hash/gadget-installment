@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -28,9 +27,10 @@ interface SalesSectionProps {
   loading: boolean;
   onDataChange: () => void;
   onUpdateSale: (saleId: string, updatedData: Partial<Sale>) => Promise<void>;
+  userRole: 'admin' | 'guest';
 }
 
-export default function SalesSection({ sales, loading, onDataChange, onUpdateSale }: SalesSectionProps) {
+export default function SalesSection({ sales, loading, onDataChange, onUpdateSale, userRole }: SalesSectionProps) {
   const { db } = useFirebase();
   const { toast } = useToast();
   
@@ -46,7 +46,10 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
 
 
   const handleSaveSale = async (saleData: Omit<Sale, "id">) => {
-    if (!db) return;
+    if (!db || userRole === 'guest') {
+        if(userRole === 'guest') toast({ variant: "destructive", title: "Read-only Access", description: "Guests cannot save sales." });
+        return;
+    }
     try {
       const commissionsCollectionRef = collection(db, "commissions");
       const batch = writeBatch(db);
@@ -111,7 +114,10 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
   };
 
   const handleDeleteSale = async (saleToDelete: Sale) => {
-    if (!db) return;
+    if (!db || userRole === 'guest') {
+        if(userRole === 'guest') toast({ variant: "destructive", title: "Read-only Access", description: "Guests cannot delete sales." });
+        return;
+    }
     try {
         const batch = writeBatch(db);
         
@@ -135,7 +141,10 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
   };
 
   const handleRecordPayment = async (saleId: string, amountPaid: number, paymentDate: string) => {
-    if (!db) return;
+    if (!db || userRole === 'guest') {
+        if(userRole === 'guest') toast({ variant: "destructive", title: "Read-only Access", description: "Guests cannot record payments." });
+        return;
+    }
     try {
       const saleDoc = sales.find(s => s.id === saleId);
       if (!saleDoc || !saleDoc.paymentInstallments) {
@@ -200,7 +209,10 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
   };
 
   const handleEditPayment = async (saleId: string, month: number, amount: number, date: string) => {
-     if (!db) return;
+     if (!db || userRole === 'guest') {
+        if(userRole === 'guest') toast({ variant: "destructive", title: "Read-only Access", description: "Guests cannot edit payments." });
+        return;
+    }
     try {
       const saleDoc = sales.find(s => s.id === saleId);
       if (!saleDoc || !saleDoc.paymentInstallments) {
@@ -307,6 +319,10 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
 
 
   const handleEditSale = (sale: Sale) => {
+    if (userRole === 'guest') {
+      toast({ variant: "destructive", title: "Read-only Access", description: "Guests cannot edit sales." });
+      return;
+    }
     setEditingSale(sale);
     setShowSalesForm(true);
   };
@@ -317,6 +333,10 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
 
 
   const handleAddNewCustomer = () => {
+    if (userRole === 'guest') {
+      toast({ variant: "destructive", title: "Read-only Access", description: "Guests cannot add new customers." });
+      return;
+    }
     setEditingSale(null);
     setShowSalesForm(true);
   }
@@ -395,6 +415,7 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
                   onRecordPayment={handleRecordPayment}
                   onEditPayment={handleEditPayment}
                   onOpenContract={handleOpenContract}
+                  userRole={userRole}
                 />
               ))}
             </div>

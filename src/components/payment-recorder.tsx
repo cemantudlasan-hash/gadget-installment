@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -14,9 +15,10 @@ interface PaymentRecorderProps {
   sale: Sale;
   onRecordPayment: (saleId: string, amount: number, date: string) => void;
   onEditPayment: (saleId: string, month: number, amount: number, date: string) => void;
+  userRole: 'admin' | 'guest';
 }
 
-export default function PaymentRecorder({ sale, onRecordPayment, onEditPayment }: PaymentRecorderProps) {
+export default function PaymentRecorder({ sale, onRecordPayment, onEditPayment, userRole }: PaymentRecorderProps) {
   const [amountPaid, setAmountPaid] = useState('');
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [isDateWarning, setIsDateWarning] = useState(false);
@@ -34,6 +36,10 @@ export default function PaymentRecorder({ sale, onRecordPayment, onEditPayment }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (userRole === 'guest') {
+        toast({ variant: 'destructive', title: 'Read-only Access', description: 'Guests cannot record payments.' });
+        return;
+    }
     const amount = parseFloat(amountPaid);
     if (isNaN(amount) || amount <= 0) {
       toast({ variant: 'destructive', title: 'Invalid Amount', description: 'Please enter a valid positive amount.' });
@@ -45,6 +51,10 @@ export default function PaymentRecorder({ sale, onRecordPayment, onEditPayment }
   };
 
   const handleEditClick = (installment: Installment) => {
+    if (userRole === 'guest') {
+        toast({ variant: 'destructive', title: 'Read-only Access', description: 'Guests cannot edit payments.' });
+        return;
+    }
     setEditingInstallment(installment);
     setEditedAmount(String(installment.paidAmount));
     setEditedDate(installment.lastPaymentDate || '');
@@ -122,13 +132,13 @@ export default function PaymentRecorder({ sale, onRecordPayment, onEditPayment }
           <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-end gap-2">
             <div className="flex-grow">
               <label htmlFor={`amount-${sale.id}`} className="text-sm font-medium">Amount (฿)</label>
-              <Input id={`amount-${sale.id}`} type="number" value={amountPaid} onChange={e => setAmountPaid(e.target.value)} placeholder="0.00" step="0.01" />
+              <Input id={`amount-${sale.id}`} type="number" value={amountPaid} onChange={e => setAmountPaid(e.target.value)} placeholder="0.00" step="0.01" disabled={userRole === 'guest'} />
             </div>
             <div className="flex-grow">
               <label htmlFor={`date-${sale.id}`} className="text-sm font-medium">Payment Date</label>
-              <Input id={`date-${sale.id}`} type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} />
+              <Input id={`date-${sale.id}`} type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} disabled={userRole === 'guest'} />
             </div>
-            <Button type="submit">Record Payment</Button>
+            <Button type="submit" disabled={userRole === 'guest'}>Record Payment</Button>
           </form>
           {isDateWarning && <p className="text-red-500 text-xs text-center">A payment has already been recorded for this date.</p>}
 
@@ -173,4 +183,3 @@ export default function PaymentRecorder({ sale, onRecordPayment, onEditPayment }
     </>
   );
 }
- 

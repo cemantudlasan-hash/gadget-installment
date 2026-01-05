@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -27,9 +26,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [sales, setSales] = useState<Sale[]>([]);
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [userRole, setUserRole] = useState<'admin' | 'guest'>('admin'); // Default to admin, adjust if needed
 
   const fetchAllData = useCallback(async () => {
-    if (!db || !user) return;
+    if (!db) return;
     setLoadingData(true);
     try {
       // Fetch commissions
@@ -62,16 +62,24 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     } finally {
       setLoadingData(false);
     }
-  }, [db, user, toast]);
+  }, [db, toast]);
 
   useEffect(() => {
-    if (user) {
-      fetchAllData();
+    // This is a simple way to distinguish. A real app would use auth claims.
+    if (user?.isAnonymous) {
+      setUserRole('guest');
+    } else {
+      setUserRole('admin');
     }
+    fetchAllData();
   }, [user, fetchAllData]);
   
   const handleUpdateSale = async (saleId: string, updatedData: Partial<Sale>) => {
     if (!db) return;
+    if (userRole === 'guest') {
+        toast({variant: "destructive", title: "Read-only Access", description: "Guests are not allowed to make changes."});
+        return;
+    }
     try {
       const saleRef = doc(db, "sales", saleId);
       await updateDoc(saleRef, updatedData);
@@ -101,6 +109,21 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   const futuristicBgClasses = "relative overflow-hidden bg-transparent font-sans p-0 rounded-2xl";
 
+  const getWelcomeMessage = () => {
+    if (userRole === 'admin' && !user?.isAnonymous) {
+        return "Cirannakorn Tudlasan";
+    }
+    return "Guest";
+  };
+  
+  const getAvatarFallback = () => {
+    if (userRole === 'admin' && !user?.isAnonymous) {
+        return "CT";
+    }
+    return "G";
+  }
+
+
   return (
     <div className="max-w-7xl mx-auto bg-transparent p-0 w-full">
       <div className="text-center mb-8 relative">
@@ -110,10 +133,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         {user && (
           <div className="flex items-center justify-center gap-3 text-sm text-slate-400 mt-4">
              <Avatar>
-              <AvatarImage src="https://images.unsplash.com/photo-1596629040517-2f0b5b853834?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxiYWJ5JTIwYm95fGVufDB8fHx8MTc1Mzg5Njg3Mnww&ixlib=rb-4.1.0&q=80&w=1080" alt="User Avatar" data-ai-hint="person user" />
-              <AvatarFallback>CT</AvatarFallback>
+              <AvatarImage src={userRole === 'admin' ? "https://images.unsplash.com/photo-1596629040517-2f0b5b853834?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxiYWJ5JTIwYm95fGVufDB8fHx8MTc1Mzg5Njg3Mnww&ixlib=rb-4.1.0&q=80&w=1080" : ''} alt="User Avatar" data-ai-hint="person user" />
+              <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
             </Avatar>
-            <span>Logged in as: <span className="bg-cyan-900/50 px-2 py-1 rounded-md text-cyan-300 font-semibold">Cirannakorn Tudlasan</span></span>
+            <span>Logged in as: <span className="bg-cyan-900/50 px-2 py-1 rounded-md text-cyan-300 font-semibold">{getWelcomeMessage()}</span></span>
           </div>
         )}
         <Button onClick={onLogout} variant="outline" size="icon" className="absolute top-0 right-0 bg-transparent border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-slate-900">
@@ -138,14 +161,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <TabsContent value="sales">
             <div className={futuristicBgClasses}>
                 <div className="relative z-10">
-                    <SalesSection sales={sales} loading={loadingData} onDataChange={fetchAllData} onUpdateSale={handleUpdateSale} />
+                    <SalesSection sales={sales} loading={loadingData} onDataChange={fetchAllData} onUpdateSale={handleUpdateSale} userRole={userRole} />
                 </div>
             </div>
         </TabsContent>
         <TabsContent value="commissions">
              <div className={futuristicBgClasses}>
                 <div className="relative z-10">
-                    <CommissionsSection commissions={commissions} sales={sales} loading={loadingData} onDataChange={fetchAllData} />
+                    <CommissionsSection commissions={commissions} sales={sales} loading={loadingData} onDataChange={fetchAllData} userRole={userRole}/>
                 </div>
             </div>
         </TabsContent>
@@ -159,7 +182,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <TabsContent value="reminders">
             <div className={futuristicBgClasses}>
                 <div className="relative z-10">
-                    <RemindersSection sales={sales} commissions={commissions} loading={loadingData} onDataChange={fetchAllData} onUpdateSale={handleUpdateSale} />
+                    <RemindersSection sales={sales} commissions={commissions} loading={loadingData} onDataChange={fetchAllData} onUpdateSale={handleUpdateSale} userRole={userRole} />
                 </div>
             </div>
         </TabsContent>

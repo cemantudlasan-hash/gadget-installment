@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
@@ -33,6 +32,7 @@ interface RemindersSectionProps {
   loading: boolean;
   onDataChange: () => void;
   onUpdateSale: (saleId: string, updatedData: Partial<Sale>) => Promise<void>;
+  userRole: 'admin' | 'guest';
 }
 
 interface OverdueCustomer {
@@ -41,7 +41,7 @@ interface OverdueCustomer {
   monthlyPayment: number;
 }
 
-export default function RemindersSection({ sales, commissions, loading, onDataChange, onUpdateSale }: RemindersSectionProps) {
+export default function RemindersSection({ sales, commissions, loading, onDataChange, onUpdateSale, userRole }: RemindersSectionProps) {
   const { db } = useFirebase();
   const { toast } = useToast();
   const [selectedSaleId, setSelectedSaleId] = useState<string>("");
@@ -53,6 +53,10 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
   const [editedPenaltyComment, setEditedPenaltyComment] = useState("");
 
   const handleDismissReminder = async (saleId: string) => {
+    if (userRole === 'guest') {
+        toast({ variant: 'destructive', title: 'Read-only Access', description: 'Guests cannot dismiss reminders.' });
+        return;
+    }
     try {
       await onUpdateSale(saleId, { reminderDismissed: true });
       toast({ title: "Reminder Dismissed", description: "The customer has been removed from the overdue list." });
@@ -62,6 +66,10 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
   };
   
   const handleRestoreReminder = async (saleId: string) => {
+    if (userRole === 'guest') {
+        toast({ variant: 'destructive', title: 'Read-only Access', description: 'Guests cannot restore reminders.' });
+        return;
+    }
      try {
       await onUpdateSale(saleId, { reminderDismissed: false });
       toast({ title: "Reminder Restored", description: "The customer has been added back to the overdue list if applicable." });
@@ -132,6 +140,10 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
   }, [sales]);
 
   const handleAddPenalty = async () => {
+    if (userRole === 'guest') {
+        toast({ variant: "destructive", title: "Read-only Access", description: "Guests cannot add penalties." });
+        return;
+    }
     if (!selectedSaleId || penaltyAmount <= 0 || !db) {
       toast({
         variant: "destructive",
@@ -191,6 +203,10 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
   };
 
   const handleEditPenalty = async () => {
+    if (userRole === 'guest') {
+        toast({ variant: "destructive", title: "Read-only Access", description: "Guests cannot edit penalties." });
+        return;
+    }
     if (!editingPenalty || editedPenaltyAmount < 0 || !db) return;
     setIsSubmitting(true);
     try {
@@ -225,6 +241,10 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
   };
 
   const handleDeletePenalty = async (penalty: Commission) => {
+    if (userRole === 'guest') {
+        toast({ variant: "destructive", title: "Read-only Access", description: "Guests cannot delete penalties." });
+        return;
+    }
      if (!db || !penalty.saleId) return;
      setIsSubmitting(true);
      try {
@@ -256,6 +276,10 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
   };
 
   const handleEditClick = (penalty: Commission) => {
+    if (userRole === 'guest') {
+        toast({ variant: "destructive", title: "Read-only Access", description: "Guests cannot edit penalties." });
+        return;
+    }
     setEditingPenalty(penalty);
     setEditedPenaltyAmount(penalty.getAmount);
     setEditedPenaltyComment(penalty.comment || "");
@@ -305,7 +329,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                       {monthlyPayment.toFixed(2)}
                     </TableCell>
                     <TableCell className="text-center">
-                      <Button variant="outline" size="sm" onClick={() => handleDismissReminder(sale.id)}>
+                      <Button variant="outline" size="sm" onClick={() => handleDismissReminder(sale.id)} disabled={userRole === 'guest'}>
                         <BellOff className="mr-2 h-4 w-4" />
                         Dismiss
                       </Button>
@@ -333,7 +357,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                 <div className="flex flex-col sm:flex-row items-end gap-4">
                     <div className="w-full sm:w-1/2 space-y-2">
                         <Label htmlFor="customer-select">Customer</Label>
-                        <Select value={selectedSaleId} onValueChange={setSelectedSaleId}>
+                        <Select value={selectedSaleId} onValueChange={setSelectedSaleId} disabled={userRole === 'guest'}>
                         <SelectTrigger id="customer-select">
                             <SelectValue placeholder="Select a customer..." />
                         </SelectTrigger>
@@ -355,12 +379,13 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                         onChange={(e) => setPenaltyAmount(parseFloat(e.target.value) || 0)}
                         placeholder="e.g. 100" 
                         step="1"
+                        disabled={userRole === 'guest'}
                         />
                     </div>
                      <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button 
-                            disabled={isSubmitting || !selectedSaleId || penaltyAmount <= 0}
+                            disabled={isSubmitting || !selectedSaleId || penaltyAmount <= 0 || userRole === 'guest'}
                             className="w-full sm:w-auto"
                             >
                             <AlertTriangle className="mr-2 h-4 w-4" />
@@ -390,6 +415,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                         value={penaltyComment}
                         onChange={(e) => setPenaltyComment(e.target.value)}
                         placeholder="e.g., Late payment fee for June"
+                        disabled={userRole === 'guest'}
                     />
                 </div>
              </div>
@@ -427,12 +453,12 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                             </TableCell>
                             <TableCell className="text-right font-medium text-amber-500">{item.getAmount?.toFixed(2)}</TableCell>
                             <TableCell className="flex items-center justify-end gap-2">
-                                <Button variant="ghost" size="icon" onClick={() => handleEditClick(item)}>
+                                <Button variant="ghost" size="icon" onClick={() => handleEditClick(item)} disabled={userRole === 'guest'}>
                                     <Edit className="h-4 w-4" />
                                 </Button>
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={userRole === 'guest'}>
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
                                     </AlertDialogTrigger>
@@ -484,7 +510,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                                 <TableCell>{sale.customerName}</TableCell>
                                 <TableCell>{sale.gadget}</TableCell>
                                 <TableCell className="text-center">
-                                 <Button variant="outline" size="sm" onClick={() => handleRestoreReminder(sale.id)}>
+                                 <Button variant="outline" size="sm" onClick={() => handleRestoreReminder(sale.id)} disabled={userRole === 'guest'}>
                                     <RefreshCw className="mr-2 h-4 w-4" />
                                     Restore
                                  </Button>

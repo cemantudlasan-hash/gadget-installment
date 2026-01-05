@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useFirebase } from "@/lib/firebase/context";
-import { collection, addDoc, doc, deleteDoc, setDoc, getDocs, query, orderBy } from "firebase/firestore";
+import { collection, addDoc, doc, deleteDoc, setDoc, getDocs, query, orderBy, writeBatch } from "firebase/firestore";
 import CommissionForm from "./commission-form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,9 +27,10 @@ interface CommissionsSectionProps {
   sales: Sale[];
   loading: boolean;
   onDataChange: () => void;
+  userRole: 'admin' | 'guest';
 }
 
-export default function CommissionsSection({ commissions, sales, loading, onDataChange }: CommissionsSectionProps) {
+export default function CommissionsSection({ commissions, sales, loading, onDataChange, userRole }: CommissionsSectionProps) {
   const { db } = useFirebase();
   const { toast } = useToast();
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -59,19 +60,17 @@ export default function CommissionsSection({ commissions, sales, loading, onData
 
   useEffect(() => {
     fetchArchivedReports();
-  }, [db]);
+  }, [db, fetchArchivedReports]);
 
 
   const monthlyCommissions = useMemo(() => {
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
     
-    // Filter by search term across all commissions first
     const searchedCommissions = searchTerm
       ? commissions.filter(c => c.description.toLowerCase().includes(searchTerm.toLowerCase()))
       : commissions;
 
-    // Then filter by the current month for display
     const monthlyLedgerEntries = searchedCommissions.filter(c => {
       try {
         const commissionDate = parseISO(c.date);
@@ -136,7 +135,10 @@ export default function CommissionsSection({ commissions, sales, loading, onData
 
 
   const handleSaveCommission = async (commissionData: Omit<Commission, 'id' | 'runningTotal'>) => {
-    if (!db) return;
+    if (!db || userRole === 'guest') {
+        if(userRole === 'guest') toast({ variant: "destructive", title: "Read-only Access", description: "Guests cannot save ledger entries." });
+        return;
+    }
     try {
       await addDoc(collection(db, "commissions"), commissionData);
       toast({ title: "Success", description: "Entry added successfully!" });
@@ -153,7 +155,10 @@ export default function CommissionsSection({ commissions, sales, loading, onData
   };
 
   const handleDeleteCommission = async (id: string) => {
-    if (!db) return;
+    if (!db || userRole === 'guest') {
+        if(userRole === 'guest') toast({ variant: "destructive", title: "Read-only Access", description: "Guests cannot delete ledger entries." });
+        return;
+    }
 
     try {
       await deleteDoc(doc(db, "commissions", id));
@@ -169,270 +174,294 @@ export default function CommissionsSection({ commissions, sales, loading, onData
     }
   };
 
-  const handleArchiveReport = async () => {
-    if (!db) return;
+  const handleArchiveYear = async () => {
+    if (!db || userRole === 'guest') {
+        if(userRole === 'guest') toast({ variant: "destructive", title: "Read-only Access", description: "Guests cannot archive data." });
+        return;
+    }
     setIsArchiving(true);
     try {
-      const reportId = String(yearlyReport.year);
-      const reportRef = doc(db, "yearlyReports", reportId);
+      const year = currentYear.getFullYear();
+      const reportRef = doc(db, "yearlyReports", String(year));
       await setDoc(reportRef, yearlyReport);
 
-      toast({
-        title: "Report Archived!",
-        description: `The report for ${yearlyReport.year} has been successfully saved.`,
+      const start = startOfYear(currentYear);
+      const end = endOfYear(currentYear);
+
+      const commissionsToArchive = commissions.filter(c => {
+        try {
+            const commissionDate = parseISO(c.date);
+            return isWithinInterval(commissionDate, { start, end });
+        } catch (e) { return false; }
       });
-      fetchArchivedReports(); 
+      
+      const salesToArchive = sales.filter(s => {
+        try {
+            const saleDate = parseISO(s.dateStart);
+            return isWithinInterval(saleDate, { start, end });
+        } catch (e) { return false; }
+      });
+
+      const batch = writeBatch(db);
+
+      commissionsToArchive.forEach(c => {
+        batch.delete(doc(db, "commissions", c.id));
+      });
+      salesToArchive.forEach(s => {
+        batch.delete(doc(db, "sales", s.id));
+      });
+      
+      await batch.commit();
+
+      toast({
+        title: "Year Archived",
+        description: `The data for ${year} has been successfully archived.`,
+      });
+
+      onDataChange();
+      fetchArchivedReports();
     } catch (e: any) {
-      console.error("Error archiving report:", e);
+      console.error("Error archiving year:", e);
       toast({
         variant: "destructive",
         title: "Archive Error",
-        description: `Could not archive the report: ${e.message}`,
+        description: e.message || "An unknown error occurred during archiving.",
       });
     } finally {
       setIsArchiving(false);
     }
+  };
+  
+  const handleRestoreReport = async (report: YearlyReport) => {
+    toast({
+        variant: "destructive",
+        title: "Not Implemented",
+        description: "Restoring archived data is not yet supported.",
+    });
   }
 
-  const handleDeleteArchive = async (year: number) => {
-     if (!db) return;
-    try {
-      const reportId = String(year);
-      await deleteDoc(doc(db, "yearlyReports", reportId));
-      toast({
-        title: "Archive Deleted",
-        description: `The archived report for ${year} has been deleted.`,
-      });
-      fetchArchivedReports();
-    } catch (e: any) {
-      console.error("Error deleting archive:", e);
-      toast({
-        variant: "destructive",
-        title: "Deletion Error",
-        description: `Could not delete the archived report: ${e.message}`,
-      });
-    }
+  const changeMonth = (amount: number) => {
+    setCurrentMonth(prev => addMonths(prev, amount));
+  };
+  
+  const changeYear = (amount: number) => {
+    setCurrentYear(prev => addYears(prev, amount));
   };
 
+  const hasDataForCurrentYear = useMemo(() => {
+    const year = currentYear.getFullYear();
+    const hasCommissions = commissions.some(c => parseISO(c.date).getFullYear() === year);
+    const hasSales = sales.some(s => parseISO(s.dateStart).getFullYear() === year);
+    return hasCommissions || hasSales;
+  }, [commissions, sales, currentYear]);
 
-  const isReportArchived = archivedReports.some(r => r.year === yearlyReport.year);
-
-
+  if (showCommissionForm) {
+    return <CommissionForm onSave={handleSaveCommission} onCancel={() => setShowCommissionForm(false)} />;
+  }
+  
   return (
     <div className="space-y-8">
-      {showCommissionForm ? (
-        <CommissionForm
-          onSave={handleSaveCommission}
-          onCancel={() => setShowCommissionForm(false)}
-        />
-      ) : (
-         <div className="text-center py-4">
-          <Button onClick={() => setShowCommissionForm(true)} size="lg">
-             Add New Ledger Entry
-          </Button>
-        </div>
-      )}
-
       <Card>
         <CardHeader>
-           <div className="flex justify-between items-center mb-4">
-             <CardTitle>Monthly Ledger</CardTitle>
-             <div className="flex items-center gap-4">
-                <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
-                    <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-lg font-semibold">{format(currentMonth, "MMMM yyyy")}</span>
-                <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
-                    <ChevronRight className="h-4 w-4" />
-                </Button>
-             </div>
-           </div>
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                placeholder="Search by description..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10"
-                />
-            </div>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <CardTitle>Commission & Expense Ledger</CardTitle>
+                <p className="text-muted-foreground text-sm mt-1">Track all your income and expenses here.</p>
+              </div>
+              <Button onClick={() => setShowCommissionForm(true)} disabled={userRole === 'guest'}>
+                  Add New Entry
+              </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
+            <div className="flex justify-between items-center mb-4">
+              <Button variant="outline" size="icon" onClick={() => changeMonth(-1)}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="text-xl font-bold text-center">
+                {format(currentMonth, "MMMM yyyy")}
+              </div>
+              <Button variant="outline" size="icon" onClick={() => changeMonth(1)}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-          ) : monthlyCommissions.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">{searchTerm ? 'No matching entries found.' : 'No ledger entries for this month. Add one above!'}</p>
-          ) : (
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input 
+                placeholder="Search descriptions..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {loading ? (
+                <div className="space-y-4">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+            ) : monthlyCommissions.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Received (฿)</TableHead>
-                  <TableHead className="text-right">Expense (฿)</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="text-right text-green-500">Income (฿)</TableHead>
+                  <TableHead className="text-right text-red-500">Expense (฿)</TableHead>
+                  <TableHead className="text-center">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {monthlyCommissions.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>{item.date}</TableCell>
+                    <TableCell>{format(parseISO(item.date), "MMM dd")}</TableCell>
                     <TableCell>{item.description}</TableCell>
-                    <TableCell className="text-right font-medium text-green-500">{item.getAmount?.toFixed(2)}</TableCell>
-                    <TableCell className="text-right font-medium text-red-500">{item.spentAmount?.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                           <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={!!item.saleId}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete this ledger entry.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteCommission(item.id)} className="bg-destructive hover:bg-destructive/90">
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                    <TableCell className="text-right font-medium text-green-500">
+                      {item.getAmount > 0 ? item.getAmount.toFixed(2) : "-"}
+                    </TableCell>
+                    <TableCell className="text-right font-medium text-red-500">
+                      {item.spentAmount > 0 ? item.spentAmount.toFixed(2) : "-"}
+                    </TableCell>
+                     <TableCell className="text-center">
+                       <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={userRole === 'guest'}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>This action will permanently delete the ledger entry. This cannot be undone.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteCommission(item.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          )}
+            ) : (
+                <p className="text-center py-8 text-muted-foreground">
+                    No ledger entries for {format(currentMonth, "MMMM yyyy")}.
+                </p>
+            )}
         </CardContent>
       </Card>
       
       <Card>
         <CardHeader>
-           <div className="flex justify-between items-center">
-             <CardTitle>Sales Report</CardTitle>
-             <div className="flex items-center gap-4">
-                <Button variant="outline" size="icon" onClick={() => setCurrentYear(subYears(currentYear, 1))}>
-                    <ChevronLeft className="h-4 w-4" />
+           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <CardTitle>Yearly Financial Report</CardTitle>
+              <p className="text-muted-foreground text-sm mt-1">Summary of income, expenses, and net profit for the selected year.</p>
+            </div>
+             <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={isArchiving || !hasDataForCurrentYear || userRole === 'guest'}>
+                    <Archive className="mr-2 h-4 w-4"/>
+                    {isArchiving ? "Archiving..." : `Archive ${currentYear.getFullYear()} Data`}
                 </Button>
-                <span className="text-lg font-semibold">{format(currentYear, "yyyy")}</span>
-                <Button variant="outline" size="icon" onClick={() => setCurrentYear(addYears(currentYear, 1))}>
-                    <ChevronRight className="h-4 w-4" />
-                </Button>
-             </div>
-           </div>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Archive {currentYear.getFullYear()} Data?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete all sales and ledger entries for {currentYear.getFullYear()} and save a summary report. This action cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleArchiveYear} className="bg-destructive hover:bg-destructive/90">
+                        {isArchiving ? "Archiving..." : "Yes, Archive"}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </CardHeader>
         <CardContent>
-           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
-                <p className="text-sm text-muted-foreground text-center">Total Commission (from Sales + Ledger):</p>
-                <p className={`text-2xl font-bold mt-auto text-center text-green-500`}>฿{yearlyReport.totalCommission.toFixed(2)}</p>
-              </div>
-              <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
-                <p className="text-sm text-muted-foreground text-center">Total Yearly Expenses (from Ledger):</p>
-                <p className="text-2xl font-bold mt-auto text-center text-red-500">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
-              </div>
-              <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
-                <p className="text-sm text-muted-foreground text-center">Net Income (Commission - Expenses):</p>
-                <p className={`text-2xl font-bold mt-auto text-center ${yearlyReport.netYearlyIncome >= 0 ? 'text-blue-500' : 'text-red-500'}`}>฿{yearlyReport.netYearlyIncome.toFixed(2)}</p>
-              </div>
-              <div className="flex flex-col bg-muted p-4 rounded-lg h-full">
-                <p className="text-sm text-muted-foreground text-center">Total Down Payments (from Sales):</p>
-                <p className={`text-2xl font-bold mt-auto text-center text-yellow-500`}>฿{yearlyReport.totalDownPayments.toFixed(2)}</p>
-              </div>
+          <div className="flex justify-between items-center mb-6">
+            <Button variant="outline" size="icon" onClick={() => changeYear(-1)}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <h3 className="text-2xl font-bold">{yearlyReport.year}</h3>
+            <Button variant="outline" size="icon" onClick={() => changeYear(1)}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">Total Commission</p>
+              <p className="text-2xl font-bold text-green-500">฿{yearlyReport.totalCommission.toFixed(2)}</p>
             </div>
-            <div className="mt-6 flex justify-center gap-2">
-                 <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                         <Button disabled={isArchiving || isReportArchived}>
-                           <Archive className="mr-2 h-4 w-4" />
-                           {isReportArchived ? `Report for ${yearlyReport.year} is Archived` : `Finalize & Archive ${yearlyReport.year} Report`}
-                         </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>Finalize Yearly Report?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This will save a permanent record of the {yearlyReport.year} report. You will not be able to change it after archiving.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleArchiveReport}>
-                            Yes, Archive Report
-                        </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-                 {isReportArchived && (
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button variant="destructive" disabled={isArchiving}>
-                                <FileX2 className="mr-2 h-4 w-4" />
-                                Delete Archive
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Archived Report?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                Are you sure you want to delete the archived report for {yearlyReport.year}? This action cannot be undone.
-                            </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteArchive(yearlyReport.year)} className="bg-destructive hover:bg-destructive/90">
-                                Yes, Delete Archive
-                            </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                )}
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">Total Expenses</p>
+              <p className="text-2xl font-bold text-red-500">฿{yearlyReport.totalExpenses.toFixed(2)}</p>
             </div>
+             <div className="p-4 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">Total Down Payments</p>
+              <p className="text-2xl font-bold text-blue-500">฿{yearlyReport.totalDownPayments.toFixed(2)}</p>
+            </div>
+            <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+              <p className="text-sm font-bold text-primary">Net Yearly Income</p>
+              <p className="text-2xl font-extrabold text-primary">฿{yearlyReport.netYearlyIncome.toFixed(2)}</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
-
-      <Card>
-          <CardHeader>
-             <div className="flex justify-between items-center">
-                <CardTitle>Archived Yearly Reports</CardTitle>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline">
-                           <History className="mr-2 h-4 w-4"/>
-                           View Archives
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                        {loading && <DropdownMenuItem>Loading...</DropdownMenuItem>}
-                        {!loading && archivedReports.length === 0 && <DropdownMenuItem>No archived reports yet.</DropdownMenuItem>}
-                        {archivedReports.map(report => (
-                             <DropdownMenuItem key={report.year} onSelect={() => setCurrentYear(new Date(report.year, 1, 1))}>
-                                {report.year} Report
-                             </DropdownMenuItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-             </div>
-          </CardHeader>
-      </Card>
+      
+       <Card>
+        <CardHeader>
+            <CardTitle>Archived Reports</CardTitle>
+            <p className="text-muted-foreground text-sm mt-1">View summaries of previously archived years.</p>
+        </CardHeader>
+        <CardContent>
+             {loading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-10 w-full" />
+                </div>
+            ) : archivedReports.length > 0 ? (
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Year</TableHead>
+                        <TableHead className="text-right">Net Income (฿)</TableHead>
+                        <TableHead className="text-right">Total Commission (฿)</TableHead>
+                        <TableHead className="text-right">Total Expenses (฿)</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {archivedReports.map((report) => (
+                        <TableRow key={report.year}>
+                            <TableCell className="font-bold">{report.year}</TableCell>
+                            <TableCell className="text-right font-bold text-primary">฿{report.netYearlyIncome.toFixed(2)}</TableCell>
+                            <TableCell className="text-right text-green-500">฿{report.totalCommission.toFixed(2)}</TableCell>
+                            <TableCell className="text-right text-red-500">฿{report.totalExpenses.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">
+                               <Button variant="outline" size="sm" onClick={() => handleRestoreReport(report)} disabled>
+                                    <History className="mr-2 h-4 w-4" />
+                                    Restore
+                               </Button>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+             ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                    <FileX2 className="mx-auto h-12 w-12 mb-4" />
+                    <p className="text-lg">No archived reports found.</p>
+                </div>
+            )}
+        </CardContent>
+       </Card>
     </div>
   );
 }
-
-
-    
-
-
-
-    
-
-    
