@@ -21,12 +21,6 @@ interface GuestPageProps {
   onBack: () => void;
 }
 
-const Background = () => (
-    <div className="absolute inset-0 z-0 overflow-hidden bg-slate-900">
-        <div className="absolute inset-0 z-10 bg-gradient-to-br from-slate-900 via-transparent to-slate-900"></div>
-    </div>
-);
-
 export default function GuestPage({ onBack }: GuestPageProps) {
   const { db } = useFirebase();
   const { toast } = useToast();
@@ -136,8 +130,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
 
 
   return (
-    <div className="relative flex flex-col min-h-screen overflow-hidden text-white p-4 sm:p-6 md:p-8">
-      <Background />
+    <div className="dark dashboard-bg relative flex flex-col min-h-screen overflow-hidden text-white p-4 sm:p-6 md:p-8">
       <div className="relative z-10 w-full max-w-6xl mx-auto">
         <header className="flex justify-between items-center mb-8">
           <div className="text-center flex-grow">

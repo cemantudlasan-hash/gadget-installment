@@ -9,13 +9,6 @@ interface RoleSelectionProps {
   onRoleSelect: (role: "admin" | "guest") => void;
 }
 
-const Background = () => (
-    <div className="absolute inset-0 z-0 overflow-hidden bg-slate-900">
-        <div className="absolute inset-0 z-10 bg-gradient-to-br from-slate-900 via-transparent to-slate-900"></div>
-    </div>
-);
-
-
 const RoleCard = ({
     icon: Icon,
     title,
@@ -46,9 +39,8 @@ export default function RoleSelection({ onRoleSelect }: RoleSelectionProps) {
 
   return (
     <div 
-      className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden"
+      className="dark dashboard-bg relative flex flex-col items-center justify-center min-h-screen overflow-hidden"
     >
-        <Background />
       <div className="relative z-10 text-center mb-16">
         <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-wider">
             Welcome to Gadget Management
