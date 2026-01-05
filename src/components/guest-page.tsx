@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card'
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
 import { useFirebase } from '@/lib/firebase/context';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import type { GadgetPost } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -37,10 +37,15 @@ export default function GuestPage({ onBack }: GuestPageProps) {
     setLoading(true);
     try {
       const postsRef = collection(db, "gadgetPosts");
-      const q = query(postsRef, where("isSold", "==", false), orderBy("createdAt", "desc"));
+      // Fetch all posts ordered by date first
+      const q = query(postsRef, orderBy("createdAt", "desc"));
       const snapshot = await getDocs(q);
-      const postsData = snapshot.docs.map(doc => doc.data() as GadgetPost);
-      setPosts(postsData);
+      const allPosts = snapshot.docs.map(doc => doc.data() as GadgetPost);
+      
+      // Filter for unsold posts on the client
+      const availablePosts = allPosts.filter(post => !post.isSold);
+      setPosts(availablePosts);
+
     } catch (e: any) {
       console.error("Error fetching gadget posts:", e);
       toast({
