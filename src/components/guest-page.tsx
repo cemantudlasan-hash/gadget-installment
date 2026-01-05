@@ -182,14 +182,14 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                     {!post.isSold && <Badge className="absolute top-2 right-2 bg-cyan-500 text-black z-10">Available</Badge>}
                 </div>
                 <CardHeader>
-                  <CardTitle className="text-cyan-300 text-xl">{post.productName}</CardTitle>
+                  <CardTitle className="text-cyan-300 text-xl break-words">{post.productName}</CardTitle>
                   <p className="text-xs text-slate-400">P/N: {post.productNumber}</p>
                 </CardHeader>
-                <CardContent className="flex-grow">
+                <CardContent className="flex-grow break-all">
                   <div className="space-y-3 text-slate-300">
-                    <p className="flex items-center gap-2"><Contact className="w-5 h-5 text-cyan-400" /> <strong>Seller:</strong> {post.adminName}</p>
-                    <p className="flex items-center gap-2"><Phone className="w-5 h-5 text-cyan-400" /> <strong>Contact:</strong> {post.contactNumber}</p>
-                    <p className="flex items-center gap-2"><Mail className="w-5 h-5 text-cyan-400" /> <strong>Socials:</strong> {post.socialMedia}</p>
+                    <p className="flex items-center gap-2"><Contact className="w-5 h-5 text-cyan-400 flex-shrink-0" /> <strong>Seller:</strong> {post.adminName}</p>
+                    <p className="flex items-center gap-2"><Phone className="w-5 h-5 text-cyan-400 flex-shrink-0" /> <strong>Contact:</strong> {post.contactNumber}</p>
+                    <p className="flex items-center gap-2"><Mail className="w-5 h-5 text-cyan-400 flex-shrink-0" /> <strong>Socials:</strong> {post.socialMedia}</p>
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col sm:flex-row gap-2">
@@ -254,5 +254,3 @@ export default function GuestPage({ onBack }: GuestPageProps) {
     </div>
   );
 }
-
-    
