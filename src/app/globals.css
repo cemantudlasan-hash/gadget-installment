@@ -68,13 +68,9 @@
   }
 }
 
-.dark {
-  background-color: #020617;
-}
-
 .dashboard-bg {
     position: relative;
-    background-color: #020617;
+    background-color: #0d1a26; /* Dark teal base */
     overflow: hidden;
 }
 
@@ -85,11 +81,13 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: 
-        radial-gradient(ellipse at center, rgba(13, 148, 136, 0.15) 0%, transparent 70%),
-        radial-gradient(ellipse at top left, rgba(79, 70, 229, 0.2) 0%, transparent 50%),
-        radial-gradient(ellipse at bottom right, rgba(20, 83, 45, 0.2) 0%, transparent 50%);
-    animation: background-pan 25s linear infinite;
+    background-image:
+        /* Glowing circuit lines */
+        linear-gradient(0deg, transparent 24%, rgba(0, 255, 255, 0.2) 25%, rgba(0, 255, 255, 0.2) 26%, transparent 27%, transparent 74%, rgba(0, 255, 255, 0.2) 75%, rgba(0, 255, 255, 0.2) 76%, transparent 77%, transparent),
+        linear-gradient(90deg, transparent 24%, rgba(0, 255, 255, 0.2) 25%, rgba(0, 255, 255, 0.2) 26%, transparent 27%, transparent 74%, rgba(0, 255, 255, 0.2) 75%, rgba(0, 255, 255, 0.2) 76%, transparent 77%, transparent);
+    background-size: 60px 60px;
+    animation: move-circuits 5s linear infinite;
+    opacity: 0.2;
 }
 
 .dashboard-bg::after {
@@ -100,17 +98,22 @@
     width: 200%;
     height: 200%;
     background-image: 
-        radial-gradient(circle at 1px 1px, rgba(204, 251, 241, 0.5) 1px, transparent 0),
-        radial-gradient(circle at 10px 10px, rgba(153, 246, 228, 0.3) 1px, transparent 0);
+        /* Energy pulses */
+        radial-gradient(circle at 1px 1px, rgba(0, 255, 255, 0.8) 1px, transparent 0),
+        radial-gradient(circle at 25px 25px, rgba(173, 216, 230, 0.5) 1px, transparent 0);
     background-size: 50px 50px;
-    animation: move-dots 15s linear infinite;
-    opacity: 0.1;
+    animation: move-dots 3s linear infinite;
+    opacity: 0.5;
+    filter: blur(0.5px);
 }
 
-@keyframes background-pan {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+@keyframes move-circuits {
+    0% {
+        transform: translate(0, 0);
+    }
+    100% {
+        transform: translate(-60px, -60px);
+    }
 }
 
 @keyframes move-dots {
