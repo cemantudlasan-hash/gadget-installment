@@ -165,3 +165,41 @@
     opacity: 1;
   }
 }
+
+
+@keyframes tilt {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(0.5deg); }
+}
+
+.animate-tilt {
+  animation: tilt 10s infinite linear;
+}
+
+.clip-path-glitch-1 {
+  clip-path: polygon(0 0, 100% 0, 100% 75%, 0% 75%);
+}
+
+.clip-path-glitch-2 {
+  clip-path: polygon(0 25%, 100% 25%, 100% 100%, 0% 100%);
+}
+
+@keyframes glitch-slow {
+  2%, 64% { transform: translate(2px, 0) skew(0deg); }
+  4%, 60% { transform: translate(-2px, 0) skew(0deg); }
+  62% { transform: translate(0, 0) skew(5deg); }
+}
+
+@keyframes glitch-fast {
+  2%, 64% { transform: translate(0, 2px) skew(0deg); }
+  4%, 60% { transform: translate(0, -2px) skew(0deg); }
+  62% { transform: translate(0, 0) skew(0, 2deg); }
+}
+
+.animate-glitch-slow {
+  animation: glitch-slow 2.5s infinite;
+}
+
+.animate-glitch-fast {
+  animation: glitch-fast 1.5s infinite;
+}
