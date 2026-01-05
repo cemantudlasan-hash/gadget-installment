@@ -72,13 +72,13 @@
   background-color: #020617;
 }
 
-.dark.dashboard-bg {
+.dashboard-bg {
     position: relative;
     background-color: #020617;
     overflow: hidden;
 }
 
-.dark.dashboard-bg::before {
+.dashboard-bg::before {
     content: '';
     position: absolute;
     top: 0;
@@ -92,7 +92,7 @@
     animation: background-pan 25s linear infinite;
 }
 
-.dark.dashboard-bg::after {
+.dashboard-bg::after {
     content: '';
     position: absolute;
     top: 0;

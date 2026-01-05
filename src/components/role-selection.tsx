@@ -39,7 +39,7 @@ export default function RoleSelection({ onRoleSelect }: RoleSelectionProps) {
 
   return (
     <div 
-      className="dark dashboard-bg relative flex flex-col items-center justify-center min-h-screen overflow-hidden"
+      className="dashboard-bg relative flex flex-col items-center justify-center min-h-screen overflow-hidden"
     >
       <div className="relative z-10 text-center mb-16">
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-wider bg-gradient-to-r from-purple-400 to-cyan-300 bg-clip-text text-transparent">
