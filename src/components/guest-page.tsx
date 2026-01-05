@@ -2,16 +2,20 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone } from "lucide-react";
+import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
 import { useFirebase } from '@/lib/firebase/context';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import type { GadgetPost } from '@/types';
+import { collection, getDocs, query, orderBy, addDoc, serverTimestamp, runTransaction, getDoc, doc } from 'firebase/firestore';
+import type { GadgetPost, Inquiry } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
+import { Label } from './ui/label';
 
 interface GuestPageProps {
   onBack: () => void;
@@ -31,13 +35,22 @@ export default function GuestPage({ onBack }: GuestPageProps) {
   const { toast } = useToast();
   const [posts, setPosts] = useState<GadgetPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [inquiryPost, setInquiryPost] = useState<GadgetPost | null>(null);
+  const [inquiryForm, setInquiryForm] = useState({
+    guestName: '',
+    contactNumber: '',
+    email: '',
+    socialMedia: '',
+    message: ''
+  });
 
   const fetchPosts = useCallback(async () => {
     if (!db) return;
     setLoading(true);
     try {
       const postsRef = collection(db, "gadgetPosts");
-      // Fetch all posts ordered by date first
       const q = query(postsRef, orderBy("createdAt", "desc"));
       const snapshot = await getDocs(q);
       const allPosts = snapshot.docs.map(doc => ({
@@ -45,7 +58,6 @@ export default function GuestPage({ onBack }: GuestPageProps) {
         ...doc.data()
       } as GadgetPost));
       
-      // Filter for unsold posts on the client
       const availablePosts = allPosts.filter(post => !post.isSold);
       setPosts(availablePosts);
 
@@ -64,6 +76,67 @@ export default function GuestPage({ onBack }: GuestPageProps) {
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
+
+  const handleInquiryChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setInquiryForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleInquireNow = (post: GadgetPost) => {
+    setInquiryPost(post);
+  };
+
+  const handleInquirySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!db || !inquiryPost) return;
+
+    if (!inquiryForm.guestName || !inquiryForm.contactNumber || !inquiryForm.message) {
+      toast({ variant: 'destructive', title: 'Missing Fields', description: 'Please fill in your name, contact number, and message.' });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const counterRef = doc(db, 'inquiryCounters', today);
+
+      const newDailyId = await runTransaction(db, async (transaction) => {
+        const counterDoc = await transaction.get(counterRef);
+        const newCount = (counterDoc.data()?.count || 0) + 1;
+        transaction.set(counterRef, { count: newCount });
+        return newCount;
+      });
+
+      const newInquiry: Omit<Inquiry, 'id'> = {
+        dailyInquiryId: newDailyId,
+        guestName: inquiryForm.guestName,
+        contactNumber: inquiryForm.contactNumber,
+        email: inquiryForm.email,
+        socialMedia: inquiryForm.socialMedia,
+        productName: inquiryPost.productName,
+        productId: inquiryPost.id,
+        message: inquiryForm.message,
+        createdAt: new Date().toISOString(),
+        isRead: false,
+      };
+
+      await addDoc(collection(db, 'inquiries'), newInquiry);
+
+      toast({
+        title: 'Inquiry Sent!',
+        description: 'The seller has been notified. They will contact you shortly.',
+      });
+      setInquiryPost(null);
+      setInquiryForm({ guestName: '', contactNumber: '', email: '', socialMedia: '', message: '' });
+
+    } catch (err: any) {
+      console.error('Error submitting inquiry:', err);
+      toast({ variant: 'destructive', title: 'Submission Error', description: 'Could not send your inquiry. Please try again.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
 
   return (
     <div className="relative flex flex-col min-h-screen overflow-hidden bg-slate-900 text-white p-4 sm:p-6 md:p-8">
@@ -129,7 +202,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                   </div>
                 </CardContent>
                 <CardFooter>
-                    <Button className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold">
+                    <Button className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold" onClick={() => handleInquireNow(post)}>
                         <Smartphone className="mr-2"/> Inquire Now
                     </Button>
                 </CardFooter>
@@ -138,6 +211,49 @@ export default function GuestPage({ onBack }: GuestPageProps) {
           </div>
         )}
       </div>
+
+       <Dialog open={!!inquiryPost} onOpenChange={() => setInquiryPost(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Inquire about: {inquiryPost?.productName}</DialogTitle>
+            <DialogDescription>
+              Fill out your details below and the seller will get back to you shortly.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleInquirySubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="guestName" className="text-right">Name *</Label>
+                <Input id="guestName" name="guestName" value={inquiryForm.guestName} onChange={handleInquiryChange} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="contactNumber" className="text-right">Contact # *</Label>
+                <Input id="contactNumber" name="contactNumber" value={inquiryForm.contactNumber} onChange={handleInquiryChange} className="col-span-3" />
+              </div>
+               <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right">Email</Label>
+                <Input id="email" name="email" value={inquiryForm.email} onChange={handleInquiryChange} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="socialMedia" className="text-right">Social Media</Label>
+                <Input id="socialMedia" name="socialMedia" value={inquiryForm.socialMedia} onChange={handleInquiryChange} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="message" className="text-right">Message *</Label>
+                <Textarea id="message" name="message" value={inquiryForm.message} onChange={handleInquiryChange} className="col-span-3" placeholder="e.g., Is this still available? What are the installment terms?"/>
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</> : 'Send Inquiry'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+
       <style jsx>{`
         @keyframes blob {
           0% { transform: translate(0px, 0px) scale(1); }

@@ -1,6 +1,7 @@
 
 
 
+
 export interface Installment {
   month: number;
   dueAmount: number;
@@ -62,4 +63,18 @@ export interface GadgetPost {
   imageUrl: string;
   isSold: boolean;
   createdAt: string;
+}
+
+export interface Inquiry {
+  id: string;
+  dailyInquiryId: number;
+  guestName: string;
+  contactNumber: string;
+  email: string;
+  socialMedia: string;
+  productName: string;
+  productId: string;
+  message: string;
+  createdAt: string;
+  isRead: boolean;
 }

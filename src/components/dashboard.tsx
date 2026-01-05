@@ -7,13 +7,14 @@ import SalesSection from "@/components/sales-section";
 import CommissionsSection from "@/components/commissions-section";
 import PricingCalculator from "@/components/pricing-calculator";
 import RemindersSection from "@/components/reminders-section";
-import GadgetPostsSection from "@/components/gadget-posts-section"; // New Import
+import GadgetPostsSection from "@/components/gadget-posts-section";
+import InboxSection from "@/components/inbox-section"; // New Import
 import { useFirebase } from "@/lib/firebase/context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { LogOut, Package } from "lucide-react";
-import { collection, getDocs, orderBy, query, doc, updateDoc } from "firebase/firestore";
-import type { Commission, Sale, GadgetPost } from "@/types";
+import { LogOut, Package, Inbox } from "lucide-react";
+import { collection, getDocs, orderBy, query, doc, updateDoc, where, onSnapshot } from "firebase/firestore";
+import type { Commission, Sale, GadgetPost, Inquiry } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -29,35 +30,33 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
   const [sales, setSales] = useState<Sale[]>([]);
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [gadgetPosts, setGadgetPosts] = useState<GadgetPost[]>([]);
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [loadingData, setLoadingData] = useState(true);
 
   const fetchAllData = useCallback(async () => {
     if (!db) return;
     setLoadingData(true);
     try {
-      const commissionsCollectionRef = collection(db, "commissions");
-      const q = query(commissionsCollectionRef, orderBy("date", "desc"));
-      const commissionsSnapshot = await getDocs(q);
-      const commissionsData: Commission[] = commissionsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Commission[];
+      // This function can be expanded to fetch other collections as needed
+      const collections = {
+        commissions: collection(db, "commissions"),
+        sales: collection(db, "sales"),
+        gadgetPosts: collection(db, "gadgetPosts"),
+      };
+
+      const [commissionsSnapshot, salesSnapshot, postsSnapshot] = await Promise.all([
+        getDocs(query(collections.commissions, orderBy("date", "desc"))),
+        getDocs(query(collections.sales, orderBy("dateStart", "desc"))),
+        getDocs(query(collections.gadgetPosts, orderBy("createdAt", "desc"))),
+      ]);
+      
+      const commissionsData = commissionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Commission[];
+      const salesData = salesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(sale => sale.dateStart) as Sale[];
+      const postsData = postsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as GadgetPost[];
+      
       setCommissions(commissionsData);
-
-      const salesCollectionRef = collection(db, "sales");
-      const salesQuery = query(salesCollectionRef, orderBy("dateStart", "desc"));
-      const salesSnapshot = await getDocs(salesQuery);
-      let salesData = salesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Sale[];
-      salesData = salesData.filter(sale => sale.dateStart);
       setSales(salesData);
-
-      const postsCollectionRef = collection(db, "gadgetPosts");
-      const postsQuery = query(postsCollectionRef, orderBy("createdAt", "desc"));
-      const postsSnapshot = await getDocs(postsQuery);
-      const postsData: GadgetPost[] = postsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as GadgetPost[];
       setGadgetPosts(postsData);
 
     } catch (err: any) {
@@ -76,6 +75,27 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
   useEffect(() => {
     fetchAllData();
   }, [fetchAllData]);
+
+  useEffect(() => {
+    if (!db) return;
+    const inquiriesQuery = query(collection(db, "inquiries"), orderBy("createdAt", "desc"));
+    
+    const unsubscribe = onSnapshot(inquiriesQuery, (snapshot) => {
+        const inquiriesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Inquiry[];
+        setInquiries(inquiriesData);
+        const unread = inquiriesData.filter(inq => !inq.isRead).length;
+        setUnreadCount(unread);
+    }, (error) => {
+        console.error("Error fetching inquiries:", error);
+        toast({
+            variant: "destructive",
+            title: "Inbox Error",
+            description: "Could not fetch new inquiries.",
+        });
+    });
+
+    return () => unsubscribe();
+  }, [db, toast]);
   
   const handleUpdateSale = async (saleId: string, updatedData: Partial<Sale>) => {
     if (!db) return;
@@ -96,6 +116,19 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
       });
     }
   };
+
+  const handleUpdateInquiry = async (inquiryId: string, updatedData: Partial<Inquiry>) => {
+    if (!db || userRole !== 'admin') return;
+    try {
+        const inquiryRef = doc(db, "inquiries", inquiryId);
+        await updateDoc(inquiryRef, updatedData);
+        // No toast needed for marking as read/unread to avoid being noisy
+    } catch (e: any) {
+        console.error("Error updating inquiry:", e);
+        toast({ variant: "destructive", title: "Update Error", description: `Could not update inquiry: ${e.message}` });
+    }
+  }
+
 
   if (userLoading) {
     return (
@@ -151,13 +184,17 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
       </div>
 
       <Tabs defaultValue="sales" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 h-auto sm:h-12 mb-8 bg-slate-800/60 border border-slate-700 text-cyan-300">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-6 h-auto sm:h-12 mb-8 bg-slate-800/60 border border-slate-700 text-cyan-300">
           <TabsTrigger value="sales" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Sales & Installments</TabsTrigger>
           <TabsTrigger value="commissions" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Commissions & Expenses</TabsTrigger>
           <TabsTrigger value="pricing" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Pricing Calculator</TabsTrigger>
           <TabsTrigger value="reminders" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Reminders</TabsTrigger>
           <TabsTrigger value="gadget-posts" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">
             <Package className="mr-2" /> Gadget Posts
+          </TabsTrigger>
+          <TabsTrigger value="inbox" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md relative">
+            <Inbox className="mr-2" /> Inbox
+            {unreadCount > 0 && <span className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">{unreadCount}</span>}
           </TabsTrigger>
         </TabsList>
 
@@ -193,6 +230,13 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
             <div className={futuristicBgClasses}>
                 <div className="relative z-10">
                     <GadgetPostsSection posts={gadgetPosts} loading={loadingData} onDataChange={fetchAllData} userRole={userRole} />
+                </div>
+            </div>
+        </TabsContent>
+        <TabsContent value="inbox">
+            <div className={futuristicBgClasses}>
+                <div className="relative z-10">
+                    <InboxSection inquiries={inquiries} loading={loadingData} onUpdateInquiry={handleUpdateInquiry} />
                 </div>
             </div>
         </TabsContent>
