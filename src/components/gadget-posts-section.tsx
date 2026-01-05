@@ -14,7 +14,6 @@ import { PlusCircle, Edit, Trash2, PackageCheck, Package } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Image from "next/image";
 import { Badge } from "./ui/badge";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 interface GadgetPostsSectionProps {
   posts: GadgetPost[];
@@ -113,31 +112,9 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
                         {post.isSold ? "Sold" : "Available"}
                     </Badge>
                 </div>
-                 <Carousel className="w-full relative">
-                  <CarouselContent>
-                    {post.imageUrls && post.imageUrls.length > 0 ? (
-                      post.imageUrls.map((url, index) => (
-                        <CarouselItem key={index}>
-                          <div className="relative w-full h-48">
-                            <Image src={url} alt={`${post.productName} image ${index + 1}`} layout="fill" objectFit="cover" className="bg-muted" />
-                          </div>
-                        </CarouselItem>
-                      ))
-                    ) : (
-                      <CarouselItem>
-                        <div className="relative w-full h-48 bg-muted flex items-center justify-center">
-                          <p className="text-muted-foreground">No Image</p>
-                        </div>
-                      </CarouselItem>
-                    )}
-                  </CarouselContent>
-                   {post.imageUrls && post.imageUrls.length > 1 && (
-                      <>
-                        <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
-                        <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
-                      </>
-                   )}
-                </Carousel>
+                 <div className="relative w-full h-48">
+                    <Image src={post.imageUrl || "https://picsum.photos/seed/1/400/300"} alt={post.productName} layout="fill" objectFit="cover" className="bg-muted" />
+                 </div>
                 <div className="p-4 flex-grow flex flex-col">
                   <h3 className="font-bold text-lg">{post.productName}</h3>
                   <p className="text-xs text-muted-foreground mb-2">P/N: {post.productNumber}</p>

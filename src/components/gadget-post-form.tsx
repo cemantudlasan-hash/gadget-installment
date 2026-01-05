@@ -11,9 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import type { GadgetPost } from "@/types";
 import { useFirebase } from "@/lib/firebase/context";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, doc, updateDoc, query, where, getDocs } from "firebase/firestore";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,7 +22,7 @@ const postSchema = z.object({
   adminName: z.string().min(1, "Your name is required"),
   contactNumber: z.string().min(1, "Contact number is required"),
   socialMedia: z.string().min(1, "Social media or email is required"),
-  imageFiles: z.custom<FileList>().optional(),
+  imageUrl: z.string().url("Please enter a valid URL for the image."),
 });
 
 type PostFormValues = z.infer<typeof postSchema>;
@@ -35,11 +34,10 @@ interface GadgetPostFormProps {
 }
 
 export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }: GadgetPostFormProps) {
-  const { app, db } = useFirebase();
+  const { db } = useFirebase();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imagePreviews, setImagePreviews] = useState<string[]>(initialData?.imageUrls || []);
-
+  
   const form = useForm<PostFormValues>({
     resolver: zodResolver(postSchema),
     defaultValues: {
@@ -48,73 +46,41 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
       adminName: initialData?.adminName || "Saowakon Noycumlee",
       contactNumber: initialData?.contactNumber || "",
       socialMedia: initialData?.socialMedia || "",
+      imageUrl: initialData?.imageUrl || "",
     },
   });
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      const newPreviews = Array.from(files).map(file => URL.createObjectURL(file));
-      setImagePreviews(newPreviews);
-      form.setValue("imageFiles", files);
-    } else {
-      setImagePreviews(initialData?.imageUrls || []);
-      form.setValue("imageFiles", undefined);
-    }
-  };
+  const imageUrl = form.watch("imageUrl");
 
   const handleSubmit = async (values: PostFormValues) => {
-    // Critical: Ensure Firebase is initialized before proceeding
-    if (!app || !db) {
+    if (!db) {
         toast({ variant: "destructive", title: "Firebase not ready", description: "Please wait a moment and try again." });
         return;
     }
     
     setIsSubmitting(true);
-
+    
     try {
-      let uploadedImageUrls: string[] = initialData?.imageUrls || [];
-
-      // 1. Handle Image Uploads if new files are selected
-      if (values.imageFiles && values.imageFiles.length > 0) {
-        const storage = getStorage(app);
-        const uploadPromises = Array.from(values.imageFiles).map(file => {
-          const imageRef = storageRef(storage, `gadget_posts/${values.productNumber}/${Date.now()}_${file.name}`);
-          return uploadBytes(imageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
-        });
-        uploadedImageUrls = await Promise.all(uploadPromises);
-      }
-      
-      // For new posts, at least one image is required.
-      if (!initialData && uploadedImageUrls.length === 0) {
-        form.setError("imageFiles", { type: "manual", message: "At least one image is required for a new post." });
-        throw new Error("Image required"); // This will be caught by the catch block below
-      }
-
-      // 2. Prepare Data for Firestore
       const postData = {
           productNumber: values.productNumber,
           productName: values.productName,
           adminName: values.adminName,
           contactNumber: values.contactNumber,
           socialMedia: values.socialMedia,
-          imageUrls: uploadedImageUrls,
+          imageUrl: values.imageUrl,
       };
 
-      // 3. Save to Firestore
       if (initialData) {
-        // Update existing document
         const postRef = doc(db, "gadgetPosts", initialData.id);
         await updateDoc(postRef, postData);
         toast({ title: "Success", description: "Post updated successfully!" });
       } else {
-        // Create new document, but check for duplicates first
         const postsRef = collection(db, "gadgetPosts");
         const q = query(postsRef, where("productNumber", "==", postData.productNumber));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
           toast({ variant: "destructive", title: "Duplicate Product Number", description: `A post with the number "${postData.productNumber}" already exists.` });
-          throw new Error("Duplicate product number"); // Will be caught below
+          throw new Error("Duplicate product number");
         }
 
         await addDoc(collection(db, "gadgetPosts"), {
@@ -129,12 +95,10 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
 
     } catch (error: any) {
       console.error("Error saving post:", error);
-      // Avoid showing a toast if it's a user error we already handled (like duplicates)
-      if (error.message !== "Image required" && error.message !== "Duplicate product number") {
+      if (error.message !== "Duplicate product number") {
         toast({ variant: "destructive", title: "Error", description: `Error saving post: ${error.message}` });
       }
     } finally {
-      // 4. GUARANTEE: This will run no matter what happens in the try/catch block.
       setIsSubmitting(false);
     }
   };
@@ -165,37 +129,17 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
                   <FormItem><FormLabel>Social Media / Email</FormLabel><FormControl><Input {...field} placeholder="Facebook Page or test@gmail.com" /></FormControl><FormMessage /></FormItem>
               )}/>
             </div>
-             
-              <FormField
-                control={form.control}
-                name="imageFiles"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Product Images</FormLabel>
-                    <FormControl>
-                      <div className="flex items-center justify-center w-full">
-                        <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80">
-                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                            <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                            <p className="text-xs text-muted-foreground">You can select multiple images</p>
-                          </div>
-                          <Input id="dropzone-file" type="file" className="hidden" multiple onChange={handleFileChange} accept="image/png, image/jpeg, image/gif"/>
-                        </label>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            
+             <FormField name="imageUrl" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Image URL</FormLabel><FormControl><Input {...field} placeholder="https://example.com/image.jpg" /></FormControl><FormMessage /></FormItem>
+            )}/>
               
-              {imagePreviews.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {imagePreviews.map((src, index) => (
-                    <div key={index} className="relative">
-                      <Image src={src} alt={`Preview ${index}`} width={200} height={150} className="rounded-md object-cover w-full h-24" />
+              {imageUrl && (
+                <div className="mt-4">
+                    <FormLabel>Image Preview</FormLabel>
+                    <div className="mt-2 relative w-full h-48">
+                      <Image src={imageUrl} alt="Preview" layout="fill" objectFit="cover" className="rounded-md bg-muted" />
                     </div>
-                  ))}
                 </div>
               )}
 

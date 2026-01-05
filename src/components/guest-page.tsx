@@ -16,8 +16,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
+interface GuestPageProps {
+  onBack: () => void;
+}
 
 export default function GuestPage({ onBack }: GuestPageProps) {
   const { db } = useFirebase();
@@ -175,32 +177,10 @@ export default function GuestPage({ onBack }: GuestPageProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {posts.map(post => (
               <Card key={post.id} className="bg-slate-900/50 backdrop-blur-sm border-purple-500/30 overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300 shadow-lg hover:shadow-cyan-500/20">
-                <Carousel className="w-full relative">
-                  <CarouselContent>
-                    {post.imageUrls && post.imageUrls.length > 0 ? (
-                      post.imageUrls.map((url, index) => (
-                        <CarouselItem key={index}>
-                          <div className="relative w-full h-56">
-                            <Image src={url} alt={`${post.productName} image ${index + 1}`} layout="fill" objectFit="cover" className="bg-slate-800" />
-                          </div>
-                        </CarouselItem>
-                      ))
-                    ) : (
-                      <CarouselItem>
-                        <div className="relative w-full h-56 bg-slate-800 flex items-center justify-center">
-                          <p className="text-slate-400">No Image Available</p>
-                        </div>
-                      </CarouselItem>
-                    )}
-                  </CarouselContent>
-                   {post.imageUrls && post.imageUrls.length > 1 && (
-                      <>
-                        <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
-                        <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
-                      </>
-                   )}
-                </Carousel>
-                {!post.isSold && <Badge className="absolute top-2 right-2 bg-cyan-500 text-black z-10">Available</Badge>}
+                <div className="relative w-full h-56">
+                    <Image src={post.imageUrl || "https://picsum.photos/seed/1/400/300"} alt={post.productName} layout="fill" objectFit="cover" className="bg-slate-800" />
+                    {!post.isSold && <Badge className="absolute top-2 right-2 bg-cyan-500 text-black z-10">Available</Badge>}
+                </div>
                 <CardHeader>
                   <CardTitle className="text-cyan-300 text-xl">{post.productName}</CardTitle>
                   <p className="text-xs text-slate-400">P/N: {post.productNumber}</p>
