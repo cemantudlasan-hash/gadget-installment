@@ -131,14 +131,21 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
             </div>
             
              <FormField name="imageUrl" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>Image URL</FormLabel><FormControl><Input {...field} placeholder="https://example.com/image.jpg" /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Image URL</FormLabel><FormControl><Input {...field} placeholder="https://postimg.cc/your-image-link.jpg" /></FormControl><FormMessage /></FormItem>
             )}/>
               
               {imageUrl && (
                 <div className="mt-4">
                     <FormLabel>Image Preview</FormLabel>
                     <div className="mt-2 relative w-full h-48">
-                      <Image src={imageUrl} alt="Preview" layout="fill" objectFit="cover" className="rounded-md bg-muted" />
+                      <Image 
+                        src={imageUrl || "https://picsum.photos/seed/fallback/400/300"} 
+                        alt="Preview" 
+                        layout="fill" 
+                        objectFit="cover" 
+                        className="rounded-md bg-muted" 
+                        onError={(e) => { e.currentTarget.src = "https://picsum.photos/seed/fallback-error/400/300"; }}
+                      />
                     </div>
                 </div>
               )}

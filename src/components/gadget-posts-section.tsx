@@ -36,7 +36,10 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
   };
 
   const handleDeletePost = async (postId: string) => {
-    if (!db || userRole !== 'admin') return;
+    if (!db || userRole !== 'admin') {
+      toast({ variant: "destructive", title: "Permission Denied", description: "You cannot delete posts." });
+      return;
+    }
     try {
       await deleteDoc(doc(db, "gadgetPosts", postId));
       toast({ title: "Success", description: "Post deleted successfully!" });
@@ -48,7 +51,10 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
   };
 
   const handleToggleSold = async (post: GadgetPost) => {
-    if (!db || userRole !== 'admin') return;
+    if (!db || userRole !== 'admin') {
+      toast({ variant: "destructive", title: "Permission Denied", description: "You cannot change post status." });
+      return;
+    }
     try {
       const postRef = doc(db, "gadgetPosts", post.id);
       await updateDoc(postRef, { isSold: !post.isSold });
@@ -101,7 +107,7 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
           <div className="text-center py-16">
             <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">No gadget posts yet.</p>
-            <Button onClick={handleAddNewPost} className="mt-4">Create Your First Post</Button>
+            <Button onClick={handleAddNewPost} className="mt-4" disabled={userRole !== 'admin'}>Create Your First Post</Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -113,7 +119,14 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
                     </Badge>
                 </div>
                  <div className="relative w-full h-48">
-                    <Image src={post.imageUrl || "https://picsum.photos/seed/1/400/300"} alt={post.productName} layout="fill" objectFit="cover" className="bg-muted" />
+                    <Image 
+                      src={post.imageUrl || "https://picsum.photos/seed/fallback/400/300"} 
+                      alt={post.productName} 
+                      layout="fill" 
+                      objectFit="cover" 
+                      className="bg-muted" 
+                      onError={(e) => { e.currentTarget.src = "https://picsum.photos/seed/fallback-error/400/300"; }}
+                    />
                  </div>
                 <div className="p-4 flex-grow flex flex-col">
                   <h3 className="font-bold text-lg">{post.productName}</h3>

@@ -178,7 +178,14 @@ export default function GuestPage({ onBack }: GuestPageProps) {
             {posts.map(post => (
               <Card key={post.id} className="bg-slate-900/50 backdrop-blur-sm border-purple-500/30 overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300 shadow-lg hover:shadow-cyan-500/20">
                 <div className="relative w-full h-56">
-                    <Image src={post.imageUrl || "https://picsum.photos/seed/1/400/300"} alt={post.productName} layout="fill" objectFit="cover" className="bg-slate-800" />
+                    <Image 
+                      src={post.imageUrl || "https://picsum.photos/seed/fallback/400/300"} 
+                      alt={post.productName} 
+                      layout="fill" 
+                      objectFit="cover" 
+                      className="bg-slate-800" 
+                      onError={(e) => { e.currentTarget.src = "https://picsum.photos/seed/fallback-error/400/300"; }}
+                    />
                     {!post.isSold && <Badge className="absolute top-2 right-2 bg-cyan-500 text-black z-10">Available</Badge>}
                 </div>
                 <CardHeader>
