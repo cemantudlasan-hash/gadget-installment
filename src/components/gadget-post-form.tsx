@@ -7,17 +7,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import type { GadgetPost } from "@/types";
-import { suggestCustomerNote } from "@/ai/flows/customer-note-suggestions";
-import { Sparkles, Loader2 } from "lucide-react";
-import Image from "next/image";
 import { useFirebase } from "@/lib/firebase/context";
-import { collection, addDoc, doc, updateDoc, serverTimestamp, getDocs, query, where } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, getDocs, query, where } from "firebase/firestore";
+import { Loader2 } from "lucide-react";
+import { generateThumbnail } from "@/ai/flows/generate-thumbnail";
+import Image from "next/image";
 
 const postSchema = z.object({
   productNumber: z.string().min(1, "Product Number is required"),
@@ -62,13 +60,24 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
     setIsSubmitting(true);
     
     try {
+      let imageUrl = initialData?.imageUrl || "";
+
+      if (!initialData) { // Only generate for new posts
+        toast({ title: "Generating Thumbnail...", description: "Please wait while the AI creates an image for your product." });
+        const thumbnailResult = await generateThumbnail({ productName: values.productName });
+        imageUrl = thumbnailResult.imageUrl;
+      }
+
       const postData = {
           ...values,
+          imageUrl,
       };
 
       if (initialData) {
         const postRef = doc(db, "gadgetPosts", initialData.id);
-        await updateDoc(postRef, postData);
+        await updateDoc(postRef, {
+            ...values // Do not update imageUrl on edit to save costs
+        });
         toast({ title: "Success", description: "Post updated successfully!" });
       } else {
         const postsRef = collection(db, "gadgetPosts");
@@ -84,7 +93,7 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
           isSold: false,
           createdAt: new Date().toISOString(),
         });
-        toast({ title: "Success", description: "New gadget post created!" });
+        toast({ title: "Success", description: "New gadget post created with AI thumbnail!" });
       }
 
       onSaveSuccess();
@@ -98,12 +107,14 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
       setIsSubmitting(false);
     }
   };
+  
+  const currentImageUrl = initialData?.imageUrl;
 
   return (
     <Card className="max-w-3xl mx-auto">
       <CardHeader>
         <CardTitle>{initialData ? "Edit Gadget Post" : "Create New Gadget Post"}</CardTitle>
-        <CardDescription>Fill in the details for the gadget you want to list.</CardDescription>
+        <CardDescription>Fill in the details for the gadget. A thumbnail will be auto-generated for new posts.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -124,11 +135,26 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
               <FormField name="socialMedia" control={form.control} render={({ field }) => (
                   <FormItem><FormLabel>Social Media / Email</FormLabel><FormControl><Input {...field} placeholder="Facebook Page or test@gmail.com" /></FormControl><FormMessage /></FormItem>
               )}/>
-            </div>
-
-             <FormField name="externalLink" control={form.control} render={({ field }) => (
+              <FormField name="externalLink" control={form.control} render={({ field }) => (
                 <FormItem><FormLabel>External Link (Optional)</FormLabel><FormControl><Input {...field} placeholder="e.g., https://example.com/product-details" /></FormControl><FormMessage /></FormItem>
-            )}/>
+              )}/>
+            </div>
+            
+             {currentImageUrl && (
+                <div className="space-y-2">
+                    <FormLabel>Generated Thumbnail</FormLabel>
+                    <div className="mt-2 relative w-full h-48">
+                      <Image 
+                        src={currentImageUrl} 
+                        alt="Generated Thumbnail" 
+                        layout="fill" 
+                        objectFit="cover" 
+                        className="rounded-md bg-muted" 
+                      />
+                    </div>
+                </div>
+              )}
+
 
             <div className="flex justify-end space-x-3 pt-4">
               <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancel</Button>

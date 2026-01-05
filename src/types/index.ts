@@ -61,6 +61,7 @@ export interface GadgetPost {
   isSold: boolean;
   createdAt: string;
   externalLink?: string;
+  imageUrl?: string;
 }
 
 export interface Inquiry {

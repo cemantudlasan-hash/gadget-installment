@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { GadgetPost } from "@/types";
-import { PlusCircle, Edit, Trash2, PackageCheck, Package } from "lucide-react";
+import { PlusCircle, Edit, Trash2, PackageCheck, Package, ExternalLink } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Image from "next/image";
 import { Badge } from "./ui/badge";
@@ -119,7 +119,11 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
                     </Badge>
                 </div>
                  <div className="relative w-full h-48 bg-muted flex items-center justify-center">
-                    <Package className="h-16 w-16 text-muted-foreground" />
+                    {post.imageUrl ? (
+                        <Image src={post.imageUrl} alt={post.productName} layout="fill" objectFit="cover" className="bg-muted" />
+                    ) : (
+                        <Package className="h-16 w-16 text-muted-foreground" />
+                    )}
                  </div>
                 <div className="p-4 flex-grow flex flex-col">
                   <h3 className="font-bold text-lg">{post.productName}</h3>
@@ -134,6 +138,15 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
                         {post.isSold ? <Package className="mr-2"/> : <PackageCheck className="mr-2"/>}
                         {post.isSold ? 'Mark as Available' : 'Mark as Sold'}
                     </Button>
+                    {post.externalLink && (
+                        <a href={post.externalLink} target="_blank" rel="noopener noreferrer" className="w-full">
+                            <Button variant="outline" className="w-full">
+                                <ExternalLink className="mr-2 h-4 w-4"/> View Photos
+                            </Button>
+                        </a>
+                    )}
+                  </div>
+                  <div className="flex gap-2 mt-2">
                     <Button variant="ghost" size="icon" onClick={() => handleEditPost(post)} disabled={userRole !== 'admin'}><Edit className="h-4 w-4" /></Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
