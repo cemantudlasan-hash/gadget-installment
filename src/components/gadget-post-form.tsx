@@ -25,7 +25,6 @@ const postSchema = z.object({
   adminName: z.string().min(1, "Your name is required"),
   contactNumber: z.string().min(1, "Contact number is required"),
   socialMedia: z.string().min(1, "Social media or email is required"),
-  imageUrl: z.string().url("Please enter a valid URL for the image."),
   externalLink: z.string().url("Please enter a valid URL for the external link.").optional().or(z.literal('')),
 });
 
@@ -50,12 +49,9 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
       adminName: initialData?.adminName || "Saowakon Noycumlee",
       contactNumber: initialData?.contactNumber || "",
       socialMedia: initialData?.socialMedia || "",
-      imageUrl: initialData?.imageUrl || "",
       externalLink: initialData?.externalLink || "",
     },
   });
-
-  const imageUrl = form.watch("imageUrl");
 
   const handleSubmit = async (values: PostFormValues) => {
     if (!db || !app) {
@@ -129,30 +125,10 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
                   <FormItem><FormLabel>Social Media / Email</FormLabel><FormControl><Input {...field} placeholder="Facebook Page or test@gmail.com" /></FormControl><FormMessage /></FormItem>
               )}/>
             </div>
-            
-             <FormField name="imageUrl" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>Image URL</FormLabel><FormControl><Input {...field} placeholder="https://i.postimg.cc/your-image.jpg" /></FormControl><FormMessage /></FormItem>
-            )}/>
 
              <FormField name="externalLink" control={form.control} render={({ field }) => (
                 <FormItem><FormLabel>External Link (Optional)</FormLabel><FormControl><Input {...field} placeholder="e.g., https://example.com/product-details" /></FormControl><FormMessage /></FormItem>
             )}/>
-              
-              {imageUrl && (
-                <div className="mt-4">
-                    <FormLabel>Image Preview</FormLabel>
-                    <div className="mt-2 relative w-full h-48">
-                      <Image 
-                        src={imageUrl ? imageUrl : "https://picsum.photos/seed/fallback/400/300"} 
-                        alt="Preview" 
-                        layout="fill" 
-                        objectFit="cover" 
-                        className="rounded-md bg-muted" 
-                        onError={(e) => { e.currentTarget.src = "https://picsum.photos/seed/fallback-error/400/300"; }}
-                      />
-                    </div>
-                </div>
-              )}
 
             <div className="flex justify-end space-x-3 pt-4">
               <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancel</Button>

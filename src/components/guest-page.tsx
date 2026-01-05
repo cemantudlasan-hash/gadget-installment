@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone, Loader2, Tag, ExternalLink } from "lucide-react";
+import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone, Loader2, Tag, ExternalLink, Package } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
@@ -177,15 +177,8 @@ export default function GuestPage({ onBack }: GuestPageProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {posts.map(post => (
               <Card key={post.id} className="bg-slate-900/50 backdrop-blur-sm border-purple-500/30 overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300 shadow-lg hover:shadow-cyan-500/20">
-                <div className="relative w-full h-56">
-                    <Image 
-                      src={post.imageUrl || "https://picsum.photos/seed/fallback/400/300"} 
-                      alt={post.productName} 
-                      layout="fill" 
-                      objectFit="cover" 
-                      className="bg-slate-800" 
-                      onError={(e) => { e.currentTarget.src = "https://picsum.photos/seed/fallback-error/400/300"; }}
-                    />
+                <div className="relative w-full h-56 bg-slate-800 flex items-center justify-center">
+                    <Package className="h-24 w-24 text-slate-600" />
                     {!post.isSold && <Badge className="absolute top-2 right-2 bg-cyan-500 text-black z-10">Available</Badge>}
                 </div>
                 <CardHeader>

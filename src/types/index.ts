@@ -58,7 +58,6 @@ export interface GadgetPost {
   adminName: string;
   contactNumber: string;
   socialMedia: string;
-  imageUrl: string;
   isSold: boolean;
   createdAt: string;
   externalLink?: string;

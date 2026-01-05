@@ -118,15 +118,8 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
                         {post.isSold ? "Sold" : "Available"}
                     </Badge>
                 </div>
-                 <div className="relative w-full h-48">
-                    <Image 
-                      src={post.imageUrl || "https://picsum.photos/seed/fallback/400/300"} 
-                      alt={post.productName} 
-                      layout="fill" 
-                      objectFit="cover" 
-                      className="bg-muted" 
-                      onError={(e) => { e.currentTarget.src = "https://picsum.photos/seed/fallback-error/400/300"; }}
-                    />
+                 <div className="relative w-full h-48 bg-muted flex items-center justify-center">
+                    <Package className="h-16 w-16 text-muted-foreground" />
                  </div>
                 <div className="p-4 flex-grow flex flex-col">
                   <h3 className="font-bold text-lg">{post.productName}</h3>
