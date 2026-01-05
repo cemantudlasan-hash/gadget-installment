@@ -33,23 +33,21 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
   const handleSavePost = async (postData: Omit<GadgetPost, "id" | "isSold" | "createdAt">, isEditing: boolean, onComplete: () => void) => {
     if (!db || userRole !== 'admin') {
       toast({ variant: "destructive", title: "Permission Denied" });
-      onComplete(); // Ensure we always call the completion callback
+      onComplete();
       return;
     }
 
     try {
-      if (editingPost) {
+      if (isEditing && editingPost) {
         const postRef = doc(db, "gadgetPosts", editingPost.id);
         await updateDoc(postRef, postData as Partial<GadgetPost>);
         toast({ title: "Success", description: "Post updated successfully!" });
       } else {
-        // Uniqueness check for new posts
         const postsRef = collection(db, "gadgetPosts");
         const q = query(postsRef, where("productNumber", "==", postData.productNumber));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
           toast({ variant: "destructive", title: "Duplicate Product Number", description: `A post with the number "${postData.productNumber}" already exists.` });
-          onComplete(); // Stop execution
           return;
         }
 
@@ -67,7 +65,7 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
       console.error("Error saving post:", e);
       toast({ variant: "destructive", title: "Error", description: `Error saving post: ${e.message}` });
     } finally {
-      onComplete(); // ALWAYS call the completion callback
+      onComplete();
     }
   };
 
@@ -106,8 +104,13 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
     setShowForm(true);
   };
 
+  const handleCancelForm = () => {
+    setEditingPost(null);
+    setShowForm(false);
+  };
+
   if (showForm) {
-    return <GadgetPostForm onSave={handleSavePost} initialData={editingPost} onCancel={() => { setEditingPost(null); setShowForm(false); }} />;
+    return <GadgetPostForm onSave={handleSavePost} initialData={editingPost} onCancel={handleCancelForm} />;
   }
 
   return (
