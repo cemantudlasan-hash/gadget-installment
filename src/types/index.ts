@@ -1,5 +1,6 @@
 
 
+
 export interface Installment {
   month: number;
   dueAmount: number;
@@ -50,4 +51,15 @@ export interface YearlyReport {
   netYearlyIncome: number;
   totalDownPayments: number;
   totalCommission: number;
+}
+
+export interface GadgetPost {
+  id: string;
+  productName: string;
+  adminName: string;
+  contactNumber: string;
+  socialMedia: string;
+  imageUrl: string;
+  isSold: boolean;
+  createdAt: string;
 }

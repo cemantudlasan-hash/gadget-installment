@@ -7,12 +7,13 @@ import SalesSection from "@/components/sales-section";
 import CommissionsSection from "@/components/commissions-section";
 import PricingCalculator from "@/components/pricing-calculator";
 import RemindersSection from "@/components/reminders-section";
+import GadgetPostsSection from "@/components/gadget-posts-section"; // New Import
 import { useFirebase } from "@/lib/firebase/context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Package } from "lucide-react";
 import { collection, getDocs, orderBy, query, doc, updateDoc } from "firebase/firestore";
-import type { Commission, Sale } from "@/types";
+import type { Commission, Sale, GadgetPost } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -27,13 +28,13 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
 
   const [sales, setSales] = useState<Sale[]>([]);
   const [commissions, setCommissions] = useState<Commission[]>([]);
+  const [gadgetPosts, setGadgetPosts] = useState<GadgetPost[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
   const fetchAllData = useCallback(async () => {
     if (!db) return;
     setLoadingData(true);
     try {
-      // Fetch commissions
       const commissionsCollectionRef = collection(db, "commissions");
       const q = query(commissionsCollectionRef, orderBy("date", "desc"));
       const commissionsSnapshot = await getDocs(q);
@@ -43,14 +44,21 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
       })) as Commission[];
       setCommissions(commissionsData);
 
-      // Fetch sales
       const salesCollectionRef = collection(db, "sales");
       const salesQuery = query(salesCollectionRef, orderBy("dateStart", "desc"));
       const salesSnapshot = await getDocs(salesQuery);
       let salesData = salesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Sale[];
       salesData = salesData.filter(sale => sale.dateStart);
-      
       setSales(salesData);
+
+      const postsCollectionRef = collection(db, "gadgetPosts");
+      const postsQuery = query(postsCollectionRef, orderBy("createdAt", "desc"));
+      const postsSnapshot = await getDocs(postsQuery);
+      const postsData: GadgetPost[] = postsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as GadgetPost[];
+      setGadgetPosts(postsData);
 
     } catch (err: any) {
       console.error("Error fetching data:", err);
@@ -78,7 +86,6 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
     try {
       const saleRef = doc(db, "sales", saleId);
       await updateDoc(saleRef, updatedData);
-      // Not showing toast here to avoid clutter, can be added if needed
       fetchAllData();
     } catch (e: any) {
       console.error("Error updating sale:", e);
@@ -89,7 +96,6 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
       });
     }
   };
-
 
   if (userLoading) {
     return (
@@ -118,7 +124,6 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
     return "G";
   }
 
-
   return (
     <div className="max-w-7xl mx-auto bg-transparent p-0 w-full">
       <div className="text-center mb-8 relative">
@@ -146,11 +151,14 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
       </div>
 
       <Tabs defaultValue="sales" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-4 h-auto sm:h-12 mb-8 bg-slate-800/60 border border-slate-700 text-cyan-300">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5 h-auto sm:h-12 mb-8 bg-slate-800/60 border border-slate-700 text-cyan-300">
           <TabsTrigger value="sales" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Sales & Installments</TabsTrigger>
           <TabsTrigger value="commissions" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Commissions & Expenses</TabsTrigger>
           <TabsTrigger value="pricing" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Pricing Calculator</TabsTrigger>
           <TabsTrigger value="reminders" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Reminders</TabsTrigger>
+          <TabsTrigger value="gadget-posts" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">
+            <Package className="mr-2" /> Gadget Posts
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="sales">
@@ -181,9 +189,14 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
                 </div>
             </div>
         </TabsContent>
+        <TabsContent value="gadget-posts">
+            <div className={futuristicBgClasses}>
+                <div className="relative z-10">
+                    <GadgetPostsSection posts={gadgetPosts} loading={loadingData} onDataChange={fetchAllData} userRole={userRole} />
+                </div>
+            </div>
+        </TabsContent>
       </Tabs>
     </div>
   );
 }
-
-    
