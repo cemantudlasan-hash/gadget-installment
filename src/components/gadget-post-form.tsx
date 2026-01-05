@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import type { GadgetPost } from "@/types";
 
 const postSchema = z.object({
+  productNumber: z.string().min(1, "Product Number is required"),
   productName: z.string().min(1, "Product name is required"),
   adminName: z.string().min(1, "Your name is required"),
   contactNumber: z.string().min(1, "Contact number is required"),
@@ -21,7 +22,7 @@ const postSchema = z.object({
 type PostFormValues = z.infer<typeof postSchema>;
 
 interface GadgetPostFormProps {
-  onSave: (data: Omit<GadgetPost, "id" | "isSold" | "createdAt">) => void;
+  onSave: (data: Omit<GadgetPost, "id" | "isSold" | "createdAt">, isEditing: boolean) => void;
   initialData?: GadgetPost | null;
   onCancel: () => void;
 }
@@ -30,6 +31,7 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
   const form = useForm<PostFormValues>({
     resolver: zodResolver(postSchema),
     defaultValues: initialData || {
+      productNumber: "",
       productName: "",
       adminName: "Saowakon Noycumlee",
       contactNumber: "",
@@ -39,7 +41,7 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
   });
 
   const handleSubmit = (values: PostFormValues) => {
-    onSave(values);
+    onSave(values, !!initialData);
   };
 
   return (
@@ -52,6 +54,9 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <FormField name="productNumber" control={form.control} render={({ field }) => (
+                  <FormItem><FormLabel>Product Number</FormLabel><FormControl><Input {...field} placeholder="e.g., IPHONE-001" disabled={!!initialData} /></FormControl><FormMessage /></FormItem>
+              )}/>
               <FormField name="productName" control={form.control} render={({ field }) => (
                   <FormItem><FormLabel>Product Name</FormLabel><FormControl><Input {...field} placeholder="e.g., iPhone 15 Pro" /></FormControl><FormMessage /></FormItem>
               )}/>

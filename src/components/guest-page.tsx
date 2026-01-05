@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone, Loader2 } from "lucide-react";
+import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone, Loader2, Tag } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
@@ -114,7 +114,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
         email: inquiryForm.email,
         socialMedia: inquiryForm.socialMedia,
         productName: inquiryPost.productName,
-        productId: inquiryPost.id,
+        productId: inquiryPost.productNumber, // Use user-defined productNumber
         message: inquiryForm.message,
         createdAt: new Date().toISOString(),
         isRead: false,
@@ -193,6 +193,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                 </div>
                 <CardHeader>
                   <CardTitle className="text-cyan-300 text-xl">{post.productName}</CardTitle>
+                  <p className="text-xs text-slate-400">P/N: {post.productNumber}</p>
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <div className="space-y-3 text-slate-300">
@@ -217,7 +218,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
           <DialogHeader>
             <DialogTitle>Inquire about: {inquiryPost?.productName}</DialogTitle>
             <DialogDescription>
-              Fill out your details below and the seller will get back to you shortly.
+              Fill out your details below and the seller will get back to you shortly. (Product Number: {inquiryPost?.productNumber})
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleInquirySubmit}>

@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useFirebase } from "@/lib/firebase/context";
-import { collection, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, getDocs } from "firebase/firestore";
 import GadgetPostForm from "./gadget-post-form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,15 +29,27 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
   const [editingPost, setEditingPost] = useState<GadgetPost | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  const handleSavePost = async (postData: Omit<GadgetPost, "id" | "isSold" | "createdAt">) => {
+  const handleSavePost = async (postData: Omit<GadgetPost, "id" | "isSold" | "createdAt">, isEditing: boolean) => {
     if (!db || userRole !== 'admin') {
       toast({ variant: "destructive", title: "Permission Denied" });
       return;
     }
+
     try {
+      // Uniqueness check for new posts
+      if (!isEditing) {
+        const postsRef = collection(db, "gadgetPosts");
+        const q = query(postsRef, where("productNumber", "==", postData.productNumber));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          toast({ variant: "destructive", title: "Duplicate Product Number", description: `A post with the number "${postData.productNumber}" already exists.` });
+          return;
+        }
+      }
+      
       if (editingPost) {
         const postRef = doc(db, "gadgetPosts", editingPost.id);
-        await updateDoc(postRef, postData);
+        await updateDoc(postRef, postData as Partial<GadgetPost>);
         toast({ title: "Success", description: "Post updated successfully!" });
       } else {
         await addDoc(collection(db, "gadgetPosts"), {
@@ -122,29 +134,30 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {posts.map((post) => (
-              <Card key={post.id} className="overflow-hidden relative">
+              <Card key={post.id} className="overflow-hidden relative flex flex-col">
                 <div className="absolute top-2 right-2 z-10 flex gap-2">
                     <Badge variant={post.isSold ? "destructive" : "default"}>
                         {post.isSold ? "Sold" : "Available"}
                     </Badge>
                 </div>
                 <Image src={post.imageUrl} alt={post.productName} width={400} height={300} className="w-full h-48 object-cover bg-muted" />
-                <div className="p-4">
+                <div className="p-4 flex-grow flex flex-col">
                   <h3 className="font-bold text-lg">{post.productName}</h3>
-                  <div className="text-sm text-muted-foreground mt-2 space-y-1">
+                  <p className="text-xs text-muted-foreground mb-2">P/N: {post.productNumber}</p>
+                  <div className="text-sm text-muted-foreground mt-2 space-y-1 flex-grow">
                      <p><strong>Seller:</strong> {post.adminName}</p>
                      <p><strong>Contact:</strong> {post.contactNumber}</p>
                      <p><strong>Socials:</strong> {post.socialMedia}</p>
                   </div>
                   <div className="flex gap-2 mt-4">
-                    <Button variant="outline" size="sm" onClick={() => handleToggleSold(post)} className="w-full">
+                    <Button variant="outline" size="sm" onClick={() => handleToggleSold(post)} className="w-full" disabled={userRole !== 'admin'}>
                         {post.isSold ? <Package className="mr-2"/> : <PackageCheck className="mr-2"/>}
                         {post.isSold ? 'Mark as Available' : 'Mark as Sold'}
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleEditPost(post)}><Edit className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleEditPost(post)} disabled={userRole !== 'admin'}><Edit className="h-4 w-4" /></Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={userRole !== 'admin'}><Trash2 className="h-4 w-4" /></Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader><AlertDialogTitle>Delete this post?</AlertDialogTitle><AlertDialogDescription>This will permanently remove the post for "{post.productName}".</AlertDialogDescription></AlertDialogHeader>

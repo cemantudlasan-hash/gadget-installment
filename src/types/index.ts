@@ -2,6 +2,7 @@
 
 
 
+
 export interface Installment {
   month: number;
   dueAmount: number;
@@ -56,6 +57,7 @@ export interface YearlyReport {
 
 export interface GadgetPost {
   id: string;
+  productNumber: string;
   productName: string;
   adminName: string;
   contactNumber: string;

@@ -127,7 +127,7 @@ function InquiryItem({ inquiry, onToggleRead, onDelete }: InquiryItemProps) {
                          <div className="space-y-2">
                              <h4 className="font-semibold text-primary">Product Details</h4>
                             <p className="flex items-center gap-2"><Tag className="w-4 h-4 text-muted-foreground"/><strong>Product:</strong> {inquiry.productName}</p>
-                            <p className="flex items-center gap-2"><Tag className="w-4 h-4 text-muted-foreground"/><strong>Product ID:</strong> <span className="text-xs">{inquiry.productId}</span></p>
+                            <p className="flex items-center gap-2"><Tag className="w-4 h-4 text-muted-foreground"/><strong>P/N:</strong> <span className="font-mono">{inquiry.productId}</span></p>
                         </div>
                     </div>
                     <div className="flex justify-end gap-2 mt-4">
