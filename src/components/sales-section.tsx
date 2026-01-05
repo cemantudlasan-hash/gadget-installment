@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -6,12 +7,12 @@ import * as XLSX from "xlsx";
 import { useFirebase } from "@/lib/firebase/context";
 import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs, query, where, writeBatch } from "firebase/firestore";
 import SalesForm from "./sales-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { Sale } from "@/types";
-import { PlusCircle, ChevronDown, FileSpreadsheet, FileText } from "lucide-react";
+import { PlusCircle, ChevronDown, FileSpreadsheet, FileText, UserPlus } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import CustomerDetails from "./customer-details"; // Import the new component
 import {
@@ -346,11 +347,18 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
       {showSalesForm ? (
         <SalesForm onSave={handleSaveSale} initialData={editingSale} onCancel={() => { setEditingSale(null); setShowSalesForm(false); }} />
       ) : (
-        <div className="text-center py-4">
-          <Button onClick={handleAddNewCustomer} size="lg">
-            <PlusCircle className="mr-2 h-5 w-5" /> Add New Customer
-          </Button>
-        </div>
+        <Card className="bg-slate-800/30 border-slate-700 text-center">
+            <CardContent className="p-8 flex flex-col items-center justify-center">
+                <div className="p-4 bg-slate-700/50 rounded-full mb-4">
+                    <UserPlus className="h-8 w-8 text-cyan-300" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-200 mb-2">Start a New Installment Plan</h3>
+                <p className="text-slate-400 mb-6 max-w-sm">Click the button below to add a new customer and create their installment plan and payment schedule.</p>
+                <Button onClick={handleAddNewCustomer} size="lg" className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold">
+                    <PlusCircle className="mr-2 h-5 w-5" /> Add New Customer
+                </Button>
+            </CardContent>
+        </Card>
       )}
 
       {contractSale && (
