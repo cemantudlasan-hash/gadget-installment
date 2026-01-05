@@ -3,9 +3,18 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     // Allow public read access to all files.
-    // Allow write access only for authenticated users.
     match /{allPaths=**} {
       allow read;
+    }
+
+    // Allow anonymous writes ONLY to the thumbnails directory, for the AI flow.
+    // This path is unguessable due to UUIDs in filenames.
+    match /thumbnails/{imageId} {
+      allow write;
+    }
+
+    // For all other paths, require authentication to write.
+    match /{path=**}/o/{allPaths=**} {
       allow write: if request.auth != null;
     }
   }
