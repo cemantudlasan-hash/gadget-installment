@@ -27,7 +27,7 @@ const postSchema = z.object({
 type PostFormValues = z.infer<typeof postSchema>;
 
 interface GadgetPostFormProps {
-  onSave: (data: Omit<GadgetPost, "id" | "isSold" | "createdAt">, isEditing: boolean, onComplete: () => void) => void;
+  onSave: (data: Omit<GadgetPost, "id" | "isSold" | "createdAt">, isEditing: boolean) => Promise<void>;
   initialData?: GadgetPost | null;
   onCancel: () => void;
 }
@@ -68,6 +68,7 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
     try {
         let uploadedImageUrls: string[] = initialData?.imageUrls || [];
 
+        // Only upload new images if they are provided
         if (values.imageFiles && values.imageFiles.length > 0) {
             const storage = getStorage(app);
             const uploadPromises = Array.from(values.imageFiles).map(file => {
@@ -79,7 +80,6 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
 
         if (!initialData && uploadedImageUrls.length === 0) {
             form.setError("imageFiles", { type: "manual", message: "At least one image is required for a new post." });
-            setIsUploading(false); // Stop loading state on validation error
             return;
         }
 
@@ -92,14 +92,12 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
             imageUrls: uploadedImageUrls,
         };
 
-        // Pass a callback to be executed by onSave
-        onSave(postData, !!initialData, () => {
-            setIsUploading(false);
-        });
+        await onSave(postData, !!initialData);
         
     } catch (error) {
         console.error("Error preparing post data:", error);
-        setIsUploading(false); // Ensure loading state is reset on error
+    } finally {
+        setIsUploading(false);
     }
 };
 

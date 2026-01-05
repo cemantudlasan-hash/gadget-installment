@@ -30,10 +30,9 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
   const [editingPost, setEditingPost] = useState<GadgetPost | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  const handleSavePost = async (postData: Omit<GadgetPost, "id" | "isSold" | "createdAt">, isEditing: boolean, onComplete: () => void) => {
+  const handleSavePost = async (postData: Omit<GadgetPost, "id" | "isSold" | "createdAt">, isEditing: boolean) => {
     if (!db || userRole !== 'admin') {
       toast({ variant: "destructive", title: "Permission Denied" });
-      onComplete();
       return;
     }
 
@@ -64,8 +63,8 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
     } catch (e: any) {
       console.error("Error saving post:", e);
       toast({ variant: "destructive", title: "Error", description: `Error saving post: ${e.message}` });
-    } finally {
-      onComplete();
+      // Re-throw the error to be caught by the form's handler
+      throw e;
     }
   };
 
