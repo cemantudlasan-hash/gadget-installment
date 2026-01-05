@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useFirebase } from "@/lib/firebase/context";
-import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, getDocs } from "firebase/firestore";
+import { collection, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import GadgetPostForm from "./gadget-post-form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,42 +30,10 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
   const [editingPost, setEditingPost] = useState<GadgetPost | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  const handleSavePost = async (postData: Omit<GadgetPost, "id" | "isSold" | "createdAt">, isEditing: boolean) => {
-    if (!db || userRole !== 'admin') {
-      toast({ variant: "destructive", title: "Permission Denied" });
-      return;
-    }
-
-    try {
-      if (isEditing && editingPost) {
-        const postRef = doc(db, "gadgetPosts", editingPost.id);
-        await updateDoc(postRef, postData as Partial<GadgetPost>);
-        toast({ title: "Success", description: "Post updated successfully!" });
-      } else {
-        const postsRef = collection(db, "gadgetPosts");
-        const q = query(postsRef, where("productNumber", "==", postData.productNumber));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          toast({ variant: "destructive", title: "Duplicate Product Number", description: `A post with the number "${postData.productNumber}" already exists.` });
-          return;
-        }
-
-        await addDoc(collection(db, "gadgetPosts"), {
-          ...postData,
-          isSold: false,
-          createdAt: new Date().toISOString(),
-        });
-        toast({ title: "Success", description: "New gadget post created!" });
-      }
-      setShowForm(false);
-      setEditingPost(null);
-      onDataChange();
-    } catch (e: any) {
-      console.error("Error saving post:", e);
-      toast({ variant: "destructive", title: "Error", description: `Error saving post: ${e.message}` });
-      // Re-throw the error to be caught by the form's handler
-      throw e;
-    }
+  const handleSaveSuccess = () => {
+    setShowForm(false);
+    setEditingPost(null);
+    onDataChange();
   };
 
   const handleDeletePost = async (postId: string) => {
@@ -109,7 +77,7 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
   };
 
   if (showForm) {
-    return <GadgetPostForm onSave={handleSavePost} initialData={editingPost} onCancel={handleCancelForm} />;
+    return <GadgetPostForm onSaveSuccess={handleSaveSuccess} initialData={editingPost} onCancel={handleCancelForm} />;
   }
 
   return (

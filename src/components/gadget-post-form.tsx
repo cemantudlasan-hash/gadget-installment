@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import type { GadgetPost } from "@/types";
 import { useFirebase } from "@/lib/firebase/context";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import { Loader2, Upload, X } from "lucide-react";
+import { collection, addDoc, doc, updateDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
+import { Loader2, Upload } from "lucide-react";
 import Image from "next/image";
+import { useToast } from "@/hooks/use-toast";
 
 const postSchema = z.object({
   productNumber: z.string().min(1, "Product Number is required"),
@@ -27,14 +29,15 @@ const postSchema = z.object({
 type PostFormValues = z.infer<typeof postSchema>;
 
 interface GadgetPostFormProps {
-  onSave: (data: Omit<GadgetPost, "id" | "isSold" | "createdAt">, isEditing: boolean) => Promise<void>;
+  onSaveSuccess: () => void;
   initialData?: GadgetPost | null;
   onCancel: () => void;
 }
 
-export default function GadgetPostForm({ onSave, initialData, onCancel }: GadgetPostFormProps) {
-  const { app } = useFirebase();
-  const [isUploading, setIsUploading] = useState(false);
+export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }: GadgetPostFormProps) {
+  const { app, db } = useFirebase();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>(initialData?.imageUrls || []);
 
   const form = useForm<PostFormValues>({
@@ -55,52 +58,81 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
       setImagePreviews(newPreviews);
       form.setValue("imageFiles", files);
     } else {
-        // if user cancels file selection, revert to initial images if they exist
-        setImagePreviews(initialData?.imageUrls || []);
-        form.setValue("imageFiles", undefined);
+      setImagePreviews(initialData?.imageUrls || []);
+      form.setValue("imageFiles", undefined);
     }
   };
 
   const handleSubmit = async (values: PostFormValues) => {
-    if (!app) return;
-    setIsUploading(true);
+    if (!app || !db) {
+        toast({ variant: "destructive", title: "Firebase not initialized." });
+        return;
+    }
+    
+    setIsSubmitting(true);
 
     try {
-        let uploadedImageUrls: string[] = initialData?.imageUrls || [];
+      let uploadedImageUrls: string[] = initialData?.imageUrls || [];
 
-        // Only upload new images if they are provided
-        if (values.imageFiles && values.imageFiles.length > 0) {
-            const storage = getStorage(app);
-            const uploadPromises = Array.from(values.imageFiles).map(file => {
-                const imageRef = storageRef(storage, `gadget_posts/${values.productNumber}/${Date.now()}_${file.name}`);
-                return uploadBytes(imageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
-            });
-            uploadedImageUrls = await Promise.all(uploadPromises);
+      // 1. Handle Image Uploads
+      if (values.imageFiles && values.imageFiles.length > 0) {
+        const storage = getStorage(app);
+        const uploadPromises = Array.from(values.imageFiles).map(file => {
+          const imageRef = storageRef(storage, `gadget_posts/${values.productNumber}/${Date.now()}_${file.name}`);
+          return uploadBytes(imageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
+        });
+        uploadedImageUrls = await Promise.all(uploadPromises);
+      }
+      
+      if (!initialData && uploadedImageUrls.length === 0) {
+        form.setError("imageFiles", { type: "manual", message: "At least one image is required for a new post." });
+        return; // Early exit
+      }
+
+      // 2. Prepare Data for Firestore
+      const postData = {
+          productNumber: values.productNumber,
+          productName: values.productName,
+          adminName: values.adminName,
+          contactNumber: values.contactNumber,
+          socialMedia: values.socialMedia,
+          imageUrls: uploadedImageUrls,
+      };
+
+      // 3. Save to Firestore
+      if (initialData) {
+        // Update existing document
+        const postRef = doc(db, "gadgetPosts", initialData.id);
+        await updateDoc(postRef, postData);
+        toast({ title: "Success", description: "Post updated successfully!" });
+      } else {
+        // Create new document
+        const postsRef = collection(db, "gadgetPosts");
+        const q = query(postsRef, where("productNumber", "==", postData.productNumber));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          toast({ variant: "destructive", title: "Duplicate Product Number", description: `A post with the number "${postData.productNumber}" already exists.` });
+          return;
         }
 
-        if (!initialData && uploadedImageUrls.length === 0) {
-            form.setError("imageFiles", { type: "manual", message: "At least one image is required for a new post." });
-            return;
-        }
+        await addDoc(collection(db, "gadgetPosts"), {
+          ...postData,
+          isSold: false,
+          createdAt: new Date().toISOString(),
+        });
+        toast({ title: "Success", description: "New gadget post created!" });
+      }
 
-        const postData = {
-            productNumber: values.productNumber,
-            productName: values.productName,
-            adminName: values.adminName,
-            contactNumber: values.contactNumber,
-            socialMedia: values.socialMedia,
-            imageUrls: uploadedImageUrls,
-        };
+      onSaveSuccess();
 
-        await onSave(postData, !!initialData);
-        
-    } catch (error) {
-        console.error("Error preparing post data:", error);
+    } catch (error: any) {
+      console.error("Error saving post:", error);
+      toast({ variant: "destructive", title: "Error", description: `Error saving post: ${error.message}` });
     } finally {
-        setIsUploading(false);
+      // 4. THIS IS THE GUARANTEE: Reset submitting state no matter what.
+      setIsSubmitting(false);
     }
-};
-
+  };
 
   return (
     <Card className="max-w-3xl mx-auto">
@@ -162,12 +194,11 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
                 </div>
               )}
 
-
             <div className="flex justify-end space-x-3 pt-4">
-              <Button type="button" variant="outline" onClick={onCancel} disabled={isUploading}>Cancel</Button>
-              <Button type="submit" disabled={isUploading}>
-                {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {isUploading ? 'Saving...' : (initialData ? "Update Post" : "Create Post")}
+              <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancel</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {isSubmitting ? 'Saving...' : (initialData ? "Update Post" : "Create Post")}
               </Button>
             </div>
           </form>
