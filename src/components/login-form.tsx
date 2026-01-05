@@ -142,7 +142,7 @@ export default function LoginForm({ onLoginSuccess, onBack }: LoginFormProps) {
 
   const handleLogin = (e: FormEvent) => {
     e.preventDefault();
-    if (username === "admin" && password === "admin") {
+    if (username === "admin" && password === "tudlasan2720866") {
       onLoginSuccess();
     } else {
       setError("Invalid username or password. Please try again.");
