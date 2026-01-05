@@ -190,6 +190,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                   <p className="text-xs text-slate-400">P/N: {post.productNumber}</p>
                 </CardHeader>
                 <CardContent className="flex-grow break-all">
+                  <p className="text-slate-300 mb-4">{post.description}</p>
                   <div className="space-y-3 text-slate-300">
                     <p className="flex items-center gap-2"><Contact className="w-5 h-5 text-cyan-400 flex-shrink-0" /> <strong>Seller:</strong> {post.adminName}</p>
                     <p className="flex items-center gap-2"><Phone className="w-5 h-5 text-cyan-400 flex-shrink-0" /> <strong>Contact:</strong> {post.contactNumber}</p>

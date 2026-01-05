@@ -101,7 +101,7 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
       <CardContent>
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-80 w-full" />)}
+            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-96 w-full" />)}
           </div>
         ) : posts.length === 0 ? (
           <div className="text-center py-16">
@@ -128,7 +128,8 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
                 <div className="p-4 flex-grow flex flex-col">
                   <h3 className="font-bold text-lg">{post.productName}</h3>
                   <p className="text-xs text-muted-foreground mb-2">P/N: {post.productNumber}</p>
-                  <div className="text-sm text-muted-foreground mt-2 space-y-1 flex-grow">
+                  <p className="text-sm text-muted-foreground my-2 flex-grow">{post.description}</p>
+                  <div className="text-sm text-muted-foreground mt-2 space-y-1">
                      <p><strong>Seller:</strong> {post.adminName}</p>
                      <p><strong>Contact:</strong> {post.contactNumber}</p>
                      <p><strong>Socials:</strong> {post.socialMedia}</p>

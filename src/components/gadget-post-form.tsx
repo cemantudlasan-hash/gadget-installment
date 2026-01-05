@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,7 @@ import Image from "next/image";
 const postSchema = z.object({
   productNumber: z.string().min(1, "Product Number is required"),
   productName: z.string().min(1, "Product name is required"),
+  description: z.string().optional(),
   adminName: z.string().min(1, "Your name is required"),
   contactNumber: z.string().min(1, "Contact number is required"),
   socialMedia: z.string().min(1, "Social media or email is required"),
@@ -44,6 +46,7 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
     defaultValues: {
       productNumber: initialData?.productNumber || "",
       productName: initialData?.productName || "",
+      description: initialData?.description || "",
       adminName: initialData?.adminName || "Saowakon Noycumlee",
       contactNumber: initialData?.contactNumber || "",
       socialMedia: initialData?.socialMedia || "",
@@ -126,6 +129,19 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
               <FormField name="productName" control={form.control} render={({ field }) => (
                   <FormItem><FormLabel>Product Name</FormLabel><FormControl><Input {...field} placeholder="e.g., iPhone 15 Pro" /></FormControl><FormMessage /></FormItem>
               )}/>
+            </div>
+            
+            <FormField name="description" control={form.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Product Description</FormLabel>
+                <FormControl>
+                  <Textarea {...field} placeholder="e.g., Brand new, 256GB, Deep Purple..." />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}/>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField name="adminName" control={form.control} render={({ field }) => (
                   <FormItem><FormLabel>Your Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
