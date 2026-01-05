@@ -65,34 +65,34 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
     if (!app) return;
     setIsUploading(true);
 
-    let finalImageUrls: string[] = initialData?.imageUrls || [];
-
     try {
-        // Only upload new files if they are selected
+        let uploadedImageUrls: string[] = initialData?.imageUrls || [];
+
+        // 1. Handle Image Uploads if new files are present
         if (values.imageFiles && values.imageFiles.length > 0) {
             const storage = getStorage(app);
             const uploadPromises = Array.from(values.imageFiles).map(file => {
                 const imageRef = storageRef(storage, `gadget_posts/${values.productNumber}/${Date.now()}_${file.name}`);
                 return uploadBytes(imageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
             });
-            const newUrls = await Promise.all(uploadPromises);
-            finalImageUrls = newUrls; // Replace old URLs with new ones
+            uploadedImageUrls = await Promise.all(uploadPromises);
         }
 
-        // Ensure there's at least one image if creating a new post
-        if (!initialData && finalImageUrls.length === 0) {
-            form.setError("imageFiles", { type: "manual", message: "At least one image is required." });
-            setIsUploading(false);
+        // 2. Validate that there's at least one image for a new post
+        if (!initialData && uploadedImageUrls.length === 0) {
+            form.setError("imageFiles", { type: "manual", message: "At least one image is required for a new post." });
+            // Exit early, finally block will reset isUploading
             return;
         }
 
+        // 3. Prepare data and save
         const postData = {
             productNumber: values.productNumber,
             productName: values.productName,
             adminName: values.adminName,
             contactNumber: values.contactNumber,
             socialMedia: values.socialMedia,
-            imageUrls: finalImageUrls,
+            imageUrls: uploadedImageUrls,
         };
 
         await onSave(postData, !!initialData);
@@ -100,6 +100,7 @@ export default function GadgetPostForm({ onSave, initialData, onCancel }: Gadget
     } catch (error) {
         console.error("Error saving post:", error);
     } finally {
+        // 4. ALWAYS reset the loading state
         setIsUploading(false);
     }
 };
