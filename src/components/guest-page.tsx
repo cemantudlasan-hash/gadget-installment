@@ -176,7 +176,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {posts.map(post => (
-              <Card key={post.id} className="bg-white/5 backdrop-blur-md border-white/10 overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300 shadow-lg hover:shadow-cyan-500/20">
+              <Card key={post.id} className="bg-slate-900/50 backdrop-blur-md border-purple-500/30 overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300 shadow-lg hover:shadow-cyan-500/20">
                 <div className="relative w-full h-56">
                     <Image src={post.imageUrl} alt={post.productName} layout="fill" objectFit="cover" className="bg-slate-800" />
                     {!post.isSold && <Badge className="absolute top-2 right-2 bg-cyan-500 text-black">Available</Badge>}
