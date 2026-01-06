@@ -130,7 +130,7 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
                   <p className="text-xs text-muted-foreground mb-2">P/N: {post.productNumber}</p>
                    <div className="font-bold text-primary text-lg my-2 flex items-center">
                      <Tag className="mr-2 h-5 w-5" />
-                     ฿{post.price.toLocaleString()}
+                     ฿{(post.price || 0).toLocaleString()}
                    </div>
                   <p className="text-sm text-muted-foreground my-2 flex-grow">{post.description}</p>
                   <div className="text-sm text-muted-foreground mt-2 space-y-1">

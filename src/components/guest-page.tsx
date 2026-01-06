@@ -190,7 +190,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                   <p className="text-xs text-slate-400">P/N: {post.productNumber}</p>
                 </CardHeader>
                 <CardContent className="flex-grow">
-                  <div className="font-bold text-primary text-2xl mb-4">฿{post.price.toLocaleString()}</div>
+                  <div className="font-bold text-primary text-2xl mb-4">฿{(post.price || 0).toLocaleString()}</div>
                   <p className="text-slate-300 mb-4">{post.description}</p>
                   <div className="space-y-3 text-slate-300 break-all">
                     <p className="flex items-center gap-2"><Contact className="w-5 h-5 text-cyan-400 flex-shrink-0" /> <strong>Seller:</strong> {post.adminName}</p>
