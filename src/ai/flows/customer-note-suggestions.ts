@@ -12,7 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const SuggestCustomerNoteInputSchema = z.object({
-  passportID: z.string().describe('The customer\u0027s passport ID.'),
+  passportID: z.string().describe("The customer's passport ID."),
 });
 export type SuggestCustomerNoteInput = z.infer<typeof SuggestCustomerNoteInputSchema>;
 

@@ -81,4 +81,6 @@ export interface Inquiry {
   message: string;
   createdAt: string;
   isRead: boolean;
+  translation?: string;
+  detectedLanguage?: string;
 }

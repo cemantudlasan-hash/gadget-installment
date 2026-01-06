@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
+import { translateInquiry } from '@/ai/flows/translate-inquiry';
 
 interface GuestPageProps {
   onBack: () => void;
@@ -98,6 +99,8 @@ export default function GuestPage({ onBack }: GuestPageProps) {
         return newCount;
       });
 
+      const translationResult = await translateInquiry({ message: inquiryForm.message });
+
       const newInquiry: Omit<Inquiry, 'id'> = {
         dailyInquiryId: newDailyId,
         guestName: inquiryForm.guestName,
@@ -107,6 +110,8 @@ export default function GuestPage({ onBack }: GuestPageProps) {
         productName: inquiryPost.productName,
         productId: inquiryPost.productNumber, // Use user-defined productNumber
         message: inquiryForm.message,
+        translation: translationResult.translation,
+        detectedLanguage: translationResult.language,
         createdAt: new Date().toISOString(),
         isRead: false,
       };

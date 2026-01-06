@@ -3,3 +3,4 @@ config();
 
 import '@/ai/flows/customer-note-suggestions.ts';
 import '@/ai/flows/generate-thumbnail.ts';
+import '@/ai/flows/translate-inquiry.ts';

@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
-import { Inbox, MailOpen, Trash2, Mail, Phone, User, Tag, MessageSquare } from "lucide-react";
+import { Inbox, MailOpen, Trash2, Mail, Phone, User, Tag, MessageSquare,Languages } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useFirebase } from "@/lib/firebase/context";
 import { doc, deleteDoc } from "firebase/firestore";
@@ -115,7 +115,18 @@ function InquiryItem({ inquiry, onToggleRead, onDelete }: InquiryItemProps) {
             </AccordionTrigger>
             <AccordionContent className="p-4 pt-0">
                 <div className="border-t pt-4 space-y-4">
-                    <p className="text-md font-medium bg-muted p-3 rounded-lg"><strong className="text-muted-foreground">Message:</strong> {inquiry.message}</p>
+                    <p className="text-md font-medium bg-muted p-3 rounded-lg"><strong className="text-muted-foreground">Original Message:</strong> {inquiry.message}</p>
+                    
+                    {inquiry.translation && inquiry.detectedLanguage !== 'en' && (
+                        <div className="text-md font-medium bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                            <div className="flex items-center gap-2 text-blue-800 dark:text-blue-300 mb-2">
+                                <Languages className="h-5 w-5"/>
+                                <h4 className="font-semibold">English Translation (from {inquiry.detectedLanguage})</h4>
+                            </div>
+                            <p>{inquiry.translation}</p>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div className="space-y-2">
                             <h4 className="font-semibold text-primary">Guest Details</h4>
