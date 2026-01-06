@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone, Loader2, Tag, ExternalLink, Package, Wallet, Calendar, Repeat } from "lucide-react";
+import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone, Loader2, Tag, ExternalLink, Package, Wallet, Calendar, Repeat, Languages } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
@@ -17,17 +17,28 @@ import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { translateInquiry } from '@/ai/flows/translate-inquiry';
+import { translateProductDetails, TranslateProductDetailsOutput } from '@/ai/flows/translate-product-details';
 
 interface GuestPageProps {
   onBack: () => void;
 }
 
+interface DisplayPost extends GadgetPost {
+    displayData: {
+        name: string;
+        description: string;
+    };
+    translation?: TranslateProductDetailsOutput;
+    isTranslated: boolean;
+}
+
 export default function GuestPage({ onBack }: GuestPageProps) {
   const { db } = useFirebase();
   const { toast } = useToast();
-  const [posts, setPosts] = useState<GadgetPost[]>([]);
+  const [posts, setPosts] = useState<DisplayPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [translatingId, setTranslatingId] = useState<string | null>(null);
 
   const [inquiryPost, setInquiryPost] = useState<GadgetPost | null>(null);
   const [inquiryForm, setInquiryForm] = useState({
@@ -51,7 +62,11 @@ export default function GuestPage({ onBack }: GuestPageProps) {
       } as GadgetPost));
       
       const availablePosts = allPosts.filter(post => !post.isSold);
-      setPosts(availablePosts);
+      setPosts(availablePosts.map(p => ({
+          ...p,
+          displayData: { name: p.productName, description: p.description || ''},
+          isTranslated: false,
+      })));
 
     } catch (e: any) {
       console.error("Error fetching gadget posts:", e);
@@ -76,6 +91,47 @@ export default function GuestPage({ onBack }: GuestPageProps) {
 
   const handleInquireNow = (post: GadgetPost) => {
     setInquiryPost(post);
+  };
+
+  const handleToggleTranslation = async (postId: string) => {
+    setTranslatingId(postId);
+    try {
+        const postIndex = posts.findIndex(p => p.id === postId);
+        if (postIndex === -1) return;
+
+        const post = posts[postIndex];
+
+        if (post.isTranslated) {
+            // Switch back to original
+            setPosts(prev => prev.map(p => p.id === postId ? {
+                ...p,
+                displayData: { name: p.productName, description: p.description || '' },
+                isTranslated: false
+            } : p));
+        } else {
+            // Get translation (cached or new)
+            let translation = post.translation;
+            if (!translation) {
+                translation = await translateProductDetails({
+                    productName: post.productName,
+                    description: post.description || ''
+                });
+            }
+
+            if (translation) {
+                setPosts(prev => prev.map(p => p.id === postId ? {
+                    ...p,
+                    displayData: { name: translation!.translatedName, description: translation!.translatedDescription },
+                    translation,
+                    isTranslated: true,
+                } : p));
+            }
+        }
+    } catch(err) {
+        toast({ variant: 'destructive', title: 'Translation Error', description: 'Could not translate the product details.' });
+    } finally {
+        setTranslatingId(null);
+    }
   };
 
   const handleInquirySubmit = async (e: React.FormEvent) => {
@@ -191,12 +247,17 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                     {!post.isSold && <Badge className="absolute top-2 right-2 bg-cyan-500 text-black z-10">Available</Badge>}
                 </div>
                 <CardHeader>
-                  <CardTitle className="text-cyan-300 text-xl break-words">{post.productName}</CardTitle>
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-cyan-300 text-xl break-words">{post.displayData.name}</CardTitle>
+                    <Button variant="ghost" size="icon" onClick={() => handleToggleTranslation(post.id)} disabled={translatingId === post.id}>
+                        {translatingId === post.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <Languages className="h-5 w-5" />}
+                    </Button>
+                  </div>
                   <p className="text-xs text-slate-400">P/N: {post.productNumber}</p>
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <div className="font-bold text-primary text-xl mb-2">Cash Price: ฿{(post.cashPrice || 0).toLocaleString()}</div>
-                  <p className="text-slate-300 mb-4">{post.description}</p>
+                  <p className="text-slate-300 mb-4">{post.displayData.description}</p>
                   
                   {(post.downPayment || 0) > 0 && (
                     <div className="my-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700 space-y-2 text-sm">
