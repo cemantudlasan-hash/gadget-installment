@@ -130,12 +130,13 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
                   <p className="text-xs text-muted-foreground mb-2">P/N: {post.productNumber}</p>
                    <div className="font-bold text-primary text-lg my-2 flex items-center">
                      <Tag className="mr-2 h-5 w-5" />
-                     ฿{(post.price || 0).toLocaleString()}
+                     Cash Price: ฿{(post.cashPrice || 0).toLocaleString()}
                    </div>
                   <p className="text-sm text-muted-foreground my-2 flex-grow">{post.description}</p>
                   
                   {(post.downPayment || 0) > 0 && (
                     <div className="mt-2 space-y-2 text-sm border-t pt-3">
+                        <h4 className="font-semibold">Installment Plan</h4>
                         <p className="flex items-center gap-2"><Wallet className="w-4 h-4 text-muted-foreground"/> <strong>Down Payment:</strong> ฿{(post.downPayment || 0).toLocaleString()}</p>
                         <p className="flex items-center gap-2"><Calendar className="w-4 h-4 text-muted-foreground"/> <strong>Months:</strong> {post.installmentMonths || 0}</p>
                         <p className="flex items-center gap-2"><Repeat className="w-4 h-4 text-muted-foreground"/> <strong>Monthly:</strong> ฿{(post.monthlyInstallment || 0).toLocaleString()}</p>

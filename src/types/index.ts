@@ -56,7 +56,7 @@ export interface GadgetPost {
   productNumber: string;
   productName: string;
   description?: string;
-  price: number;
+  cashPrice: number;
   downPayment?: number;
   installmentMonths?: number;
   monthlyInstallment?: number;

@@ -190,12 +190,12 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                   <p className="text-xs text-slate-400">P/N: {post.productNumber}</p>
                 </CardHeader>
                 <CardContent className="flex-grow">
-                  <div className="font-bold text-primary text-2xl mb-4">฿{(post.price || 0).toLocaleString()}</div>
+                  <div className="font-bold text-primary text-xl mb-2">Cash Price: ฿{(post.cashPrice || 0).toLocaleString()}</div>
                   <p className="text-slate-300 mb-4">{post.description}</p>
                   
                   {(post.downPayment || 0) > 0 && (
                     <div className="my-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700 space-y-2 text-sm">
-                        <h4 className="font-bold text-slate-200">Installment Option</h4>
+                        <h4 className="font-bold text-slate-200">Installment Plan</h4>
                         <p className="flex items-center justify-between"><span className="flex items-center gap-2"><Wallet className="w-4 h-4 text-cyan-400"/> Down Payment</span> <strong>฿{(post.downPayment || 0).toLocaleString()}</strong></p>
                         <p className="flex items-center justify-between"><span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-cyan-400"/> Months to Pay</span> <strong>{post.installmentMonths || 0}</strong></p>
                         <p className="flex items-center justify-between"><span className="flex items-center gap-2"><Repeat className="w-4 h-4 text-cyan-400"/> Monthly Installment</span> <strong>฿{(post.monthlyInstallment || 0).toLocaleString()}</strong></p>

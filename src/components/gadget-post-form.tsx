@@ -23,7 +23,7 @@ const postSchema = z.object({
   productNumber: z.string().min(1, "Product Number is required"),
   productName: z.string().min(1, "Product name is required"),
   description: z.string().optional(),
-  price: z.coerce.number().min(0, "Price must be a positive number"),
+  cashPrice: z.coerce.number().min(0, "Price must be a positive number"),
   downPayment: z.coerce.number().min(0).optional(),
   installmentMonths: z.coerce.number().int().min(0).optional(),
   monthlyInstallment: z.coerce.number().min(0).optional(),
@@ -52,7 +52,7 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
       productNumber: initialData?.productNumber || "",
       productName: initialData?.productName || "",
       description: initialData?.description || "",
-      price: initialData?.price || 0,
+      cashPrice: initialData?.cashPrice || 0,
       downPayment: initialData?.downPayment || 0,
       installmentMonths: initialData?.installmentMonths || 0,
       monthlyInstallment: initialData?.monthlyInstallment || 0,
@@ -131,7 +131,7 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
     }
   };
   
-  const currentImageUrl = form.watch('imageUrl') || initialData?.imageUrl;
+  const currentImageUrl = initialData?.imageUrl;
 
   return (
     <Card className="max-w-3xl mx-auto">
@@ -165,26 +165,29 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
              <Separator className="my-8" />
              <h4 className="text-lg font-medium">Pricing Details</h4>
              
-             <FormField name="price" control={form.control} render={({ field }) => (
+             <FormField name="cashPrice" control={form.control} render={({ field }) => (
               <FormItem>
-                <FormLabel>Total Price (฿)</FormLabel>
+                <FormLabel>Cash Price (฿)</FormLabel>
                 <FormControl>
                   <Input type="number" {...field} placeholder="e.g., 35000" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}/>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <FormField name="downPayment" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Down Payment (฿)</FormLabel><FormControl><Input type="number" {...field} placeholder="e.g., 5000" /></FormControl><FormMessage /></FormItem>
-                )}/>
-                <FormField name="installmentMonths" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Installment Months</FormLabel><FormControl><Input type="number" {...field} placeholder="e.g., 6" /></FormControl><FormMessage /></FormItem>
-                )}/>
-                <FormField name="monthlyInstallment" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Monthly Installment (฿)</FormLabel><FormControl><Input type="number" {...field} placeholder="e.g., 5000" /></FormControl><FormMessage /></FormItem>
-                )}/>
+            
+            <div className="p-4 border rounded-lg space-y-4">
+                <h5 className="font-medium">Installment Options (Optional)</h5>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FormField name="downPayment" control={form.control} render={({ field }) => (
+                        <FormItem><FormLabel>Down Payment (฿)</FormLabel><FormControl><Input type="number" {...field} placeholder="e.g., 5000" /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                    <FormField name="installmentMonths" control={form.control} render={({ field }) => (
+                        <FormItem><FormLabel>Installment Months</FormLabel><FormControl><Input type="number" {...field} placeholder="e.g., 6" /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                    <FormField name="monthlyInstallment" control={form.control} render={({ field }) => (
+                        <FormItem><FormLabel>Monthly Installment (฿)</FormLabel><FormControl><Input type="number" {...field} placeholder="e.g., 5000" /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                </div>
             </div>
 
 
