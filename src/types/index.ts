@@ -56,6 +56,7 @@ export interface GadgetPost {
   productNumber: string;
   productName: string;
   description?: string;
+  price: number;
   adminName: string;
   contactNumber: string;
   socialMedia: string;

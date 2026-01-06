@@ -22,6 +22,7 @@ const postSchema = z.object({
   productNumber: z.string().min(1, "Product Number is required"),
   productName: z.string().min(1, "Product name is required"),
   description: z.string().optional(),
+  price: z.coerce.number().min(0, "Price must be a positive number"),
   adminName: z.string().min(1, "Your name is required"),
   contactNumber: z.string().min(1, "Contact number is required"),
   socialMedia: z.string().min(1, "Social media or email is required"),
@@ -47,6 +48,7 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
       productNumber: initialData?.productNumber || "",
       productName: initialData?.productName || "",
       description: initialData?.description || "",
+      price: initialData?.price || 0,
       adminName: initialData?.adminName || "Saowakon Noycumlee",
       contactNumber: initialData?.contactNumber || "",
       socialMedia: initialData?.socialMedia || "",
@@ -65,10 +67,20 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
     try {
       let imageUrl = initialData?.imageUrl || "";
 
-      if (!initialData) { // Only generate for new posts
+      if (!initialData || !initialData.imageUrl) { 
         toast({ title: "Generating Thumbnail...", description: "Please wait while the AI creates an image for your product." });
-        const thumbnailResult = await generateThumbnail({ productName: values.productName });
-        imageUrl = thumbnailResult.imageUrl;
+        try {
+          const thumbnailResult = await generateThumbnail({ productName: values.productName });
+          imageUrl = thumbnailResult.imageUrl;
+        } catch (aiError) {
+            console.error("AI thumbnail generation failed:", aiError);
+            toast({
+                variant: "destructive",
+                title: "AI Thumbnail Failed",
+                description: "Could not generate an image. You can save the post without one.",
+            });
+            imageUrl = ""; // Ensure imageUrl is blank if generation fails
+        }
       }
 
       const postData = {
@@ -78,9 +90,7 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
 
       if (initialData) {
         const postRef = doc(db, "gadgetPosts", initialData.id);
-        await updateDoc(postRef, {
-            ...values // Do not update imageUrl on edit to save costs
-        });
+        await updateDoc(postRef, postData);
         toast({ title: "Success", description: "Post updated successfully!" });
       } else {
         const postsRef = collection(db, "gadgetPosts");
@@ -88,7 +98,8 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
           toast({ variant: "destructive", title: "Duplicate Product Number", description: `A post with the number "${postData.productNumber}" already exists.` });
-          throw new Error("Duplicate product number");
+          setIsSubmitting(false); // Stop submission
+          return; 
         }
 
         await addDoc(collection(db, "gadgetPosts"), {
@@ -107,11 +118,13 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
         toast({ variant: "destructive", title: "Error", description: `Error saving post: ${error.message}` });
       }
     } finally {
-      setIsSubmitting(false);
+      if (isSubmitting) { // Only set to false if it was true, to avoid race conditions
+          setIsSubmitting(false);
+      }
     }
   };
   
-  const currentImageUrl = initialData?.imageUrl;
+  const currentImageUrl = form.watch('imageUrl') || initialData?.imageUrl;
 
   return (
     <Card className="max-w-3xl mx-auto">
@@ -131,6 +144,16 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
               )}/>
             </div>
             
+             <FormField name="price" control={form.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Price (฿)</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} placeholder="e.g., 35000" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}/>
+
             <FormField name="description" control={form.control} render={({ field }) => (
               <FormItem>
                 <FormLabel>Product Description</FormLabel>

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { GadgetPost } from "@/types";
-import { PlusCircle, Edit, Trash2, PackageCheck, Package, ExternalLink } from "lucide-react";
+import { PlusCircle, Edit, Trash2, PackageCheck, Package, ExternalLink, Tag } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Image from "next/image";
 import { Badge } from "./ui/badge";
@@ -128,6 +128,10 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
                 <div className="p-4 flex-grow flex flex-col">
                   <h3 className="font-bold text-lg">{post.productName}</h3>
                   <p className="text-xs text-muted-foreground mb-2">P/N: {post.productNumber}</p>
+                   <div className="font-bold text-primary text-lg my-2 flex items-center">
+                     <Tag className="mr-2 h-5 w-5" />
+                     ฿{post.price.toLocaleString()}
+                   </div>
                   <p className="text-sm text-muted-foreground my-2 flex-grow">{post.description}</p>
                   <div className="text-sm text-muted-foreground mt-2 space-y-1">
                      <p><strong>Seller:</strong> {post.adminName}</p>
