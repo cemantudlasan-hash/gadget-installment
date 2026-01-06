@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { GadgetPost } from "@/types";
-import { PlusCircle, Edit, Trash2, PackageCheck, Package, ExternalLink, Tag } from "lucide-react";
+import { PlusCircle, Edit, Trash2, PackageCheck, Package, ExternalLink, Tag, Wallet, Calendar, Repeat } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Image from "next/image";
 import { Badge } from "./ui/badge";
@@ -133,7 +133,16 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
                      ฿{(post.price || 0).toLocaleString()}
                    </div>
                   <p className="text-sm text-muted-foreground my-2 flex-grow">{post.description}</p>
-                  <div className="text-sm text-muted-foreground mt-2 space-y-1">
+                  
+                  {(post.downPayment || 0) > 0 && (
+                    <div className="mt-2 space-y-2 text-sm border-t pt-3">
+                        <p className="flex items-center gap-2"><Wallet className="w-4 h-4 text-muted-foreground"/> <strong>Down Payment:</strong> ฿{(post.downPayment || 0).toLocaleString()}</p>
+                        <p className="flex items-center gap-2"><Calendar className="w-4 h-4 text-muted-foreground"/> <strong>Months:</strong> {post.installmentMonths || 0}</p>
+                        <p className="flex items-center gap-2"><Repeat className="w-4 h-4 text-muted-foreground"/> <strong>Monthly:</strong> ฿{(post.monthlyInstallment || 0).toLocaleString()}</p>
+                    </div>
+                  )}
+
+                  <div className="text-sm text-muted-foreground mt-4 border-t pt-3 space-y-1">
                      <p><strong>Seller:</strong> {post.adminName}</p>
                      <p><strong>Contact:</strong> {post.contactNumber}</p>
                      <p><strong>Socials:</strong> {post.socialMedia}</p>

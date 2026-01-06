@@ -17,12 +17,16 @@ import { collection, addDoc, doc, updateDoc, getDocs, query, where } from "fireb
 import { Loader2 } from "lucide-react";
 import { generateThumbnail } from "@/ai/flows/generate-thumbnail";
 import Image from "next/image";
+import { Separator } from "./ui/separator";
 
 const postSchema = z.object({
   productNumber: z.string().min(1, "Product Number is required"),
   productName: z.string().min(1, "Product name is required"),
   description: z.string().optional(),
   price: z.coerce.number().min(0, "Price must be a positive number"),
+  downPayment: z.coerce.number().min(0).optional(),
+  installmentMonths: z.coerce.number().int().min(0).optional(),
+  monthlyInstallment: z.coerce.number().min(0).optional(),
   adminName: z.string().min(1, "Your name is required"),
   contactNumber: z.string().min(1, "Contact number is required"),
   socialMedia: z.string().min(1, "Social media or email is required"),
@@ -49,6 +53,9 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
       productName: initialData?.productName || "",
       description: initialData?.description || "",
       price: initialData?.price || 0,
+      downPayment: initialData?.downPayment || 0,
+      installmentMonths: initialData?.installmentMonths || 0,
+      monthlyInstallment: initialData?.monthlyInstallment || 0,
       adminName: initialData?.adminName || "Saowakon Noycumlee",
       contactNumber: initialData?.contactNumber || "",
       socialMedia: initialData?.socialMedia || "",
@@ -135,6 +142,7 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <h4 className="text-lg font-medium">Product Details</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <FormField name="productNumber" control={form.control} render={({ field }) => (
                   <FormItem><FormLabel>Product Number</FormLabel><FormControl><Input {...field} placeholder="e.g., IPHONE-001" disabled={!!initialData} /></FormControl><FormMessage /></FormItem>
@@ -144,16 +152,6 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
               )}/>
             </div>
             
-             <FormField name="price" control={form.control} render={({ field }) => (
-              <FormItem>
-                <FormLabel>Price (฿)</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} placeholder="e.g., 35000" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}/>
-
             <FormField name="description" control={form.control} render={({ field }) => (
               <FormItem>
                 <FormLabel>Product Description</FormLabel>
@@ -163,6 +161,35 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
                 <FormMessage />
               </FormItem>
             )}/>
+
+             <Separator className="my-8" />
+             <h4 className="text-lg font-medium">Pricing Details</h4>
+             
+             <FormField name="price" control={form.control} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Total Price (฿)</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} placeholder="e.g., 35000" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}/>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <FormField name="downPayment" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Down Payment (฿)</FormLabel><FormControl><Input type="number" {...field} placeholder="e.g., 5000" /></FormControl><FormMessage /></FormItem>
+                )}/>
+                <FormField name="installmentMonths" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Installment Months</FormLabel><FormControl><Input type="number" {...field} placeholder="e.g., 6" /></FormControl><FormMessage /></FormItem>
+                )}/>
+                <FormField name="monthlyInstallment" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Monthly Installment (฿)</FormLabel><FormControl><Input type="number" {...field} placeholder="e.g., 5000" /></FormControl><FormMessage /></FormItem>
+                )}/>
+            </div>
+
+
+            <Separator className="my-8" />
+            <h4 className="text-lg font-medium">Seller Contact</h4>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField name="adminName" control={form.control} render={({ field }) => (

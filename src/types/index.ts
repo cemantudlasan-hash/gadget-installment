@@ -57,6 +57,9 @@ export interface GadgetPost {
   productName: string;
   description?: string;
   price: number;
+  downPayment?: number;
+  installmentMonths?: number;
+  monthlyInstallment?: number;
   adminName: string;
   contactNumber: string;
   socialMedia: string;

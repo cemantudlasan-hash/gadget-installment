@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone, Loader2, Tag, ExternalLink, Package } from "lucide-react";
+import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone, Loader2, Tag, ExternalLink, Package, Wallet, Calendar, Repeat } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
@@ -192,7 +192,17 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                 <CardContent className="flex-grow">
                   <div className="font-bold text-primary text-2xl mb-4">฿{(post.price || 0).toLocaleString()}</div>
                   <p className="text-slate-300 mb-4">{post.description}</p>
-                  <div className="space-y-3 text-slate-300 break-all">
+                  
+                  {(post.downPayment || 0) > 0 && (
+                    <div className="my-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700 space-y-2 text-sm">
+                        <h4 className="font-bold text-slate-200">Installment Option</h4>
+                        <p className="flex items-center justify-between"><span className="flex items-center gap-2"><Wallet className="w-4 h-4 text-cyan-400"/> Down Payment</span> <strong>฿{(post.downPayment || 0).toLocaleString()}</strong></p>
+                        <p className="flex items-center justify-between"><span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-cyan-400"/> Months to Pay</span> <strong>{post.installmentMonths || 0}</strong></p>
+                        <p className="flex items-center justify-between"><span className="flex items-center gap-2"><Repeat className="w-4 h-4 text-cyan-400"/> Monthly Installment</span> <strong>฿{(post.monthlyInstallment || 0).toLocaleString()}</strong></p>
+                    </div>
+                  )}
+
+                  <div className="space-y-3 text-slate-300 break-all mt-4 border-t border-slate-700 pt-4">
                     <p className="flex items-center gap-2"><Contact className="w-5 h-5 text-cyan-400 flex-shrink-0" /> <strong>Seller:</strong> {post.adminName}</p>
                     <p className="flex items-center gap-2"><Phone className="w-5 h-5 text-cyan-400 flex-shrink-0" /> <strong>Contact:</strong> {post.contactNumber}</p>
                     <p className="flex items-center gap-2"><Mail className="w-5 h-5 text-cyan-400 flex-shrink-0" /> <strong>Socials:</strong> {post.socialMedia}</p>
