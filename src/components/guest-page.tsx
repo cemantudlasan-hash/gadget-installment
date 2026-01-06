@@ -17,7 +17,7 @@ import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { translateInquiry } from '@/ai/flows/translate-inquiry';
-import { translateProductDetails, TranslateProductDetailsOutput } from '@/ai/flows/translate-product-details';
+import { translateProductDetails, type TranslateProductDetailsOutput } from '@/ai/flows/translate-product-details';
 
 interface GuestPageProps {
   onBack: () => void;
@@ -245,13 +245,19 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                         <Package className="h-24 w-24 text-slate-600" />
                     )}
                     {!post.isSold && <Badge className="absolute top-2 right-2 bg-cyan-500 text-black z-10">Available</Badge>}
+                     <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleToggleTranslation(post.id)}
+                        disabled={translatingId === post.id}
+                        className="absolute top-2 left-2 z-10 h-10 w-10 bg-black/50 text-white rounded-full backdrop-blur-sm border border-white/20 hover:bg-black/70 hover:text-cyan-300 transition-all duration-300 shadow-lg hover:shadow-cyan-400/50"
+                        >
+                        {translatingId === post.id ? <Loader2 className="h-6 w-6 animate-spin" /> : <Languages className="h-6 w-6" />}
+                    </Button>
                 </div>
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-cyan-300 text-xl break-words">{post.displayData.name}</CardTitle>
-                    <Button variant="ghost" size="icon" onClick={() => handleToggleTranslation(post.id)} disabled={translatingId === post.id}>
-                        {translatingId === post.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <Languages className="h-5 w-5" />}
-                    </Button>
                   </div>
                   <p className="text-xs text-slate-400">P/N: {post.productNumber}</p>
                 </CardHeader>
