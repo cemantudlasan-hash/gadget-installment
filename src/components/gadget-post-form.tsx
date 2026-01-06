@@ -25,7 +25,7 @@ const postSchema = z.object({
   description: z.string().optional(),
   cashPrice: z.coerce.number().min(0, "Price must be a positive number"),
   downPayment: z.coerce.number().min(0).optional(),
-  installmentMonths: z.coerce.number().int().min(0).optional(),
+  installmentMonths: z.coerce.number().int().min(1, "Installment months must be at least 1.").optional(),
   monthlyInstallment: z.coerce.number().min(0).optional(),
   adminName: z.string().min(1, "Your name is required"),
   contactNumber: z.string().min(1, "Contact number is required"),
@@ -62,6 +62,22 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
       externalLink: initialData?.externalLink || "",
     },
   });
+
+  const { cashPrice, downPayment, installmentMonths } = form.watch();
+
+  useEffect(() => {
+    if (cashPrice > 0 && installmentMonths && installmentMonths > 0) {
+      const remainingBalance = cashPrice - (downPayment || 0);
+      const monthly = remainingBalance / installmentMonths;
+      if (isFinite(monthly) && monthly >= 0) {
+        form.setValue("monthlyInstallment", parseFloat(monthly.toFixed(2)));
+      } else {
+        form.setValue("monthlyInstallment", 0);
+      }
+    } else {
+      form.setValue("monthlyInstallment", 0);
+    }
+  }, [cashPrice, downPayment, installmentMonths, form]);
 
   const handleSubmit = async (values: PostFormValues) => {
     if (!db) {
@@ -185,7 +201,7 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
                         <FormItem><FormLabel>Installment Months</FormLabel><FormControl><Input type="number" {...field} placeholder="e.g., 6" /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField name="monthlyInstallment" control={form.control} render={({ field }) => (
-                        <FormItem><FormLabel>Monthly Installment (฿)</FormLabel><FormControl><Input type="number" {...field} placeholder="e.g., 5000" /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Monthly Installment (฿)</FormLabel><FormControl><Input type="number" {...field} placeholder="Auto-calculated" readOnly className="bg-muted" /></FormControl><FormMessage /></FormItem>
                     )}/>
                 </div>
             </div>
@@ -238,3 +254,5 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
     </Card>
   );
 }
+
+    
