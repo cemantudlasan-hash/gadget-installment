@@ -245,15 +245,6 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                         <Package className="h-24 w-24 text-slate-600" />
                     )}
                     {!post.isSold && <Badge className="absolute top-2 right-2 bg-cyan-500 text-black z-10">Available</Badge>}
-                     <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleToggleTranslation(post.id)}
-                        disabled={translatingId === post.id}
-                        className="absolute top-2 left-2 z-10 h-10 w-10 bg-black/50 text-white rounded-full backdrop-blur-sm border border-white/20 hover:bg-black/70 hover:text-cyan-300 transition-all duration-300 shadow-lg hover:shadow-cyan-400/50"
-                        >
-                        {translatingId === post.id ? <Loader2 className="h-6 w-6 animate-spin" /> : <Languages className="h-6 w-6" />}
-                    </Button>
                 </div>
                 <CardHeader>
                   <div className="flex justify-between items-start">
@@ -262,8 +253,22 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                   <p className="text-xs text-slate-400">P/N: {post.productNumber}</p>
                 </CardHeader>
                 <CardContent className="flex-grow">
-                  <div className="font-bold text-primary text-xl mb-2">Cash Price: ฿{(post.cashPrice || 0).toLocaleString()}</div>
+                    <Button
+                        variant="outline"
+                        onClick={() => handleToggleTranslation(post.id)}
+                        disabled={translatingId === post.id}
+                        className="w-full mb-4 bg-black/30 border-purple-400/50 hover:bg-purple-900/50"
+                    >
+                        {translatingId === post.id ? 
+                            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Translating...</> : 
+                            <><Languages className="mr-2 h-4 w-4" /> {post.isTranslated ? 'Show Original' : 'Translate to Thai'}</>
+                        }
+                    </Button>
                   <p className="text-slate-300 mb-4">{post.displayData.description}</p>
+                  
+                  <div className="font-bold text-primary text-xl my-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700 text-center">
+                    Cash Price: ฿{(post.cashPrice || 0).toLocaleString()}
+                  </div>
                   
                   {(post.downPayment || 0) > 0 && (
                     <div className="my-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700 space-y-2 text-sm">
