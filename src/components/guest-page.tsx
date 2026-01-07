@@ -112,10 +112,11 @@ export default function GuestPage({ onBack }: GuestPageProps) {
             // Get translation (cached or new)
             let translation = post.translation;
             if (!translation) {
-                translation = await translateProductDetails({
+                const result = await translateProductDetails({
                     productName: post.productName,
                     description: post.description || ''
                 });
+                translation = { translatedName: result.translatedName, translatedDescription: result.translatedDescription };
             }
 
             if (translation) {
@@ -193,13 +194,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
   return (
     <div className="dark dashboard-bg relative flex flex-col min-h-screen overflow-hidden text-white p-4 sm:p-6 md:p-8">
       <div className="relative z-10 w-full max-w-6xl mx-auto">
-        <header className="flex justify-between items-center mb-8">
-          <div className="text-center flex-grow">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-wider bg-gradient-to-r from-purple-400 to-cyan-300 bg-clip-text text-transparent">
-              Available Gadgets
-            </h1>
-            <p className="mt-2 text-lg text-slate-300">Browse our latest products available for cash or installment.</p>
-          </div>
+        <header className="relative flex flex-col sm:flex-row justify-between items-center mb-8 pt-16 sm:pt-0">
           <Button
             onClick={onBack}
             variant="outline"
@@ -208,6 +203,12 @@ export default function GuestPage({ onBack }: GuestPageProps) {
             <ArrowLeft className="mr-2 h-5 w-5" />
             Back
           </Button>
+          <div className="text-center flex-grow">
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-wider bg-gradient-to-r from-purple-400 to-cyan-300 bg-clip-text text-transparent">
+              Available Gadgets
+            </h1>
+            <p className="mt-2 text-lg text-slate-300">Browse our latest products available for cash or installment.</p>
+          </div>
         </header>
 
         {loading ? (
