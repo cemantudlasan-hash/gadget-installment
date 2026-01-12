@@ -18,6 +18,7 @@ import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { translateInquiry } from '@/ai/flows/translate-inquiry';
 import { translateProductDetails, type TranslateProductDetailsOutput } from '@/ai/flows/translate-product-details';
+import { cn } from '@/lib/utils';
 
 interface GuestPageProps {
   onBack: () => void;
@@ -61,8 +62,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
         ...doc.data()
       } as GadgetPost));
       
-      const availablePosts = allPosts.filter(post => !post.isSold);
-      setPosts(availablePosts.map(p => ({
+      setPosts(allPosts.map(p => ({
           ...p,
           displayData: { name: p.productName, description: p.description || ''},
           isTranslated: false,
@@ -238,14 +238,16 @@ export default function GuestPage({ onBack }: GuestPageProps) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {posts.map(post => (
-              <Card key={post.id} className="bg-slate-900/50 backdrop-blur-sm border-purple-500/30 overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300 shadow-lg hover:shadow-cyan-500/20">
+              <Card key={post.id} className={cn("bg-slate-900/50 backdrop-blur-sm border-purple-500/30 overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300 shadow-lg hover:shadow-cyan-500/20", post.isSold && "opacity-60")}>
                 <div className="relative w-full h-56 bg-slate-800 flex items-center justify-center">
                     {post.imageUrl ? (
                         <Image src={post.imageUrl} alt={post.productName} layout="fill" objectFit="cover" className="bg-slate-800" />
                     ) : (
                         <Package className="h-24 w-24 text-slate-600" />
                     )}
-                    {!post.isSold && <Badge className="absolute top-2 right-2 bg-cyan-500 text-black z-10">Available</Badge>}
+                    <Badge className={cn("absolute top-2 right-2 z-10", post.isSold ? "bg-red-600 text-white" : "bg-cyan-500 text-black")}>
+                        {post.isSold ? "Out of Stock" : "In Stock"}
+                    </Badge>
                 </div>
                 <CardHeader>
                   <div className="flex justify-between items-start">
@@ -287,7 +289,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col sm:flex-row gap-2">
-                    <Button className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold" onClick={() => handleInquireNow(post)}>
+                    <Button className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold" onClick={() => handleInquireNow(post)} disabled={post.isSold}>
                         <Smartphone className="mr-2"/> Inquire Now
                     </Button>
                     {post.externalLink && (

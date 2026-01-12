@@ -58,7 +58,7 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
     try {
       const postRef = doc(db, "gadgetPosts", post.id);
       await updateDoc(postRef, { isSold: !post.isSold });
-      toast({ title: "Status Updated", description: `${post.productName} marked as ${!post.isSold ? 'Sold' : 'Available'}.` });
+      toast({ title: "Status Updated", description: `${post.productName} marked as ${!post.isSold ? 'Out of Stock' : 'In Stock'}.` });
       onDataChange();
     } catch (e: any) {
        console.error("Error updating status:", e);
@@ -115,7 +115,7 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
               <Card key={post.id} className="overflow-hidden relative flex flex-col">
                 <div className="absolute top-2 right-2 z-10 flex gap-2">
                     <Badge variant={post.isSold ? "destructive" : "default"}>
-                        {post.isSold ? "Sold" : "Available"}
+                        {post.isSold ? "Out of Stock" : "In Stock"}
                     </Badge>
                 </div>
                  <div className="relative w-full h-48 bg-muted flex items-center justify-center">
@@ -150,8 +150,8 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
                   </div>
                   <div className="flex gap-2 mt-4">
                     <Button variant="outline" size="sm" onClick={() => handleToggleSold(post)} className="w-full" disabled={userRole !== 'admin'}>
-                        {post.isSold ? <Package className="mr-2"/> : <PackageCheck className="mr-2"/>}
-                        {post.isSold ? 'Mark as Available' : 'Mark as Sold'}
+                        {post.isSold ? <PackageCheck className="mr-2"/> : <Package className="mr-2"/>}
+                        {post.isSold ? 'Mark In Stock' : 'Mark Out of Stock'}
                     </Button>
                     {post.externalLink && (
                         <a href={post.externalLink} target="_blank" rel="noopener noreferrer" className="w-full">
