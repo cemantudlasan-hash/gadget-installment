@@ -14,6 +14,7 @@ import { PlusCircle, Edit, Trash2, PackageCheck, Package, ExternalLink, Tag, Wal
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Image from "next/image";
 import { Badge } from "./ui/badge";
+import { cn } from "@/lib/utils";
 
 interface GadgetPostsSectionProps {
   posts: GadgetPost[];
@@ -28,6 +29,15 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
   
   const [editingPost, setEditingPost] = useState<GadgetPost | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<string[]>([]);
+
+  const toggleDescription = (postId: string) => {
+    setExpandedDescriptions(prev =>
+      prev.includes(postId)
+        ? prev.filter(id => id !== postId)
+        : [...prev, postId]
+    );
+  };
 
   const handleSaveSuccess = () => {
     setShowForm(false);
@@ -111,7 +121,9 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
-            {posts.map((post) => (
+            {posts.map((post) => {
+               const isExpanded = expandedDescriptions.includes(post.id);
+               return (
               <Card key={post.id} className="overflow-hidden relative flex flex-col">
                 <div className="absolute top-2 right-2 z-10 flex gap-2">
                     {post.category && <Badge variant="secondary">{post.category}</Badge>}
@@ -133,7 +145,20 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
                      <Tag className="mr-2 h-5 w-5" />
                      Cash Price: ฿{(post.cashPrice || 0).toLocaleString()}
                    </div>
-                  <p className="text-sm text-muted-foreground my-2 flex-grow">{post.description}</p>
+                  <div className="flex-grow">
+                    <p className={cn("text-sm text-muted-foreground my-2 transition-all duration-300", !isExpanded && "line-clamp-3")}>
+                      {post.description}
+                    </p>
+                    {post.description && post.description.length > 100 && (
+                      <Button
+                        variant="link"
+                        className="text-cyan-400 p-0 h-auto -mt-1"
+                        onClick={() => toggleDescription(post.id)}
+                      >
+                        {isExpanded ? "Read Less" : "Read More"}
+                      </Button>
+                    )}
+                  </div>
                   
                   {(post.downPayment || 0) > 0 && (
                     <div className="mt-2 space-y-2 text-sm border-t pt-3">
@@ -179,10 +204,12 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
                   </div>
                 </div>
               </Card>
-            ))}
+            )})}
           </div>
         )}
       </CardContent>
     </Card>
   );
 }
+
+    
