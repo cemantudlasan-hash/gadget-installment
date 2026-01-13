@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone, Loader2, Tag, ExternalLink, Package, Wallet, Calendar, Repeat, Languages, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
@@ -41,6 +41,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [translatingId, setTranslatingId] = useState<string | null>(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   const [inquiryPost, setInquiryPost] = useState<GadgetPost | null>(null);
   const [inquiryForm, setInquiryForm] = useState({
@@ -84,6 +85,18 @@ export default function GuestPage({ onBack }: GuestPageProps) {
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
+
+  const categories = useMemo(() => {
+    const allCategories = posts.map(p => p.category);
+    return ['All', ...Array.from(new Set(allCategories))];
+  }, [posts]);
+  
+  const filteredPosts = useMemo(() => {
+    if (selectedCategory === 'All') {
+      return posts;
+    }
+    return posts.filter(p => p.category === selectedCategory);
+  }, [posts, selectedCategory]);
 
   const handleInquiryChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -222,6 +235,24 @@ export default function GuestPage({ onBack }: GuestPageProps) {
           </div>
         </header>
 
+        <div className="flex flex-wrap justify-center gap-2 mb-8">
+          {categories.map(category => (
+            <Button
+              key={category}
+              variant={selectedCategory === category ? 'default' : 'outline'}
+              onClick={() => setSelectedCategory(category)}
+              className={cn(
+                "font-semibold rounded-full transition-all duration-300",
+                selectedCategory === category
+                  ? "bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-500/20"
+                  : "bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-700/70 hover:text-white"
+              )}
+            >
+              {category}
+            </Button>
+          ))}
+        </div>
+
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[...Array(3)].map((_, i) => (
@@ -240,15 +271,15 @@ export default function GuestPage({ onBack }: GuestPageProps) {
               </Card>
             ))}
           </div>
-        ) : posts.length === 0 ? (
+        ) : filteredPosts.length === 0 ? (
           <div className="text-center py-20 bg-white/5 backdrop-blur-md rounded-2xl">
             <Store className="mx-auto h-16 w-16 text-cyan-400 mb-4" />
-            <h2 className="text-3xl font-bold">No Gadgets Available</h2>
-            <p className="text-slate-300 mt-2">Please check back later for new products!</p>
+            <h2 className="text-3xl font-bold">No Gadgets in this Category</h2>
+            <p className="text-slate-300 mt-2">Please select another category or check back later!</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
-            {posts.map(post => {
+            {filteredPosts.map(post => {
               const isExpanded = expandedDescriptions.includes(post.id);
               return (
               <Card key={post.id} className={cn("bg-slate-900/50 backdrop-blur-sm border-purple-500/30 overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300 shadow-lg hover:shadow-cyan-500/20", post.isSold && "opacity-60")}>
@@ -379,3 +410,5 @@ export default function GuestPage({ onBack }: GuestPageProps) {
     </div>
   );
 }
+
+    
