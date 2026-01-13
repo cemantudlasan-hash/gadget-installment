@@ -110,7 +110,7 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
             <Button onClick={handleAddNewPost} className="mt-4" disabled={userRole !== 'admin'}>Create Your First Post</Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
             {posts.map((post) => (
               <Card key={post.id} className="overflow-hidden relative flex flex-col">
                 <div className="absolute top-2 right-2 z-10 flex gap-2">
