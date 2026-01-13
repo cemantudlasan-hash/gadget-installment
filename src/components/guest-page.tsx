@@ -247,7 +247,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
             <p className="text-slate-300 mt-2">Please check back later for new products!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
             {posts.map(post => {
               const isExpanded = expandedDescriptions.includes(post.id);
               return (
@@ -376,5 +376,3 @@ export default function GuestPage({ onBack }: GuestPageProps) {
     </div>
   );
 }
-
-    
