@@ -235,22 +235,24 @@ export default function GuestPage({ onBack }: GuestPageProps) {
           </div>
         </header>
 
-        <div className="flex flex-wrap justify-center gap-2 mb-8">
-          {categories.map(category => (
-            <Button
-              key={category}
-              variant={selectedCategory === category ? 'default' : 'outline'}
-              onClick={() => setSelectedCategory(category)}
-              className={cn(
-                "font-semibold rounded-full transition-all duration-300",
-                selectedCategory === category
-                  ? "bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-500/20"
-                  : "bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-700/70 hover:text-white"
-              )}
-            >
-              {category}
-            </Button>
-          ))}
+        <div className="mb-8 p-4 rounded-xl bg-gradient-to-r from-slate-900 via-purple-900/50 to-slate-900">
+          <div className="flex flex-wrap justify-center gap-2">
+            {categories.map(category => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? 'default' : 'outline'}
+                onClick={() => setSelectedCategory(category)}
+                className={cn(
+                  "font-semibold rounded-full transition-all duration-300",
+                  selectedCategory === category
+                    ? "bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-500/20"
+                    : "bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-700/70 hover:text-white"
+                )}
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
         </div>
 
         {loading ? (
