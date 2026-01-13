@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone, Loader2, Tag, ExternalLink, Package, Wallet, Calendar, Repeat, Languages } from "lucide-react";
+import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone, Loader2, Tag, ExternalLink, Package, Wallet, Calendar, Repeat, Languages, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
@@ -40,6 +40,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [translatingId, setTranslatingId] = useState<string | null>(null);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<string[]>([]);
 
   const [inquiryPost, setInquiryPost] = useState<GadgetPost | null>(null);
   const [inquiryForm, setInquiryForm] = useState({
@@ -91,6 +92,14 @@ export default function GuestPage({ onBack }: GuestPageProps) {
 
   const handleInquireNow = (post: GadgetPost) => {
     setInquiryPost(post);
+  };
+  
+  const toggleDescription = (postId: string) => {
+    setExpandedDescriptions(prev =>
+      prev.includes(postId)
+        ? prev.filter(id => id !== postId)
+        : [...prev, postId]
+    );
   };
 
   const handleToggleTranslation = async (postId: string) => {
@@ -195,15 +204,17 @@ export default function GuestPage({ onBack }: GuestPageProps) {
     <div className="dark dashboard-bg relative flex flex-col min-h-screen overflow-hidden text-white p-4 sm:p-6 md:p-8">
       <div className="relative z-10 w-full max-w-6xl mx-auto">
         <header className="relative flex flex-col sm:flex-row justify-between items-center mb-8 pt-16 sm:pt-0">
-          <Button
-            onClick={onBack}
-            variant="outline"
-            className="text-lg py-3 px-6 font-semibold bg-transparent hover:bg-slate-700/50 border-slate-600 text-slate-300 rounded-md transition-all duration-300 absolute top-0 left-0"
-          >
-            <ArrowLeft className="mr-2 h-5 w-5" />
-            Back
-          </Button>
-          <div className="text-center flex-grow">
+           <div className="absolute top-0 left-0">
+             <Button
+                onClick={onBack}
+                variant="outline"
+                className="text-lg py-3 px-6 font-semibold bg-transparent hover:bg-slate-700/50 border-slate-600 text-slate-300 rounded-md transition-all duration-300"
+              >
+                <ArrowLeft className="mr-2 h-5 w-5" />
+                Back
+            </Button>
+          </div>
+          <div className="text-center w-full">
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-wider bg-gradient-to-r from-purple-400 to-cyan-300 bg-clip-text text-transparent">
               Available Gadgets
             </h1>
@@ -237,7 +248,9 @@ export default function GuestPage({ onBack }: GuestPageProps) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {posts.map(post => (
+            {posts.map(post => {
+              const isExpanded = expandedDescriptions.includes(post.id);
+              return (
               <Card key={post.id} className={cn("bg-slate-900/50 backdrop-blur-sm border-purple-500/30 overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300 shadow-lg hover:shadow-cyan-500/20", post.isSold && "opacity-60")}>
                 <div className="relative w-full h-56 bg-slate-800 flex items-center justify-center">
                     {post.imageUrl ? (
@@ -255,7 +268,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                   </div>
                   <p className="text-xs text-slate-400">P/N: {post.productNumber}</p>
                 </CardHeader>
-                <CardContent className="flex-grow">
+                <CardContent className="flex-grow flex flex-col">
                     <Button
                         variant="outline"
                         onClick={() => handleToggleTranslation(post.id)}
@@ -267,7 +280,20 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                             <><Languages className="mr-2 h-4 w-4" /> {post.isTranslated ? 'Show Original' : 'Translate to Thai'}</>
                         }
                     </Button>
-                  <p className="text-slate-300 mb-4">{post.displayData.description}</p>
+                  <div className="flex-grow">
+                    <p className={cn("text-slate-300 mb-2 transition-all duration-300", !isExpanded && "line-clamp-3")}>
+                        {post.displayData.description}
+                    </p>
+                     {post.displayData.description && post.displayData.description.length > 100 && (
+                        <Button
+                            variant="link"
+                            className="text-cyan-400 p-0 h-auto"
+                            onClick={() => toggleDescription(post.id)}
+                        >
+                            {isExpanded ? "Read Less" : "Read More"}
+                        </Button>
+                     )}
+                  </div>
                   
                   <div className="font-bold text-primary text-xl my-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700 text-center">
                     Cash Price: ฿{(post.cashPrice || 0).toLocaleString()}
@@ -288,7 +314,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                     <p className="flex items-center gap-2"><Mail className="w-5 h-5 text-cyan-400 flex-shrink-0" /> <strong>Socials:</strong> {post.socialMedia}</p>
                   </div>
                 </CardContent>
-                <CardFooter className="flex flex-col sm:flex-row gap-2">
+                <CardFooter className="flex flex-col sm:flex-row gap-2 mt-4">
                     <Button className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold" onClick={() => handleInquireNow(post)} disabled={post.isSold}>
                         <Smartphone className="mr-2"/> Inquire Now
                     </Button>
@@ -302,7 +328,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                 </CardFooter>
               </Card>
               )
-            )}
+            })}
           </div>
         )}
       </div>
@@ -350,3 +376,5 @@ export default function GuestPage({ onBack }: GuestPageProps) {
     </div>
   );
 }
+
+    
