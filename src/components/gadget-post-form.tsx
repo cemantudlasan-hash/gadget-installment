@@ -18,10 +18,12 @@ import { Loader2 } from "lucide-react";
 import { generateThumbnail } from "@/ai/flows/generate-thumbnail";
 import Image from "next/image";
 import { Separator } from "./ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 const postSchema = z.object({
   productNumber: z.string().min(1, "Product Number is required"),
   productName: z.string().min(1, "Product name is required"),
+  category: z.string().min(1, "Category is required"),
   description: z.string().optional(),
   cashPrice: z.coerce.number().min(0, "Price must be a positive number"),
   downPayment: z.coerce.number().min(0).optional(),
@@ -51,6 +53,7 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
     defaultValues: {
       productNumber: initialData?.productNumber || "",
       productName: initialData?.productName || "",
+      category: initialData?.category || "",
       description: initialData?.description || "",
       cashPrice: initialData?.cashPrice || 0,
       downPayment: initialData?.downPayment || 0,
@@ -168,6 +171,30 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
               )}/>
             </div>
             
+             <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Mobile Phone">Mobile Phone</SelectItem>
+                        <SelectItem value="Tablet/iPad">Tablet/iPad</SelectItem>
+                        <SelectItem value="Notebook">Notebook</SelectItem>
+                        <SelectItem value="Others">Others</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
             <FormField name="description" control={form.control} render={({ field }) => (
               <FormItem>
                 <FormLabel>Product Description</FormLabel>

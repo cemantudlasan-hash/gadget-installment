@@ -1,4 +1,5 @@
 
+
 export interface Installment {
   month: number;
   dueAmount: number;
@@ -55,6 +56,7 @@ export interface GadgetPost {
   id: string;
   productNumber: string;
   productName: string;
+  category: string;
   description?: string;
   cashPrice: number;
   downPayment?: number;

@@ -114,6 +114,7 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
             {posts.map((post) => (
               <Card key={post.id} className="overflow-hidden relative flex flex-col">
                 <div className="absolute top-2 right-2 z-10 flex gap-2">
+                    {post.category && <Badge variant="secondary">{post.category}</Badge>}
                     <Badge variant={post.isSold ? "destructive" : "default"}>
                         {post.isSold ? "Out of Stock" : "In Stock"}
                     </Badge>

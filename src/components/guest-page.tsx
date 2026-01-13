@@ -258,9 +258,12 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                     ) : (
                         <Package className="h-24 w-24 text-slate-600" />
                     )}
-                    <Badge className={cn("absolute top-2 right-2 z-10", post.isSold ? "bg-red-600 text-white" : "bg-cyan-500 text-black")}>
-                        {post.isSold ? "Out of Stock" : "In Stock"}
-                    </Badge>
+                     <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-2">
+                        <Badge className={cn(post.isSold ? "bg-red-600 text-white" : "bg-cyan-500 text-black")}>
+                            {post.isSold ? "Out of Stock" : "In Stock"}
+                        </Badge>
+                        {post.category && <Badge variant="secondary">{post.category}</Badge>}
+                    </div>
                 </div>
                 <CardHeader>
                   <div className="flex justify-between items-start">
