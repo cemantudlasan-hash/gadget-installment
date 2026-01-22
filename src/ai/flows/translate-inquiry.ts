@@ -31,6 +31,29 @@ export async function translateInquiry(
   return translateInquiryFlow(input);
 }
 
+const languageDetectionPrompt = ai.definePrompt({
+    name: 'languageDetectionPrompt',
+    input: { schema: TranslateInquiryInputSchema },
+    prompt: `Detect the language of the following text and return only the two-letter ISO 639-1 code (e.g., "en" for English, "th" for Thai).
+
+    Text: "{{{message}}}"
+    
+    Language code:`,
+    config: {
+        temperature: 0,
+    }
+});
+
+const translationToEnglishPrompt = ai.definePrompt({
+    name: 'translationToEnglishPrompt',
+    input: { schema: TranslateInquiryInputSchema },
+    prompt: `Translate the following text to English:
+
+    Text: "{{{message}}}"
+    
+    Translation:`,
+});
+
 const translateInquiryFlow = ai.defineFlow(
   {
     name: 'translateInquiryFlow',
@@ -38,35 +61,14 @@ const translateInquiryFlow = ai.defineFlow(
     outputSchema: TranslateInquiryOutputSchema,
   },
   async ({ message }) => {
-    const languageDetectionPrompt = ai.definePrompt({
-        name: 'languageDetectionPrompt',
-        prompt: `Detect the language of the following text and return only the two-letter ISO 639-1 code (e.g., "en" for English, "th" for Thai).
-
-        Text: "${message}"
-        
-        Language code:`,
-        config: {
-            temperature: 0,
-        }
-    });
-
-    const langResponse = await languageDetectionPrompt();
+    const langResponse = await languageDetectionPrompt({ message });
     const language = langResponse.text.trim().toLowerCase();
 
-    if (language === 'en') {
+    if (language === 'en' || language === '') {
         return { language: 'en' };
     }
     
-    const translationPrompt = ai.definePrompt({
-        name: 'translationToEnglishPrompt',
-        prompt: `Translate the following text to English:
-
-        Text: "${message}"
-        
-        Translation:`,
-    });
-
-    const translationResponse = await translationPrompt();
+    const translationResponse = await translationToEnglishPrompt({ message });
     const translation = translationResponse.text;
 
     return {
