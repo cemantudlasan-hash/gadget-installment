@@ -184,7 +184,7 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
       </div>
 
       <Tabs defaultValue="sales" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-6 h-auto sm:h-12 mb-8 bg-slate-800/60 border border-slate-700 text-cyan-300">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-auto mb-8 bg-slate-800/60 border border-slate-700 text-cyan-300">
           <TabsTrigger value="sales" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Sales & Installments</TabsTrigger>
           <TabsTrigger value="commissions" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Commissions & Expenses</TabsTrigger>
           <TabsTrigger value="pricing" className="py-3 text-base data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Pricing Calculator</TabsTrigger>
