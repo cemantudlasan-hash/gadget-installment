@@ -152,8 +152,20 @@ export default function LoginForm({ onLoginSuccess, onBack }: LoginFormProps) {
 
   return (
     <div 
-      className={cn("dashboard-bg relative flex flex-col items-center justify-center min-h-screen overflow-hidden")}
+      className={cn("hero-shapes-bg relative flex flex-col items-center justify-center min-h-screen overflow-hidden")}
     >
+      <ul className="shapes-container">
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+      </ul>
       <div className="relative z-10 w-full max-w-2xl h-[30rem] flex items-center justify-center p-8">
         <FuturisticFrame />
         <div className="relative z-20 w-full max-w-sm">
@@ -215,3 +227,4 @@ export default function LoginForm({ onLoginSuccess, onBack }: LoginFormProps) {
     </div>
   );
 }
+

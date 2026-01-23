@@ -214,7 +214,19 @@ export default function GuestPage({ onBack }: GuestPageProps) {
 
 
   return (
-    <div className="dark dashboard-bg relative flex flex-col min-h-screen overflow-hidden text-white p-4 sm:p-6 md:p-8">
+    <div className="dark hero-shapes-bg relative flex flex-col min-h-screen overflow-hidden text-white p-4 sm:p-6 md:p-8">
+      <ul className="shapes-container">
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+      </ul>
       <div className="relative z-10 w-full max-w-6xl mx-auto">
         <header className="relative flex flex-col sm:flex-row justify-between items-center mb-8 pt-16 sm:pt-0">
            <div className="absolute top-0 left-0">

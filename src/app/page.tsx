@@ -87,7 +87,7 @@ export default function Home() {
 
   return (
     <FirebaseProvider>
-      <main className={cn("min-h-screen font-sans", showDashboard ? "dark dashboard-bg" : "bg-background")}>
+      <main className={cn("min-h-screen font-sans", showDashboard ? "dark hero-shapes-bg" : "bg-background")}>
         {isLoggingOut && <LogoutOverlay />}
         {isLoggingIn && <LoginOverlay />}
         
