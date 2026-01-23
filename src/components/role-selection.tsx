@@ -47,8 +47,20 @@ export default function RoleSelection({ onRoleSelect }: RoleSelectionProps) {
 
   return (
     <div 
-      className="dashboard-bg relative flex flex-col items-center justify-center min-h-screen overflow-hidden p-4"
+      className="hero-shapes-bg relative flex flex-col items-center justify-center min-h-screen overflow-hidden p-4"
     >
+        <ul className="shapes-container">
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+        </ul>
       <div className="relative z-10 text-center mb-16">
         <h1 className="text-3xl md:text-5xl font-extrabold tracking-wider bg-gradient-to-r from-purple-400 to-cyan-300 bg-clip-text text-transparent">
             Welcome to Clef's Gadget-Installment and Online Store.
