@@ -90,6 +90,21 @@ export default function Home() {
       <main className={cn("min-h-screen font-sans", showDashboard ? "dark hero-shapes-bg" : "bg-background")}>
         {isLoggingOut && <LogoutOverlay />}
         {isLoggingIn && <LoginOverlay />}
+
+        {showDashboard && (
+          <ul className="shapes-container">
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+            <li className="shape-item"></li>
+          </ul>
+        )}
         
         <div className={cn("transition-opacity duration-500", (isLoggingIn || isLoggingOut) ? 'opacity-0' : 'opacity-100')}>
           {renderContent()}
@@ -98,5 +113,4 @@ export default function Home() {
     </FirebaseProvider>
   );
 }
-
     
