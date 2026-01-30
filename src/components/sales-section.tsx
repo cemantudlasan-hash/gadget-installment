@@ -13,9 +13,16 @@ import { useToast } from "@/hooks/use-toast";
 import type { Sale } from "@/types";
 import { PlusCircle, FileSpreadsheet, FileText, UserPlus, Search } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import CustomerDetails from "./customer-details"; // Import the new component
+import CustomerDetails from "./customer-details";
 import ContractEditor from "./contract-editor";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SalesSectionProps {
   sales: Sale[];
@@ -31,12 +38,27 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
   
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSaleId, setSelectedSaleId] = useState("");
   const [showSalesForm, setShowSalesForm] = useState(false);
   const [expandedSaleId, setExpandedSaleId] = useState<string | null>(null);
   const [contractSale, setContractSale] = useState<Sale | null>(null);
 
   const handleToggleSaleDetails = (saleId: string) => {
     setExpandedSaleId(prevId => (prevId === saleId ? null : saleId));
+  };
+  
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    if (e.target.value !== "") {
+        setSelectedSaleId(""); // Reset dropdown when searching
+    }
+  };
+
+  const handleSelectChange = (value: string) => {
+    setSelectedSaleId(value);
+    if (value !== "") {
+        setSearchTerm(""); // Reset search when using dropdown
+    }
   };
 
 
@@ -242,10 +264,24 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
     }
   };
 
+  const sortedSales = useMemo(() => {
+    return [...sales].sort((a, b) => a.customerName.localeCompare(b.customerName));
+  }, [sales]);
+
+  const filteredSales = useMemo(() => {
+    if (searchTerm) {
+        return sortedSales.filter(sale =>
+            sale.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }
+    if (selectedSaleId) {
+        return sortedSales.filter(sale => sale.id === selectedSaleId);
+    }
+    return sortedSales;
+  }, [sortedSales, searchTerm, selectedSaleId]);
+
   const handleExcelExport = () => {
-    const sortedSales = [...sales].sort((a, b) => a.customerName.localeCompare(b.customerName));
-    
-    const dataToExport = sortedSales.map(sale => {
+    const dataToExport = filteredSales.map(sale => {
       const row: { [key: string]: any } = {
         'Customer Name': sale.customerName,
         'Gadget': sale.gadget,
@@ -275,21 +311,23 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
 
     // Auto-adjust column widths
     const objectMaxLength: number[] = [];
-    dataToExport.forEach(obj => {
-        Object.values(obj).forEach((value, i) => {
-            const val = value ? String(value) : '';
-            objectMaxLength[i] = objectMaxLength[i] >= val.length ? objectMaxLength[i] : val.length;
+    if (dataToExport.length > 0) {
+        dataToExport.forEach(obj => {
+            Object.values(obj).forEach((value, i) => {
+                const val = value ? String(value) : '';
+                objectMaxLength[i] = objectMaxLength[i] >= val.length ? objectMaxLength[i] : val.length;
+            });
         });
-    });
 
-    const headers = Object.keys(dataToExport[0]);
-    const colWidths = headers.map((header, i) => {
-        const headerLength = header ? header.length : 0;
-        const maxLength = Math.max(headerLength, objectMaxLength[i] || 0);
-        return { wch: maxLength + 2 }; // +2 for a little padding
-    });
-    
-    worksheet["!cols"] = colWidths;
+        const headers = Object.keys(dataToExport[0]);
+        const colWidths = headers.map((header, i) => {
+            const headerLength = header ? header.length : 0;
+            const maxLength = Math.max(headerLength, objectMaxLength[i] || 0);
+            return { wch: maxLength + 2 }; // +2 for a little padding
+        });
+        
+        worksheet["!cols"] = colWidths;
+    }
 
 
     const workbook = XLSX.utils.book_new();
@@ -301,14 +339,6 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
       description: "Your sales data has been downloaded as an Excel file.",
     });
   };
-
-  const filteredSales = useMemo(() => {
-    return searchTerm
-      ? sales.filter(sale =>
-          sale.customerName.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      : sales;
-  }, [sales, searchTerm]);
 
   const handleEditSale = (sale: Sale) => {
     if (userRole === 'guest') {
@@ -362,26 +392,42 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
 
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
             <CardTitle>Existing Installment Plans</CardTitle>
             <Button variant="outline" onClick={handleExcelExport} disabled={sales.length === 0}>
               <FileSpreadsheet className="mr-2 h-4 w-4" />
               Download Excel
             </Button>
           </div>
-           <div className="pt-4">
-              <Label htmlFor="customer-search" className="sr-only">Search Customers</Label>
-              <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                      id="customer-search"
-                      placeholder="Search by customer name..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 w-full md:w-1/2 lg:w-1/3"
-                  />
-              </div>
-            </div>
+           <div className="flex flex-col md:flex-row gap-4 pt-4">
+               <div className="flex-1">
+                 <Label htmlFor="customer-search" className="sr-only">Search Customers</Label>
+                 <div className="relative">
+                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                     <Input
+                         id="customer-search"
+                         placeholder="Search by customer name..."
+                         value={searchTerm}
+                         onChange={handleSearchChange}
+                         className="pl-10 w-full"
+                     />
+                 </div>
+               </div>
+                <div className="flex-1">
+                   <Label htmlFor="customer-select" className="sr-only">Filter by Customer</Label>
+                   <Select value={selectedSaleId} onValueChange={handleSelectChange}>
+                       <SelectTrigger id="customer-select" className="w-full">
+                           <SelectValue placeholder="Or select a customer..." />
+                       </SelectTrigger>
+                       <SelectContent>
+                           <SelectItem value="">All Customers</SelectItem>
+                           {sortedSales.map(sale => (
+                           <SelectItem key={sale.id} value={sale.id}>{sale.customerName} - {sale.gadget}</SelectItem>
+                           ))}
+                       </SelectContent>
+                   </Select>
+               </div>
+           </div>
         </CardHeader>
         <CardContent>
           {loading ? (
