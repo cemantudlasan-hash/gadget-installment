@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -12,16 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { Sale } from "@/types";
-import { PlusCircle, ChevronDown, FileSpreadsheet, FileText, UserPlus } from "lucide-react";
+import { PlusCircle, FileSpreadsheet, FileText, UserPlus, Search } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import CustomerDetails from "./customer-details"; // Import the new component
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import ContractEditor from "./contract-editor";
+import { Input } from "@/components/ui/input";
 
 interface SalesSectionProps {
   sales: Sale[];
@@ -36,7 +30,7 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
   const { toast } = useToast();
   
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
-  const [selectedCustomer, setSelectedCustomer] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [showSalesForm, setShowSalesForm] = useState(false);
   const [expandedSaleId, setExpandedSaleId] = useState<string | null>(null);
   const [contractSale, setContractSale] = useState<Sale | null>(null);
@@ -308,16 +302,13 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
     });
   };
 
-
-  const customerNames = useMemo(() => {
-    const uniqueNames = new Set(sales.map(s => s.customerName));
-    return [...uniqueNames].sort((a, b) => a.localeCompare(b));
-  }, [sales]);
-
-  const filteredSales = selectedCustomer 
-    ? sales.filter(sale => sale.customerName === selectedCustomer) 
-    : sales;
-
+  const filteredSales = useMemo(() => {
+    return searchTerm
+      ? sales.filter(sale =>
+          sale.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      : sales;
+  }, [sales, searchTerm]);
 
   const handleEditSale = (sale: Sale) => {
     if (userRole === 'guest') {
@@ -378,27 +369,19 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
               Download Excel
             </Button>
           </div>
-          <div className="pt-4 flex items-center gap-4">
-            <Label>Filter by Customer</Label>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full md:w-[200px] justify-between">
-                  <span className="truncate">{selectedCustomer || "All Customers"}</span>
-                  <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[200px] max-h-60 overflow-y-auto">
-                <DropdownMenuItem onSelect={() => setSelectedCustomer("")}>
-                  All Customers
-                </DropdownMenuItem>
-                {customerNames.map((name) => (
-                  <DropdownMenuItem key={name} onSelect={() => setSelectedCustomer(name)}>
-                    {name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+           <div className="pt-4">
+              <Label htmlFor="customer-search" className="sr-only">Search Customers</Label>
+              <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                      id="customer-search"
+                      placeholder="Search by customer name..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 w-full md:w-1/2 lg:w-1/3"
+                  />
+              </div>
+            </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -409,7 +392,9 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
               <Skeleton className="h-24 w-full" />
             </div>
           ) : filteredSales.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No sales records found.</p>
+             <p className="text-center text-muted-foreground py-8">
+                {searchTerm ? `No customers found for "${searchTerm}".` : "No sales records found."}
+            </p>
           ) : (
             <div className="space-y-6">
               {filteredSales.map((sale) => (
