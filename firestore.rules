@@ -2,9 +2,32 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read and write access for any authenticated user.
-    match /{document=**} {
+  
+    match /gadgetPosts/{postId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    match /inquiries/{inquiryId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
+    
+    match /inquiryCounters/{counterId} {
+      allow write: if true;
+      allow read: if request.auth != null;
+    }
+    
+    match /sales/{saleId} {
       allow read, write: if request.auth != null;
+    }
+    
+    match /commissions/{commissionId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /yearlyReports/{year} {
+        allow read, write: if request.auth != null;
     }
   }
 }

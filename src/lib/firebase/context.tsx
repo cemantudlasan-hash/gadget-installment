@@ -27,41 +27,34 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initialize = async () => {
-      try {
-        const apps = getApps();
-        const firebaseApp = apps.length ? apps[0] : initializeApp(firebaseConfig);
-        const firebaseAuth = getAuth(firebaseApp);
-        const firestoreDb = getFirestore(firebaseApp);
-        const firebaseStorage = getStorage(firebaseApp);
+    const apps = getApps();
+    const firebaseApp = apps.length ? apps[0] : initializeApp(firebaseConfig);
+    const firebaseAuth = getAuth(firebaseApp);
+    const firestoreDb = getFirestore(firebaseApp);
+    const firebaseStorage = getStorage(firebaseApp);
 
-        setApp(firebaseApp);
-        setAuth(firebaseAuth);
-        setDb(firestoreDb);
-        setStorage(firebaseStorage);
+    setApp(firebaseApp);
+    setAuth(firebaseAuth);
+    setDb(firestoreDb);
+    setStorage(firebaseStorage);
 
-        await signInAnonymously(firebaseAuth);
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
 
-        const unsubscribe = onAuthStateChanged(firebaseAuth, (currentUser) => {
-          setUser(currentUser);
-          setLoading(false);
-        });
+    signInAnonymously(firebaseAuth).catch((error) => {
+      console.error("Anonymous sign-in error", error);
+    });
 
-        return () => unsubscribe();
-      } catch (error) {
-        console.error("Firebase initialization error", error);
-        setLoading(false);
-      }
-    };
-
-    initialize();
+    return () => unsubscribe();
   }, []);
 
   const value = { app, auth, db, storage, user, loading };
 
   return (
     <FirebaseContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </FirebaseContext.Provider>
   );
 }
