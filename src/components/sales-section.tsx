@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -274,7 +275,7 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
             sale.customerName.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }
-    if (selectedSaleId) {
+    if (selectedSaleId && selectedSaleId !== 'all') {
         return sortedSales.filter(sale => sale.id === selectedSaleId);
     }
     return sortedSales;
@@ -420,7 +421,7 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
                            <SelectValue placeholder="Or select a customer..." />
                        </SelectTrigger>
                        <SelectContent>
-                           <SelectItem value="">All Customers</SelectItem>
+                           <SelectItem value="all">All Customers</SelectItem>
                            {sortedSales.map(sale => (
                            <SelectItem key={sale.id} value={sale.id}>{sale.customerName} - {sale.gadget}</SelectItem>
                            ))}
@@ -464,3 +465,5 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
     </div>
   );
 }
+
+    
