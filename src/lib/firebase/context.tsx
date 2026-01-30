@@ -1,3 +1,4 @@
+
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
@@ -37,14 +38,15 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
     setAuth(firebaseAuth);
     setDb(firestoreDb);
     setStorage(firebaseStorage);
-
-    const unsubscribe = onAuthStateChanged(firebaseAuth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
+    setLoading(false); // Allow components to render immediately with app/db instances
 
     signInAnonymously(firebaseAuth).catch((error) => {
       console.error("Anonymous sign-in error", error);
+    });
+
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (currentUser) => {
+      setUser(currentUser);
+      // User state is now managed separately from the main loading state
     });
 
     return () => unsubscribe();
