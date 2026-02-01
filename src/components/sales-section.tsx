@@ -39,7 +39,7 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
   
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSaleId, setSelectedSaleId] = useState("");
+  const [selectedSaleId, setSelectedSaleId] = useState("all");
   const [showSalesForm, setShowSalesForm] = useState(false);
   const [expandedSaleId, setExpandedSaleId] = useState<string | null>(null);
   const [contractSale, setContractSale] = useState<Sale | null>(null);
@@ -51,13 +51,13 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     if (e.target.value !== "") {
-        setSelectedSaleId(""); // Reset dropdown when searching
+        setSelectedSaleId("all"); // Reset dropdown when searching
     }
   };
 
   const handleSelectChange = (value: string) => {
     setSelectedSaleId(value);
-    if (value !== "") {
+    if (value !== "all") {
         setSearchTerm(""); // Reset search when using dropdown
     }
   };
@@ -400,7 +400,7 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
               Download Excel
             </Button>
           </div>
-           <div className="flex flex-col md:flex-row gap-4 pt-4">
+           <div className="flex flex-col md:flex-row gap-4 pt-4 max-w-2xl">
                <div className="flex-1">
                  <Label htmlFor="customer-search" className="sr-only">Search Customers</Label>
                  <div className="relative">
@@ -465,5 +465,3 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
     </div>
   );
 }
-
-    
