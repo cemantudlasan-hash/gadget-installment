@@ -158,7 +158,7 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
   return (
     <div className="max-w-7xl mx-auto bg-transparent p-0 w-full">
        <Tabs defaultValue="sales" className="w-full">
-        <header className="flex justify-between items-center mb-4 px-1">
+        <header className="relative flex w-full flex-col items-center justify-between gap-4 mb-8 sm:flex-row">
             <div className="flex items-center gap-3">
                 <div className="bg-slate-800/60 border border-slate-700 p-2 rounded-lg">
                     <TerminalSquare className="h-6 w-6 text-cyan-400" />
@@ -168,21 +168,21 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
                 </h1>
             </div>
 
-            <div className="flex-grow flex justify-center">
-                 <TabsList className="bg-slate-800/60 border border-slate-700 rounded-lg p-1 flex-wrap h-auto justify-center">
-                    <TabsTrigger value="sales" className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white px-3 py-1.5 text-sm">Sales</TabsTrigger>
-                    <TabsTrigger value="commissions" className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white px-3 py-1.5 text-sm">Ledger</TabsTrigger>
-                    <TabsTrigger value="pricing" className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white px-3 py-1.5 text-sm">Calculator</TabsTrigger>
-                    <TabsTrigger value="reminders" className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white px-3 py-1.5 text-sm">Reminders</TabsTrigger>
-                    <TabsTrigger value="gadget-posts" className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white px-3 py-1.5 text-sm">Posts</TabsTrigger>
-                    <TabsTrigger value="inbox" className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white px-3 py-1.5 text-sm relative">
+            <div className="flex w-full justify-center sm:flex-grow">
+                 <TabsList className="bg-slate-800/60 border border-slate-700 rounded-lg p-1 flex h-auto w-full flex-col justify-center gap-1 sm:w-auto sm:flex-row sm:gap-0">
+                    <TabsTrigger value="sales" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Sales</TabsTrigger>
+                    <TabsTrigger value="commissions" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Ledger</TabsTrigger>
+                    <TabsTrigger value="pricing" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Calculator</TabsTrigger>
+                    <TabsTrigger value="reminders" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Reminders</TabsTrigger>
+                    <TabsTrigger value="gadget-posts" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Posts</TabsTrigger>
+                    <TabsTrigger value="inbox" className="dashboard-tab relative w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">
                         Inbox
                         {unreadCount > 0 && <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">{unreadCount}</span>}
                     </TabsTrigger>
                 </TabsList>
             </div>
 
-            <Button onClick={onLogout} variant="ghost" size="icon" className="text-slate-400 hover:text-white">
+            <Button onClick={onLogout} variant="ghost" size="icon" className="absolute top-0 right-0 text-slate-400 hover:text-white sm:static">
                 <LogOut className="h-5 w-5" />
                 <span className="sr-only">Logout</span>
             </Button>
