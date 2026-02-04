@@ -247,24 +247,20 @@ export default function GuestPage({ onBack }: GuestPageProps) {
           </div>
         </header>
 
-        <div className="mb-8 p-4 rounded-xl bg-gradient-to-r from-slate-900 via-purple-900/50 to-slate-900">
-          <div className="flex flex-wrap justify-center gap-2">
+        <div className="mb-8 bg-slate-800/60 border border-slate-700 rounded-lg p-1 flex h-auto flex-wrap justify-center gap-1">
             {categories.map(category => (
               <Button
                 key={category}
-                variant={selectedCategory === category ? 'default' : 'outline'}
+                variant="ghost"
                 onClick={() => setSelectedCategory(category)}
                 className={cn(
-                  "font-semibold rounded-full transition-all duration-300",
-                  selectedCategory === category
-                    ? "bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-500/20"
-                    : "bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-700/70 hover:text-white"
+                  "dashboard-tab px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 rounded-md",
+                  selectedCategory === category && "active-tab-gradient"
                 )}
               >
                 {category}
               </Button>
             ))}
-          </div>
         </div>
 
         {loading ? (
