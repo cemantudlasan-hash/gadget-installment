@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -157,35 +158,46 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
   return (
     <div className="max-w-7xl mx-auto bg-transparent p-0 w-full">
        <Tabs defaultValue="sales" className="w-full">
-        <header className="relative flex w-full flex-col items-center gap-4 mb-8 sm:grid sm:grid-cols-3 sm:items-center">
-            <div className="flex items-center gap-3">
-                <div className="bg-slate-800/60 border border-slate-700 p-2 rounded-lg">
-                    <TerminalSquare className="h-6 w-6 text-cyan-400" />
+        <header className="relative mb-8">
+            <div className="flex w-full flex-wrap items-center sm:grid sm:grid-cols-[1fr_auto_1fr] sm:gap-4">
+                
+                <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-slate-800/60 border border-slate-700 p-2 rounded-lg">
+                            <TerminalSquare className="h-6 w-6 text-cyan-400" />
+                        </div>
+                        <h1 className="hidden text-2xl font-bold text-slate-200 sm:block">
+                            Gadget Management
+                        </h1>
+                    </div>
+                    <div className="sm:hidden">
+                        <Button onClick={onLogout} variant="ghost" size="icon" className="text-slate-400 hover:text-white">
+                            <LogOut className="h-5 w-5" />
+                            <span className="sr-only">Logout</span>
+                        </Button>
+                    </div>
                 </div>
-                <h1 className="text-2xl font-bold text-slate-200 hidden sm:block">
-                    Gadget Management
-                </h1>
-            </div>
 
-            <div className="flex w-full justify-center">
-                 <TabsList className="bg-slate-800/60 border border-slate-700 rounded-lg p-1 flex h-auto w-full flex-col justify-center gap-1 sm:w-auto sm:flex-row sm:gap-0">
-                    <TabsTrigger value="sales" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Sales</TabsTrigger>
-                    <TabsTrigger value="commissions" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Ledger</TabsTrigger>
-                    <TabsTrigger value="pricing" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Calculator</TabsTrigger>
-                    <TabsTrigger value="reminders" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Reminders</TabsTrigger>
-                    <TabsTrigger value="gadget-posts" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Posts</TabsTrigger>
-                    <TabsTrigger value="inbox" className="dashboard-tab relative w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">
-                        Inbox
-                        {unreadCount > 0 && <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">{unreadCount}</span>}
-                    </TabsTrigger>
-                </TabsList>
-            </div>
+                <div className="order-last mt-4 w-full sm:order-none sm:mt-0 sm:flex sm:justify-center">
+                    <TabsList className="bg-slate-800/60 border border-slate-700 rounded-lg p-1 flex h-auto w-full flex-col justify-center gap-1 sm:w-auto sm:flex-row sm:gap-0">
+                        <TabsTrigger value="sales" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Sales</TabsTrigger>
+                        <TabsTrigger value="commissions" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Ledger</TabsTrigger>
+                        <TabsTrigger value="pricing" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Calculator</TabsTrigger>
+                        <TabsTrigger value="reminders" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Reminders</TabsTrigger>
+                        <TabsTrigger value="gadget-posts" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Posts</TabsTrigger>
+                        <TabsTrigger value="inbox" className="dashboard-tab relative w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">
+                            Inbox
+                            {unreadCount > 0 && <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">{unreadCount}</span>}
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
 
-            <div className="absolute top-0 right-0 sm:static sm:flex sm:justify-end">
-                <Button onClick={onLogout} variant="ghost" size="icon" className="text-slate-400 hover:text-white">
-                    <LogOut className="h-5 w-5" />
-                    <span className="sr-only">Logout</span>
-                </Button>
+                <div className="hidden sm:flex sm:justify-end">
+                    <Button onClick={onLogout} variant="ghost" size="icon" className="text-slate-400 hover:text-white">
+                        <LogOut className="h-5 w-5" />
+                        <span className="sr-only">Logout</span>
+                    </Button>
+                </div>
             </div>
         </header>
 
