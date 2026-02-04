@@ -132,7 +132,7 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
 
   if (userLoading) {
     return (
-      <div className="max-w-7xl mx-auto bg-card rounded-2xl shadow-2xl p-6 sm:p-8 border space-y-8">
+      <div className="max-w-7xl mx-auto p-6 sm:p-8 space-y-8">
         <Skeleton className="h-10 w-1/3 mx-auto" />
         <Skeleton className="h-8 w-1/4 mx-auto" />
         <Skeleton className="h-12 w-full" />
@@ -140,8 +140,6 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
       </div>
     )
   }
-
-  const futuristicBgClasses = "relative overflow-hidden bg-transparent font-sans p-0 rounded-2xl";
 
   const getWelcomeMessage = () => {
     if (userRole === 'admin') {
@@ -199,46 +197,22 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
         </TabsList>
 
         <TabsContent value="sales">
-            <div className={futuristicBgClasses}>
-                <div className="relative z-10">
-                    <SalesSection sales={sales} loading={loadingData} onDataChange={fetchAllData} onUpdateSale={handleUpdateSale} userRole={userRole} />
-                </div>
-            </div>
+          <SalesSection sales={sales} loading={loadingData} onDataChange={fetchAllData} onUpdateSale={handleUpdateSale} userRole={userRole} />
         </TabsContent>
         <TabsContent value="commissions">
-             <div className={futuristicBgClasses}>
-                <div className="relative z-10">
-                    <CommissionsSection commissions={commissions} sales={sales} loading={loadingData} onDataChange={fetchAllData} userRole={userRole}/>
-                </div>
-            </div>
+          <CommissionsSection commissions={commissions} sales={sales} loading={loadingData} onDataChange={fetchAllData} userRole={userRole}/>
         </TabsContent>
         <TabsContent value="pricing">
-            <div className={futuristicBgClasses}>
-                <div className="relative z-10">
-                    <PricingCalculator />
-                </div>
-            </div>
+          <PricingCalculator />
         </TabsContent>
         <TabsContent value="reminders">
-            <div className={futuristicBgClasses}>
-                <div className="relative z-10">
-                    <RemindersSection sales={sales} commissions={commissions} loading={loadingData} onDataChange={fetchAllData} onUpdateSale={handleUpdateSale} userRole={userRole} />
-                </div>
-            </div>
+          <RemindersSection sales={sales} commissions={commissions} loading={loadingData} onDataChange={fetchAllData} onUpdateSale={handleUpdateSale} userRole={userRole} />
         </TabsContent>
         <TabsContent value="gadget-posts">
-            <div className={futuristicBgClasses}>
-                <div className="relative z-10">
-                    <GadgetPostsSection posts={gadgetPosts} loading={loadingData} onDataChange={fetchAllData} userRole={userRole} />
-                </div>
-            </div>
+          <GadgetPostsSection posts={gadgetPosts} loading={loadingData} onDataChange={fetchAllData} userRole={userRole} />
         </TabsContent>
         <TabsContent value="inbox">
-            <div className={futuristicBgClasses}>
-                <div className="relative z-10">
-                    <InboxSection inquiries={inquiries} loading={loadingData} onUpdateInquiry={handleUpdateInquiry} />
-                </div>
-            </div>
+          <InboxSection inquiries={inquiries} loading={loadingData} onUpdateInquiry={handleUpdateInquiry} />
         </TabsContent>
       </Tabs>
     </div>

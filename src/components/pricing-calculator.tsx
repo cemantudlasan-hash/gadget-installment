@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -25,7 +26,7 @@ export default function PricingCalculator() {
   }, [buyPrice, markupPercentage, downPaymentAmount]);
 
   return (
-    <Card className="max-w-4xl mx-auto">
+    <Card className="max-w-4xl mx-auto bg-slate-800/30 backdrop-blur-sm border border-slate-700">
       <CardHeader>
         <CardTitle>Gadget Pricing Calculator</CardTitle>
         <CardDescription>

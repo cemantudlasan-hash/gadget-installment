@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
@@ -288,7 +289,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
 
   return (
     <div className="space-y-8">
-      <Card>
+      <Card className="bg-slate-800/30 backdrop-blur-sm border border-slate-700">
         <CardHeader>
           <CardTitle>Overdue Payments</CardTitle>
           <CardDescription>
@@ -342,7 +343,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
         </CardContent>
       </Card>
       
-      <Card>
+      <Card className="bg-slate-800/30 backdrop-blur-sm border border-slate-700">
         <CardHeader>
           <CardTitle>Penalty Management</CardTitle>
           <CardDescription>

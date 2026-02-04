@@ -49,7 +49,7 @@ export default function InboxSection({ inquiries, loading, onUpdateInquiry }: In
 
   return (
     <div className="space-y-8">
-      <Card>
+      <Card className="bg-slate-800/30 backdrop-blur-sm border border-slate-700">
         <CardHeader>
           <CardTitle>Guest Inquiries Inbox</CardTitle>
           <CardDescription>Messages from potential customers interested in your gadgets.</CardDescription>

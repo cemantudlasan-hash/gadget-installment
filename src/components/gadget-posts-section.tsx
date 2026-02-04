@@ -96,7 +96,7 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
   }
 
   return (
-    <Card>
+    <Card className="bg-slate-800/30 backdrop-blur-sm border border-slate-700">
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
@@ -124,7 +124,7 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
             {posts.map((post) => {
                const isExpanded = expandedDescriptions.includes(post.id);
                return (
-              <Card key={post.id} className="overflow-hidden relative flex flex-col">
+              <Card key={post.id} className="overflow-hidden relative flex flex-col bg-slate-800/50 border-slate-700">
                 <div className="absolute top-2 right-2 z-10 flex gap-2">
                     {post.category && <Badge variant="secondary">{post.category}</Badge>}
                     <Badge variant={post.isSold ? "destructive" : "default"}>
@@ -211,5 +211,3 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
     </Card>
   );
 }
-
-    

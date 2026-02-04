@@ -369,7 +369,7 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
       {showSalesForm ? (
         <SalesForm onSave={handleSaveSale} initialData={editingSale} onCancel={() => { setEditingSale(null); setShowSalesForm(false); }} />
       ) : (
-        <Card className="bg-slate-800/30 border-slate-700 text-center">
+        <Card className="bg-slate-800/30 backdrop-blur-sm border border-slate-700 text-center">
             <CardContent className="p-8 flex flex-col items-center justify-center">
                 <div className="p-4 bg-slate-700/50 rounded-full mb-4">
                     <UserPlus className="h-8 w-8 text-cyan-300" />
@@ -391,7 +391,7 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
         />
       )}
 
-      <Card>
+      <Card className="bg-slate-800/30 backdrop-blur-sm border border-slate-700">
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
             <CardTitle>Existing Installment Plans</CardTitle>

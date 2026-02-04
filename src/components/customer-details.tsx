@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -40,7 +41,7 @@ export default function CustomerDetails({ sale, isOpen, onToggle, onEditSale, on
     }
     
     return (
-        <Card className="bg-slate-800/30 border-slate-700">
+        <Card className="bg-slate-800/30 backdrop-blur-sm border border-slate-700">
             <CardHeader className={cn(isSpecialCustomer && 'bg-green-200 rounded-t-lg')}>
                 <div className="flex justify-between items-center">
                     <div>

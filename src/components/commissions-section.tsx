@@ -261,7 +261,7 @@ export default function CommissionsSection({ commissions, sales, loading, onData
   
   return (
     <div className="space-y-8">
-      <Card>
+      <Card className="bg-slate-800/30 backdrop-blur-sm border border-slate-700">
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
@@ -354,7 +354,7 @@ export default function CommissionsSection({ commissions, sales, loading, onData
         </CardContent>
       </Card>
       
-      <Card>
+      <Card className="bg-slate-800/30 backdrop-blur-sm border border-slate-700">
         <CardHeader>
            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -416,7 +416,7 @@ export default function CommissionsSection({ commissions, sales, loading, onData
         </CardContent>
       </Card>
       
-       <Card>
+       <Card className="bg-slate-800/30 backdrop-blur-sm border border-slate-700">
         <CardHeader>
             <CardTitle>Archived Reports</CardTitle>
             <p className="text-muted-foreground text-sm mt-1">View summaries of previously archived years.</p>
