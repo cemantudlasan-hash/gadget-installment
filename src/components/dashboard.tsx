@@ -12,7 +12,7 @@ import InboxSection from "@/components/inbox-section"; // New Import
 import { useFirebase } from "@/lib/firebase/context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { LogOut, Package, Inbox } from "lucide-react";
+import { LogOut, TerminalSquare } from "lucide-react";
 import { collection, getDocs, orderBy, query, doc, updateDoc, where, onSnapshot } from "firebase/firestore";
 import type { Commission, Sale, GadgetPost, Inquiry } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -157,45 +157,50 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
 
   return (
     <div className="max-w-7xl mx-auto bg-transparent p-0 w-full">
-      <div className="text-center mb-8 relative">
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-wider bg-gradient-to-r from-purple-400 to-cyan-300 bg-clip-text text-transparent">
-          Gadget Installment Management
-        </h1>
-        {user && (
-          <div className="flex items-center justify-center gap-3 text-sm text-slate-400 mt-4">
-             <Avatar>
-              <AvatarImage src={userRole === 'admin' ? "https://images.unsplash.com/photo-1596629040517-2f0b5b853834?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxiYWJ5JTIwYm95fGVufDB8fHx8MTc1Mzg5Njg3Mnww&ixlib=rb-4.1.0&q=80&w=1080" : ''} alt="User Avatar" data-ai-hint="person user" />
-              <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
-            </Avatar>
-            <span>Logged in as: <span className="bg-cyan-900/50 px-2 py-1 rounded-md text-cyan-300 font-semibold">{getWelcomeMessage()}</span></span>
-          </div>
-        )}
-        <Button onClick={onLogout} variant="outline" size="icon" className="absolute top-0 right-0 bg-transparent border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-slate-900">
-          <LogOut className="h-4 w-4" />
-          <span className="sr-only">Logout</span>
-        </Button>
-      </div>
+       <Tabs defaultValue="sales" className="w-full">
+        <header className="flex justify-between items-center mb-4 px-1">
+            <div className="flex items-center gap-3">
+                <div className="bg-slate-800/60 border border-slate-700 p-2 rounded-lg">
+                    <TerminalSquare className="h-6 w-6 text-cyan-400" />
+                </div>
+                <h1 className="text-2xl font-bold text-slate-200 hidden sm:block">
+                    Gadget Management
+                </h1>
+            </div>
 
-      <div className="text-center text-xs text-slate-400 mb-8">
-            <p>AI powered @Firebase</p>
-            <p>Created and Idea by: Ceman Dejamo Tudlasan</p>
-      </div>
+            <div className="flex-grow flex justify-center">
+                 <TabsList className="bg-slate-800/60 border border-slate-700 rounded-lg p-1 flex-wrap h-auto justify-center">
+                    <TabsTrigger value="sales" className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white px-3 py-1.5 text-sm">Sales</TabsTrigger>
+                    <TabsTrigger value="commissions" className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white px-3 py-1.5 text-sm">Ledger</TabsTrigger>
+                    <TabsTrigger value="pricing" className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white px-3 py-1.5 text-sm">Calculator</TabsTrigger>
+                    <TabsTrigger value="reminders" className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white px-3 py-1.5 text-sm">Reminders</TabsTrigger>
+                    <TabsTrigger value="gadget-posts" className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white px-3 py-1.5 text-sm">Posts</TabsTrigger>
+                    <TabsTrigger value="inbox" className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white px-3 py-1.5 text-sm relative">
+                        Inbox
+                        {unreadCount > 0 && <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">{unreadCount}</span>}
+                    </TabsTrigger>
+                </TabsList>
+            </div>
 
-      <Tabs defaultValue="sales" className="w-full">
-        <TabsList className="flex flex-wrap items-center justify-center gap-2 p-2 mb-8 bg-slate-800/60 border border-slate-700 text-cyan-300 rounded-lg">
-          <TabsTrigger value="sales" className="py-2 px-4 h-auto text-sm sm:text-base whitespace-normal data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Sales & Installments</TabsTrigger>
-          <TabsTrigger value="commissions" className="py-2 px-4 h-auto text-sm sm:text-base whitespace-normal data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Commissions & Expenses</TabsTrigger>
-          <TabsTrigger value="pricing" className="py-2 px-4 h-auto text-sm sm:text-base whitespace-normal data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Pricing Calculator</TabsTrigger>
-          <TabsTrigger value="reminders" className="py-2 px-4 h-auto text-sm sm:text-base whitespace-normal data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">Reminders</TabsTrigger>
-          <TabsTrigger value="gadget-posts" className="py-2 px-4 h-auto text-sm sm:text-base whitespace-normal data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md">
-            <Package className="mr-2" /> Gadget Posts
-          </TabsTrigger>
-          <TabsTrigger value="inbox" className="py-2 px-4 h-auto text-sm sm:text-base whitespace-normal data-[state=active]:bg-cyan-600/80 data-[state=active]:text-cyan-50 data-[state=active]:shadow-md relative">
-            <Inbox className="mr-2" /> Inbox
-            {unreadCount > 0 && <span className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">{unreadCount}</span>}
-          </TabsTrigger>
-        </TabsList>
+            <Button onClick={onLogout} variant="ghost" size="icon" className="text-slate-400 hover:text-white">
+                <LogOut className="h-5 w-5" />
+                <span className="sr-only">Logout</span>
+            </Button>
+        </header>
 
+        <div className="text-center mb-8">
+            {user && (
+                <div className="flex items-center justify-center gap-3 text-sm text-slate-400">
+                    <Avatar className="h-8 w-8">
+                        <AvatarImage src={userRole === 'admin' ? "https://images.unsplash.com/photo-1596629040517-2f0b5b853834?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxiYWJ5JTIwYm95fGVufDB8fHx8MTc1Mzg5Njg3Mnww&ixlib=rb-4.1.0&q=80&w=1080" : ''} alt="User Avatar" data-ai-hint="person user" />
+                        <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
+                    </Avatar>
+                    <span>Logged in as: <span className="bg-cyan-900/50 px-2 py-1 rounded-md text-cyan-300 font-semibold">{getWelcomeMessage()}</span></span>
+                </div>
+            )}
+            <p className="text-xs text-slate-500 mt-2">AI powered @Firebase | Created by: Ceman Dejamo Tudlasan</p>
+        </div>
+      
         <TabsContent value="sales">
           <SalesSection sales={sales} loading={loadingData} onDataChange={fetchAllData} onUpdateSale={handleUpdateSale} userRole={userRole} />
         </TabsContent>
