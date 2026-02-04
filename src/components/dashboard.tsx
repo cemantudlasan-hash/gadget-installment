@@ -158,8 +158,8 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
   return (
     <div className="max-w-7xl mx-auto bg-transparent p-0 w-full">
        <Tabs defaultValue="sales" className="w-full">
-        <header className="relative flex w-full flex-col items-center justify-between gap-4 mb-8 sm:flex-row">
-            <div className="flex items-center gap-3">
+        <header className="relative flex w-full flex-col items-center gap-4 mb-8 sm:flex-row sm:justify-center">
+            <div className="flex items-center gap-3 sm:absolute sm:left-0">
                 <div className="bg-slate-800/60 border border-slate-700 p-2 rounded-lg">
                     <TerminalSquare className="h-6 w-6 text-cyan-400" />
                 </div>
@@ -168,7 +168,7 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
                 </h1>
             </div>
 
-            <div className="flex w-full justify-center sm:flex-grow">
+            <div className="flex w-full justify-center">
                  <TabsList className="bg-slate-800/60 border border-slate-700 rounded-lg p-1 flex h-auto w-full flex-col justify-center gap-1 sm:w-auto sm:flex-row sm:gap-0">
                     <TabsTrigger value="sales" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Sales</TabsTrigger>
                     <TabsTrigger value="commissions" className="dashboard-tab w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">Ledger</TabsTrigger>
@@ -182,7 +182,7 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
                 </TabsList>
             </div>
 
-            <Button onClick={onLogout} variant="ghost" size="icon" className="absolute top-0 right-0 text-slate-400 hover:text-white sm:static">
+            <Button onClick={onLogout} variant="ghost" size="icon" className="absolute top-0 right-0 text-slate-400 hover:text-white sm:absolute sm:right-0">
                 <LogOut className="h-5 w-5" />
                 <span className="sr-only">Logout</span>
             </Button>
