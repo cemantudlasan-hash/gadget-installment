@@ -71,9 +71,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
       setPosts(currentPosts => {
         return allPosts.map(p => {
           const existingPost = currentPosts.find(cp => cp.id === p.id);
-          // If post exists and is translated, keep its translated state
           if (existingPost && existingPost.isTranslated) {
-              // Use the NEW underlying post data (p) but keep translation state
               return {
                   ...p,
                   displayData: existingPost.displayData,
@@ -81,7 +79,6 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                   isTranslated: existingPost.isTranslated,
               };
           }
-          // Otherwise, use the fresh data from firestore
           return {
             ...p,
             displayData: { name: p.productName, description: p.description || '' },
@@ -143,14 +140,12 @@ export default function GuestPage({ onBack }: GuestPageProps) {
         const post = posts[postIndex];
 
         if (post.isTranslated) {
-            // Switch back to original
             setPosts(prev => prev.map(p => p.id === postId ? {
                 ...p,
                 displayData: { name: p.productName, description: p.description || '' },
                 isTranslated: false
             } : p));
         } else {
-            // Get translation (cached or new)
             let translation = post.translation;
             if (!translation) {
                 const result = await translateProductDetails({
@@ -206,7 +201,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
         email: inquiryForm.email,
         socialMedia: inquiryForm.socialMedia,
         productName: inquiryPost.productName,
-        productId: inquiryPost.productNumber, // Use user-defined productNumber
+        productId: inquiryPost.productNumber,
         message: inquiryForm.message,
         translation: translationResult.translation,
         detectedLanguage: translationResult.language,
@@ -246,46 +241,49 @@ export default function GuestPage({ onBack }: GuestPageProps) {
             <li className="shape-item"></li>
             <li className="shape-item"></li>
       </ul>
-      <div className="relative z-10 w-full max-w-6xl mx-auto">
-        <header className="relative flex flex-col sm:flex-row justify-between items-center mb-8 pt-16 sm:pt-0">
-           <div className="absolute top-0 left-0">
-             <Button
+      <div className="relative z-10 w-full max-w-7xl mx-auto">
+        <header className="relative w-full mb-12">
+            <Button
                 onClick={onBack}
-                variant="outline"
-                className="text-lg py-3 px-6 font-semibold bg-transparent hover:bg-slate-700/50 border-slate-600 text-slate-300 rounded-md transition-all duration-300"
-              >
+                variant="ghost"
+                className="absolute top-0 left-0 text-slate-300 hover:bg-slate-800/50 hover:text-white"
+            >
                 <ArrowLeft className="mr-2 h-5 w-5" />
                 Back
             </Button>
-          </div>
-          <div className="text-center w-full">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-wider bg-gradient-to-r from-purple-400 to-cyan-300 bg-clip-text text-transparent">
-              Available Gadgets
-            </h1>
-            <p className="mt-2 text-lg text-slate-300">Browse our latest products available for cash or installment.</p>
-          </div>
+            <div className="text-center pt-16 sm:pt-8">
+                <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight">
+                Available Gadgets
+                </h1>
+                <p className="mt-3 text-lg text-slate-400 max-w-2xl mx-auto">Browse our latest products available for cash or installment.</p>
+            </div>
         </header>
 
-        <div className="mb-8 bg-slate-800/60 border border-slate-700 rounded-lg p-1 flex h-auto flex-wrap justify-center gap-1">
-            {categories.map(category => (
-              <Button
-                key={category}
-                variant="ghost"
-                onClick={() => setSelectedCategory(category)}
-                className={cn(
-                  "dashboard-tab px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 rounded-md",
-                  selectedCategory === category && "active-tab-gradient"
-                )}
-              >
-                {category}
-              </Button>
-            ))}
+        <div className="mb-12">
+            <h2 className="text-2xl font-bold text-white mb-5 text-center">Choose a Category</h2>
+            <div className="flex flex-wrap justify-center gap-3">
+                {categories.map(category => (
+                <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={cn(
+                        "rounded-full px-5 py-2 text-base font-medium transition-all duration-300",
+                        selectedCategory === category 
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' 
+                        : 'border border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-700/70 hover:border-slate-600'
+                    )}
+                >
+                    {category}
+                </button>
+                ))}
+            </div>
         </div>
+
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[...Array(3)].map((_, i) => (
-              <Card key={i} className="bg-white/5 backdrop-blur-md border-white/10 overflow-hidden">
+              <Card key={i} className="bg-slate-800/50 backdrop-blur-md border-white/10 overflow-hidden">
                 <Skeleton className="h-56 w-full" />
                 <CardHeader>
                   <Skeleton className="h-6 w-3/4" />
@@ -301,7 +299,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
             ))}
           </div>
         ) : filteredPosts.length === 0 ? (
-          <div className="text-center py-20 bg-white/5 backdrop-blur-md rounded-2xl">
+          <div className="text-center py-20 bg-slate-800/50 backdrop-blur-md rounded-2xl border border-white/10">
             <Store className="mx-auto h-16 w-16 text-cyan-400 mb-4" />
             <h2 className="text-3xl font-bold">No Gadgets in this Category</h2>
             <p className="text-slate-300 mt-2">Please select another category or check back later!</p>
@@ -311,7 +309,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
             {filteredPosts.map(post => {
               const isExpanded = expandedDescriptions.includes(post.id);
               return (
-              <Card key={post.id} className={cn("bg-slate-900/50 backdrop-blur-sm border-purple-500/30 overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300 shadow-lg hover:shadow-cyan-500/20", post.isSold && "opacity-60")}>
+              <Card key={post.id} className={cn("bg-slate-800/50 backdrop-blur-sm border border-white/10 overflow-hidden flex flex-col transform hover:-translate-y-1 transition-transform duration-300 shadow-lg hover:shadow-purple-500/10", post.isSold && "opacity-60")}>
                 <div className="relative w-full h-56 bg-slate-800 flex items-center justify-center">
                     {post.imageUrl ? (
                         <Image src={post.imageUrl} alt={post.productName} layout="fill" objectFit="cover" className="bg-slate-800" />
@@ -319,7 +317,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                         <Package className="h-24 w-24 text-slate-600" />
                     )}
                      <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-2">
-                        <Badge className={cn(post.isSold ? "bg-red-600 text-white" : "bg-cyan-500 text-black")}>
+                        <Badge className={cn("text-white", post.isSold ? "bg-red-600" : "bg-cyan-500")}>
                             {post.isSold ? "Out of Stock" : "In Stock"}
                         </Badge>
                         {post.category && <Badge variant="secondary">{post.category}</Badge>}
@@ -327,7 +325,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                 </div>
                 <CardHeader>
                   <div className="flex justify-between items-start">
-                    <CardTitle className="text-cyan-300 text-xl break-words">{post.displayData.name}</CardTitle>
+                    <CardTitle className="text-slate-100 text-xl break-words">{post.displayData.name}</CardTitle>
                   </div>
                   <p className="text-xs text-slate-400">P/N: {post.productNumber}</p>
                 </CardHeader>
@@ -336,7 +334,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                         variant="outline"
                         onClick={() => handleToggleTranslation(post.id)}
                         disabled={translatingId === post.id}
-                        className="w-full mb-4 bg-black/30 border-purple-400/50 hover:bg-purple-900/50"
+                        className="w-full mb-4 bg-slate-700/50 border-slate-600 hover:bg-slate-700"
                     >
                         {translatingId === post.id ? 
                             <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Translating...</> : 
@@ -358,16 +356,16 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                      )}
                   </div>
                   
-                  <div className="font-bold text-primary text-xl my-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700 text-center">
+                  <div className="font-bold text-primary text-xl my-4 p-3 bg-slate-900/50 rounded-lg border border-slate-700 text-center text-cyan-300">
                     Cash Price: ฿{(post.cashPrice || 0).toLocaleString()}
                   </div>
                   
                   {(post.downPayment || 0) > 0 && (
-                    <div className="my-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700 space-y-2 text-sm">
-                        <h4 className="font-bold text-slate-200">Installment Plan</h4>
-                        <p className="flex items-center justify-between"><span className="flex items-center gap-2"><Wallet className="w-4 h-4 text-cyan-400"/> Down Payment</span> <strong>฿{(post.downPayment || 0).toLocaleString()}</strong></p>
-                        <p className="flex items-center justify-between"><span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-cyan-400"/> Months to Pay</span> <strong>{post.installmentMonths || 0}</strong></p>
-                        <p className="flex items-center justify-between"><span className="flex items-center gap-2"><Repeat className="w-4 h-4 text-cyan-400"/> Monthly Installment</span> <strong>฿{(post.monthlyInstallment || 0).toLocaleString()}</strong></p>
+                    <div className="my-4 p-4 bg-slate-900/50 rounded-lg border border-slate-700 space-y-2 text-sm">
+                        <h4 className="font-bold text-slate-200 text-base mb-3">Installment Plan</h4>
+                        <p className="flex items-center justify-between"><span className="flex items-center gap-2 text-slate-400"><Wallet className="w-4 h-4 text-cyan-400"/> Down Payment</span> <strong>฿{(post.downPayment || 0).toLocaleString()}</strong></p>
+                        <p className="flex items-center justify-between"><span className="flex items-center gap-2 text-slate-400"><Calendar className="w-4 h-4 text-cyan-400"/> Months to Pay</span> <strong>{post.installmentMonths || 0}</strong></p>
+                        <p className="flex items-center justify-between"><span className="flex items-center gap-2 text-slate-400"><Repeat className="w-4 h-4 text-cyan-400"/> Monthly Installment</span> <strong>฿{(post.monthlyInstallment || 0).toLocaleString()}</strong></p>
                     </div>
                   )}
 
@@ -378,12 +376,12 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col sm:flex-row gap-2 mt-4">
-                    <Button className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold" onClick={() => handleInquireNow(post)} disabled={post.isSold}>
+                    <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold hover:opacity-90 transition-opacity" onClick={() => handleInquireNow(post)} disabled={post.isSold}>
                         <Smartphone className="mr-2"/> Inquire Now
                     </Button>
                     {post.externalLink && (
                         <a href={post.externalLink} target="_blank" rel="noopener noreferrer" className="w-full">
-                            <Button variant="outline" className="w-full bg-transparent hover:bg-slate-700/50 border-slate-600 text-slate-300">
+                            <Button variant="outline" className="w-full bg-slate-700/50 border-slate-600 hover:bg-slate-700 text-slate-300">
                                 <ExternalLink className="mr-2"/> View Photos
                             </Button>
                         </a>
@@ -397,39 +395,39 @@ export default function GuestPage({ onBack }: GuestPageProps) {
       </div>
 
        <Dialog open={!!inquiryPost} onOpenChange={() => setInquiryPost(null)}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] bg-slate-900 border-slate-700 text-white">
           <DialogHeader>
             <DialogTitle>Inquire about: {inquiryPost?.productName}</DialogTitle>
-            <DialogDescription>
-              Fill out your details below and the seller will get back to you shortly. (Product Number: {inquiryPost?.productNumber})
+            <DialogDescription className="text-slate-400">
+              Fill out your details below and the seller will get back to you shortly. (P/N: {inquiryPost?.productNumber})
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleInquirySubmit}>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="guestName" className="text-right">Name *</Label>
-                <Input id="guestName" name="guestName" value={inquiryForm.guestName} onChange={handleInquiryChange} className="col-span-3" />
+                <Label htmlFor="guestName" className="text-right text-slate-400">Name *</Label>
+                <Input id="guestName" name="guestName" value={inquiryForm.guestName} onChange={handleInquiryChange} className="col-span-3 bg-slate-800 border-slate-600" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="contactNumber" className="text-right">Contact # *</Label>
-                <Input id="contactNumber" name="contactNumber" value={inquiryForm.contactNumber} onChange={handleInquiryChange} className="col-span-3" />
+                <Label htmlFor="contactNumber" className="text-right text-slate-400">Contact # *</Label>
+                <Input id="contactNumber" name="contactNumber" value={inquiryForm.contactNumber} onChange={handleInquiryChange} className="col-span-3 bg-slate-800 border-slate-600" />
               </div>
                <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">Email</Label>
-                <Input id="email" name="email" value={inquiryForm.email} onChange={handleInquiryChange} className="col-span-3" />
+                <Label htmlFor="email" className="text-right text-slate-400">Email</Label>
+                <Input id="email" name="email" value={inquiryForm.email} onChange={handleInquiryChange} className="col-span-3 bg-slate-800 border-slate-600" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="socialMedia" className="text-right">Social Media</Label>
-                <Input id="socialMedia" name="socialMedia" value={inquiryForm.socialMedia} onChange={handleInquiryChange} className="col-span-3" />
+                <Label htmlFor="socialMedia" className="text-right text-slate-400">Social Media</Label>
+                <Input id="socialMedia" name="socialMedia" value={inquiryForm.socialMedia} onChange={handleInquiryChange} className="col-span-3 bg-slate-800 border-slate-600" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="message" className="text-right">Message *</Label>
-                <Textarea id="message" name="message" value={inquiryForm.message} onChange={handleInquiryChange} className="col-span-3" placeholder="e.g., Is this still available? What are the installment terms?"/>
+                <Label htmlFor="message" className="text-right text-slate-400">Message *</Label>
+                <Textarea id="message" name="message" value={inquiryForm.message} onChange={handleInquiryChange} className="col-span-3 bg-slate-800 border-slate-600" placeholder="e.g., Is this still available?"/>
               </div>
             </div>
             <DialogFooter>
               <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-blue-600 to-purple-600">
                 {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</> : 'Send Inquiry'}
               </Button>
             </DialogFooter>
