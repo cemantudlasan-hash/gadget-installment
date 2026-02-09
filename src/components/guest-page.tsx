@@ -246,21 +246,23 @@ export default function GuestPage({ onBack }: GuestPageProps) {
             <Button
                 onClick={onBack}
                 variant="ghost"
-                className="absolute top-0 left-0 text-slate-300 hover:bg-slate-800/50 hover:text-white"
+                className="absolute top-0 left-0 text-slate-300 hover:bg-slate-800/50 hover:text-white z-20"
             >
                 <ArrowLeft className="mr-2 h-5 w-5" />
                 Back
             </Button>
             <div className="text-center pt-16 sm:pt-8">
-                <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-                Available Gadgets
+                <h1 className="text-4xl md:text-6xl font-extrabold tracking-wider bg-gradient-to-r from-purple-400 to-cyan-300 bg-clip-text text-transparent">
+                    Available Gadgets
                 </h1>
-                <p className="mt-3 text-lg text-slate-400 max-w-2xl mx-auto">Browse our latest products available for cash or installment.</p>
+                <p className="mt-4 text-lg text-slate-300 max-w-2xl mx-auto">
+                    Browse our latest products available for cash or installment.
+                </p>
             </div>
         </header>
 
         <div className="mb-12">
-            <h2 className="text-2xl font-bold text-white mb-5 text-center">Choose a Category</h2>
+            <h2 className="text-2xl font-bold text-slate-200 mb-6 text-center">Choose a Category</h2>
             <div className="flex flex-wrap justify-center gap-3">
                 {categories.map(category => (
                 <button
@@ -269,7 +271,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
                     className={cn(
                         "rounded-full px-5 py-2 text-base font-medium transition-all duration-300",
                         selectedCategory === category 
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' 
+                        ? 'active-tab-gradient' 
                         : 'border border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-700/70 hover:border-slate-600'
                     )}
                 >
