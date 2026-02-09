@@ -1,14 +1,14 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone, Loader2, Tag, ExternalLink, Package, Wallet, Calendar, Repeat, Languages, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useEffect, useMemo } from 'react';
+import { ArrowLeft, Store, Contact, Smartphone, Mail, Phone, Loader2, Tag, ExternalLink, Package, Wallet, Calendar, Repeat, Languages } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
 import { useFirebase } from '@/lib/firebase/context';
-import { collection, getDocs, query, orderBy, addDoc, serverTimestamp, runTransaction, getDoc, doc } from 'firebase/firestore';
+import { collection, query, orderBy, addDoc, runTransaction, getDoc, doc, onSnapshot } from 'firebase/firestore';
 import type { GadgetPost, Inquiry } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -52,39 +52,58 @@ export default function GuestPage({ onBack }: GuestPageProps) {
     message: ''
   });
 
-  const fetchPosts = useCallback(async () => {
-    if (!db) return;
+  useEffect(() => {
+    if (!db) {
+      setLoading(false);
+      return;
+    };
+    
     setLoading(true);
-    try {
-      const postsRef = collection(db, "gadgetPosts");
-      const q = query(postsRef, orderBy("createdAt", "desc"));
-      const snapshot = await getDocs(q);
+    const postsRef = collection(db, "gadgetPosts");
+    const q = query(postsRef, orderBy("createdAt", "desc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const allPosts = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as GadgetPost));
-      
-      setPosts(allPosts.map(p => ({
-          ...p,
-          displayData: { name: p.productName, description: p.description || ''},
-          isTranslated: false,
-      })));
 
-    } catch (e: any) {
+      setPosts(currentPosts => {
+        return allPosts.map(p => {
+          const existingPost = currentPosts.find(cp => cp.id === p.id);
+          // If post exists and is translated, keep its translated state
+          if (existingPost && existingPost.isTranslated) {
+              // Use the NEW underlying post data (p) but keep translation state
+              return {
+                  ...p,
+                  displayData: existingPost.displayData,
+                  translation: existingPost.translation,
+                  isTranslated: existingPost.isTranslated,
+              };
+          }
+          // Otherwise, use the fresh data from firestore
+          return {
+            ...p,
+            displayData: { name: p.productName, description: p.description || '' },
+            isTranslated: false,
+          };
+        });
+      });
+      
+      setLoading(false);
+    }, (e: any) => {
       console.error("Error fetching gadget posts:", e);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Could not fetch available gadgets.",
       });
-    } finally {
       setLoading(false);
-    }
+    });
+
+    return () => unsubscribe();
   }, [db, toast]);
 
-  useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
 
   const categories = useMemo(() => {
     const allCategories = posts.map(p => p.category);
@@ -420,5 +439,3 @@ export default function GuestPage({ onBack }: GuestPageProps) {
     </div>
   );
 }
-
-    
