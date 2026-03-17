@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Sale, Commission } from "@/types";
-import { addMonths, differenceInMonths, endOfMonth, format, isAfter, isBefore, parseISO, startOfMonth } from "date-fns";
+import { addMonths, endOfMonth, format, isBefore, parseISO, startOfMonth } from "date-fns";
 import { UserX, AlertTriangle, History, Trash2, Edit, CheckCircle, BellOff, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,7 +97,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
       
       sale.paymentInstallments?.forEach((inst) => {
         if (!inst.isPaid) {
-          const dueDate = endOfMonth(addMonths(startDate, inst.month -1));
+          const dueDate = endOfMonth(addMonths(startDate, inst.month - 1));
 
           if (isBefore(dueDate, today)) {
              reminders.push({
@@ -221,8 +221,8 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
         // Update sale balance
         const saleRef = doc(db, "sales", editingPenalty.saleId!);
         batch.update(saleRef, {
-            totalAmountDue: saleToUpdate.totalAmountDue + difference,
-            remainingBalance: saleToUpdate.remainingBalance + difference
+            totalAmountDue: (saleToUpdate.totalAmountDue || 0) + difference,
+            remainingBalance: (saleToUpdate.remainingBalance || 0) + difference
         });
 
         // Update commission entry
@@ -257,8 +257,8 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
         // Revert sale balance
         const saleRef = doc(db, "sales", penalty.saleId);
         batch.update(saleRef, {
-            totalAmountDue: saleToUpdate.totalAmountDue - penalty.getAmount,
-            remainingBalance: saleToUpdate.remainingBalance - penalty.getAmount
+            totalAmountDue: (saleToUpdate.totalAmountDue || 0) - penalty.getAmount,
+            remainingBalance: (saleToUpdate.remainingBalance || 0) - penalty.getAmount
         });
 
         // Delete commission entry
@@ -372,16 +372,19 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                         </Select>
                     </div>
                     <div className="w-full sm:w-1/4 space-y-2">
-                        <Label htmlFor="penalty-amount">Penalty Amount (฿)</Label>
-                        <Input 
-                        id="penalty-amount" 
-                        type="number" 
-                        value={penaltyAmount} 
-                        onChange={(e) => setPenaltyAmount(parseFloat(e.target.value) || 0)}
-                        placeholder="e.g. 100" 
-                        step="1"
-                        disabled={userRole === 'guest'}
-                        />
+                        <Label htmlFor="penalty-days">Days Late (฿40/day)</Label>
+                        <div className="flex items-center gap-2">
+                            <Input 
+                                id="penalty-days" 
+                                type="number" 
+                                placeholder="e.g. 3" 
+                                onChange={(e) => setPenaltyAmount((parseFloat(e.target.value) || 0) * 40)}
+                                disabled={userRole === 'guest'}
+                            />
+                            <div className="text-lg font-bold text-cyan-400 shrink-0">
+                                ฿{penaltyAmount.toFixed(0)}
+                            </div>
+                        </div>
                     </div>
                      <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -415,7 +418,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                         id="penalty-comment"
                         value={penaltyComment}
                         onChange={(e) => setPenaltyComment(e.target.value)}
-                        placeholder="e.g., Late payment fee for June"
+                        placeholder="e.g., 3 days late penalty fee"
                         disabled={userRole === 'guest'}
                     />
                 </div>
@@ -424,7 +427,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
           <Separator className="my-6" />
 
           <div>
-            <h4 className="text-md font-semibold mb-2 flex items-center"><History className="mr-2 h-5 w-5" /> Penalty History</h4>
+            <h4 className="text-md font-semibold mb-4 flex items-center"><History className="mr-2 h-5 w-5" /> Penalty History</h4>
             {loading ? (
                 <div className="space-y-2">
                   <Skeleton className="h-10 w-full" />
@@ -433,129 +436,137 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
             ) : penaltyHistory.length === 0 ? (
                 <p className="text-center text-muted-foreground py-4">No penalties have been applied yet.</p>
             ) : (
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Details</TableHead>
-                        <TableHead className="text-right">Penalty (฿)</TableHead>
-                        <TableHead>Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {penaltyHistory.map((item) => (
-                        <TableRow key={item.id}>
-                            <TableCell>{format(parseISO(item.date), "yyyy-MM-dd")}</TableCell>
-                            <TableCell>{item.customerName}</TableCell>
-                            <TableCell>
-                                <div className="font-medium">{item.gadget}</div>
-                                {item.comment && <div className="text-xs text-muted-foreground">{item.comment}</div>}
-                            </TableCell>
-                            <TableCell className="text-right font-medium text-amber-500">{item.getAmount?.toFixed(2)}</TableCell>
-                            <TableCell className="flex items-center justify-end gap-2">
-                                <Button variant="ghost" size="icon" onClick={() => handleEditClick(item)} disabled={userRole === 'guest'}>
-                                    <Edit className="h-4 w-4" />
-                                </Button>
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={userRole === 'guest'}>
-                                            <Trash2 className="h-4 w-4" />
+                <div className="rounded-md border border-slate-700 overflow-hidden">
+                    <Table>
+                        <TableHeader className="bg-slate-800/50">
+                            <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Customer</TableHead>
+                            <TableHead>Details</TableHead>
+                            <TableHead className="text-right">Penalty (฿)</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {penaltyHistory.map((item) => (
+                            <TableRow key={item.id} className="hover:bg-slate-800/30">
+                                <TableCell className="whitespace-nowrap">{format(parseISO(item.date), "yyyy-MM-dd")}</TableCell>
+                                <TableCell className="font-semibold">{item.customerName}</TableCell>
+                                <TableCell>
+                                    <div className="text-sm">{item.gadget}</div>
+                                    {item.comment && <div className="text-xs text-slate-400 italic">{item.comment}</div>}
+                                </TableCell>
+                                <TableCell className="text-right font-bold text-amber-500">฿{item.getAmount?.toFixed(2)}</TableCell>
+                                <TableCell className="text-right">
+                                    <div className="flex justify-end gap-1">
+                                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(item)} disabled={userRole === 'guest'} className="h-8 w-8">
+                                            <Edit className="h-4 w-4" />
                                         </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                        <AlertDialogTitle>Delete Penalty?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This will permanently delete the penalty of ฿{item.getAmount.toFixed(2)} for {item.customerName} and adjust their balance. This action cannot be undone.
-                                        </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeletePenalty(item)} disabled={isSubmitting} className="bg-destructive hover:bg-destructive/90">
-                                            {isSubmitting ? 'Deleting...' : 'Delete'}
-                                        </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </TableCell>
-                        </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" disabled={userRole === 'guest'}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent className="bg-slate-900 border-slate-700 text-white">
+                                                <AlertDialogHeader>
+                                                <AlertDialogTitle>Delete Penalty?</AlertDialogTitle>
+                                                <AlertDialogDescription className="text-slate-400">
+                                                    This will permanently delete the penalty of ฿{item.getAmount.toFixed(2)} for {item.customerName} and adjust their balance. This action cannot be undone.
+                                                </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                <AlertDialogCancel className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700">Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeletePenalty(item)} disabled={isSubmitting} className="bg-destructive hover:bg-destructive/90">
+                                                    {isSubmitting ? 'Deleting...' : 'Delete'}
+                                                </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
             )}
             </div>
             
             <Separator className="my-6" />
 
              <div>
-                <h4 className="text-md font-semibold mb-2 flex items-center"><CheckCircle className="mr-2 h-5 w-5" /> Dismissed & Paid Off</h4>
+                <h4 className="text-md font-semibold mb-4 flex items-center"><CheckCircle className="mr-2 h-5 w-5" /> Dismissed & Paid Off</h4>
                 {loading ? (
                     <div className="space-y-2">
                     <Skeleton className="h-10 w-full" />
                     </div>
                 ) : dismissedAndPaidSales.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-4">No customers have been dismissed from reminders yet.</p>
+                    <p className="text-center text-muted-foreground py-4 italic">No customers have been dismissed from reminders yet.</p>
                 ) : (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                            <TableHead>Customer</TableHead>
-                            <TableHead>Gadget</TableHead>
-                            <TableHead className="text-center">Action</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {dismissedAndPaidSales.map((sale) => (
-                            <TableRow key={sale.id} className="bg-green-50/50 dark:bg-green-900/20">
-                                <TableCell>{sale.customerName}</TableCell>
-                                <TableCell>{sale.gadget}</TableCell>
-                                <TableCell className="text-center">
-                                 <Button variant="outline" size="sm" onClick={() => handleRestoreReminder(sale.id)} disabled={userRole === 'guest'}>
-                                    <RefreshCw className="mr-2 h-4 w-4" />
-                                    Restore
-                                 </Button>
-                                </TableCell>
-                            </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                    <div className="rounded-md border border-slate-700 overflow-hidden">
+                        <Table>
+                            <TableHeader className="bg-slate-800/50">
+                                <TableRow>
+                                <TableHead>Customer</TableHead>
+                                <TableHead>Gadget</TableHead>
+                                <TableHead className="text-center">Action</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {dismissedAndPaidSales.map((sale) => (
+                                <TableRow key={sale.id} className="bg-green-500/5 hover:bg-green-500/10">
+                                    <TableCell className="font-medium">{sale.customerName}</TableCell>
+                                    <TableCell>{sale.gadget}</TableCell>
+                                    <TableCell className="text-center">
+                                    <Button variant="outline" size="sm" onClick={() => handleRestoreReminder(sale.id)} disabled={userRole === 'guest'} className="bg-slate-800/50 border-slate-700 hover:bg-slate-700">
+                                        <RefreshCw className="mr-2 h-4 w-4" />
+                                        Restore
+                                    </Button>
+                                    </TableCell>
+                                </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 )}
             </div>
         </CardContent>
       </Card>
       
       <Dialog open={!!editingPenalty} onOpenChange={() => setEditingPenalty(null)}>
-        <DialogContent>
+        <DialogContent className="bg-slate-900 border-slate-700 text-white">
           <DialogHeader>
             <DialogTitle>Edit Penalty for {editingPenalty?.customerName}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-penalty-amount">New Penalty Amount (฿)</Label>
+              <Label htmlFor="edit-penalty-amount" className="text-slate-300">New Penalty Amount (฿)</Label>
               <Input
                 id="edit-penalty-amount"
                 type="number"
                 value={editedPenaltyAmount}
                 onChange={(e) => setEditedPenaltyAmount(parseFloat(e.target.value) || 0)}
+                className="bg-slate-800 border-slate-700"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-penalty-comment">Comment</Label>
+              <Label htmlFor="edit-penalty-comment" className="text-slate-300">Comment</Label>
               <Textarea
                 id="edit-penalty-comment"
                 value={editedPenaltyComment}
                 onChange={(e) => setEditedPenaltyComment(e.target.value)}
+                className="bg-slate-800 border-slate-700"
               />
             </div>
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="secondary">
+              <Button type="button" variant="secondary" className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700">
                 Cancel
               </Button>
             </DialogClose>
-            <Button onClick={handleEditPenalty} disabled={isSubmitting}>
+            <Button onClick={handleEditPenalty} disabled={isSubmitting} className="bg-cyan-600 hover:bg-cyan-500 text-white">
                 {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>
