@@ -42,6 +42,7 @@ export interface Commission {
   saleId?: string;
   penaltyAmount?: number;
   comment?: string;
+  isPaid?: boolean;
 }
 
 export interface YearlyReport {

@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Sale, Commission } from "@/types";
 import { addMonths, endOfMonth, format, isBefore, parseISO, startOfMonth } from "date-fns";
-import { UserX, AlertTriangle, History, Trash2, Edit, CheckCircle, BellOff, RefreshCw } from "lucide-react";
+import { UserX, AlertTriangle, History, Trash2, Edit, CheckCircle, BellOff, RefreshCw, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -122,7 +122,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
 
   const penaltyHistory = useMemo(() => {
     return commissions
-      .filter(c => c.description.toLowerCase().includes('penalty for'))
+      .filter(c => c.description.toLowerCase().includes('penalty for') && !c.isPaid)
       .map(c => {
         const sale = sales.find(s => s.id === c.saleId);
         return {
@@ -133,6 +133,39 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
       })
       .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
   }, [commissions, sales]);
+
+  const paidPenalties = useMemo(() => {
+    return commissions
+      .filter(c => c.description.toLowerCase().includes('penalty for') && c.isPaid)
+      .map(c => {
+        const sale = sales.find(s => s.id === c.saleId);
+        return {
+          ...c,
+          customerName: sale?.customerName || 'N/A',
+          gadget: sale?.gadget || 'N/A',
+        };
+      })
+      .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
+  }, [commissions, sales]);
+
+  const combinedDismissedAndPaid = useMemo(() => {
+    const salesList = dismissedAndPaidSales.map(s => ({
+        id: s.id,
+        type: 'sale' as const,
+        customerName: s.customerName,
+        gadget: s.gadget,
+    }));
+    
+    const penaltiesList = paidPenalties.map(p => ({
+        id: p.id,
+        type: 'penalty' as const,
+        customerName: p.customerName,
+        gadget: `Paid Penalty: ${p.gadget}`,
+        commission: p as Commission
+    }));
+
+    return [...salesList, ...penaltiesList];
+  }, [dismissedAndPaidSales, paidPenalties]);
 
   const ongoingSales = useMemo(() => {
     return sales
@@ -178,6 +211,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
         spentAmount: 0,
         saleId: selectedSaleId,
         comment: penaltyComment,
+        isPaid: false,
       });
 
       await batch.commit();
@@ -200,6 +234,76 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handlePayPenalty = async (penalty: Commission) => {
+    if (userRole === 'guest') {
+        toast({ variant: "destructive", title: "Read-only Access", description: "Guests cannot mark penalties as paid." });
+        return;
+    }
+    if (!db || !penalty.saleId) return;
+    setIsSubmitting(true);
+    try {
+        const saleToUpdate = sales.find(s => s.id === penalty.saleId);
+        if (!saleToUpdate) throw new Error("Associated sale not found.");
+
+        const batch = writeBatch(db);
+        
+        // Update sale: increase totalPaidAmount, decrease remainingBalance
+        const saleRef = doc(db, "sales", penalty.saleId);
+        batch.update(saleRef, {
+            totalPaidAmount: (saleToUpdate.totalPaidAmount || 0) + penalty.getAmount,
+            remainingBalance: (saleToUpdate.remainingBalance || 0) - penalty.getAmount
+        });
+
+        // Update commission: set isPaid to true
+        const commissionRef = doc(db, "commissions", penalty.id);
+        batch.update(commissionRef, { isPaid: true });
+
+        await batch.commit();
+        toast({ title: "Penalty Paid", description: `฿${penalty.getAmount.toFixed(2)} penalty for ${saleToUpdate.customerName} marked as paid.` });
+        onDataChange();
+    } catch(e: any) {
+        console.error("Error paying penalty:", e);
+        toast({ variant: "destructive", title: "Error", description: `Could not pay penalty: ${e.message}` });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
+  const handleRestorePenalty = async (penalty: Commission) => {
+    if (userRole === 'guest') {
+        toast({ variant: "destructive", title: "Read-only Access", description: "Guests cannot restore penalties." });
+        return;
+    }
+    if (!db || !penalty.saleId) return;
+    setIsSubmitting(true);
+    try {
+        const saleToUpdate = sales.find(s => s.id === penalty.saleId);
+        if (!saleToUpdate) throw new Error("Associated sale not found.");
+
+        const batch = writeBatch(db);
+        
+        // Revert payment on sale: decrease totalPaidAmount, increase remainingBalance
+        const saleRef = doc(db, "sales", penalty.saleId);
+        batch.update(saleRef, {
+            totalPaidAmount: (saleToUpdate.totalPaidAmount || 0) - penalty.getAmount,
+            remainingBalance: (saleToUpdate.remainingBalance || 0) + penalty.getAmount
+        });
+
+        // Update commission: set isPaid to false
+        const commissionRef = doc(db, "commissions", penalty.id);
+        batch.update(commissionRef, { isPaid: false });
+
+        await batch.commit();
+        toast({ title: "Penalty Restored", description: "Penalty has been moved back to active history." });
+        onDataChange();
+    } catch(e: any) {
+        console.error("Error restoring penalty:", e);
+        toast({ variant: "destructive", title: "Error", description: `Could not restore penalty: ${e.message}` });
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
@@ -254,11 +358,22 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
         
         const batch = writeBatch(db);
 
-        // Revert sale balance
+        // Revert penalty addition
+        let newTotalAmountDue = (saleToUpdate.totalAmountDue || 0) - penalty.getAmount;
+        let newRemainingBalance = (saleToUpdate.remainingBalance || 0) - penalty.getAmount;
+        let newTotalPaidAmount = (saleToUpdate.totalPaidAmount || 0);
+
+        // If it was already paid, we also need to revert the payment record on the sale
+        if (penalty.isPaid) {
+            newTotalPaidAmount -= penalty.getAmount;
+            newRemainingBalance += penalty.getAmount;
+        }
+
         const saleRef = doc(db, "sales", penalty.saleId);
         batch.update(saleRef, {
-            totalAmountDue: (saleToUpdate.totalAmountDue || 0) - penalty.getAmount,
-            remainingBalance: (saleToUpdate.remainingBalance || 0) - penalty.getAmount
+            totalAmountDue: newTotalAmountDue,
+            remainingBalance: newRemainingBalance,
+            totalPaidAmount: newTotalPaidAmount
         });
 
         // Delete commission entry
@@ -459,7 +574,10 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                                 <TableCell className="text-right font-bold text-amber-500">฿{item.getAmount?.toFixed(2)}</TableCell>
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-1">
-                                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(item)} disabled={userRole === 'guest'} className="h-8 w-8">
+                                        <Button variant="ghost" size="icon" onClick={() => handlePayPenalty(item)} disabled={userRole === 'guest'} className="h-8 w-8 text-green-500 hover:text-green-400">
+                                            <Check className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(item)} disabled={userRole === 'guest'} className="h-8 w-8 text-slate-400 hover:text-white">
                                             <Edit className="h-4 w-4" />
                                         </Button>
                                         <AlertDialog>
@@ -501,25 +619,31 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
                     <div className="space-y-2">
                     <Skeleton className="h-10 w-full" />
                     </div>
-                ) : dismissedAndPaidSales.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-4 italic">No customers have been dismissed from reminders yet.</p>
+                ) : combinedDismissedAndPaid.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-4 italic">No customers or penalties have been archived yet.</p>
                 ) : (
                     <div className="rounded-md border border-slate-700 overflow-hidden">
                         <Table>
                             <TableHeader className="bg-slate-800/50">
                                 <TableRow>
-                                <TableHead>Customer</TableHead>
-                                <TableHead>Gadget</TableHead>
+                                <TableHead>Entity</TableHead>
+                                <TableHead>Details</TableHead>
                                 <TableHead className="text-center">Action</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {dismissedAndPaidSales.map((sale) => (
-                                <TableRow key={sale.id} className="bg-green-500/5 hover:bg-green-500/10">
-                                    <TableCell className="font-medium">{sale.customerName}</TableCell>
-                                    <TableCell>{sale.gadget}</TableCell>
+                                {combinedDismissedAndPaid.map((item) => (
+                                <TableRow key={item.id} className="bg-green-500/5 hover:bg-green-500/10">
+                                    <TableCell className="font-medium">{item.customerName}</TableCell>
+                                    <TableCell>{item.gadget}</TableCell>
                                     <TableCell className="text-center">
-                                    <Button variant="outline" size="sm" onClick={() => handleRestoreReminder(sale.id)} disabled={userRole === 'guest'} className="bg-slate-800/50 border-slate-700 hover:bg-slate-700">
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={() => item.type === 'sale' ? handleRestoreReminder(item.id) : handleRestorePenalty(item.commission!)} 
+                                        disabled={userRole === 'guest'} 
+                                        className="bg-slate-800/50 border-slate-700 hover:bg-slate-700"
+                                    >
                                         <RefreshCw className="mr-2 h-4 w-4" />
                                         Restore
                                     </Button>
