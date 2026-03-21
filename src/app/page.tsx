@@ -6,6 +6,7 @@ import LoginForm from "@/components/login-form";
 import Dashboard from "@/components/dashboard";
 import LogoutOverlay from "@/components/logout-overlay";
 import LoginOverlay from "@/components/login-overlay";
+import GuestLoadingOverlay from "@/components/guest-loading-overlay";
 import { FirebaseProvider } from "@/lib/firebase/context";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,6 +27,7 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isGuestLoggingIn, setIsGuestLoggingIn] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [userRole, setUserRole] = useState<"admin" | "guest" | null>(null);
 
@@ -35,6 +37,12 @@ export default function Home() {
   
   const handleRoleSelect = (role: "admin" | "guest") => {
     setUserRole(role);
+    if (role === "guest") {
+      setIsGuestLoggingIn(true);
+      setTimeout(() => {
+        setIsGuestLoggingIn(false);
+      }, 1500); // 1.5s cinematic delay
+    }
   };
 
   const handleLoginSuccess = () => {
@@ -90,6 +98,7 @@ export default function Home() {
       <main className={cn("min-h-screen font-sans", showDashboard ? "dark hero-shapes-bg" : "bg-background")}>
         {isLoggingOut && <LogoutOverlay />}
         {isLoggingIn && <LoginOverlay />}
+        {isGuestLoggingIn && <GuestLoadingOverlay />}
 
         {showDashboard && (
           <ul className="shapes-container">
@@ -106,7 +115,7 @@ export default function Home() {
           </ul>
         )}
         
-        <div className={cn("transition-opacity duration-500", (isLoggingIn || isLoggingOut) ? 'opacity-0' : 'opacity-100')}>
+        <div className={cn("transition-opacity duration-500", (isLoggingIn || isLoggingOut || isGuestLoggingIn) ? 'opacity-0' : 'opacity-100')}>
           {renderContent()}
         </div>
       </main>
