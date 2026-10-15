@@ -52,7 +52,7 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
       ]);
       
       const commissionsData = commissionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Commission[];
-      const salesData = salesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(sale => sale.dateStart) as Sale[];
+      const salesData = (salesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Sale[]).filter(sale => sale.dateStart);
       const postsData = postsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as GadgetPost[];
       
       setCommissions(commissionsData);

@@ -37,12 +37,7 @@ export default function Home() {
   
   const handleRoleSelect = (role: "admin" | "guest") => {
     setUserRole(role);
-    if (role === "guest") {
-      setIsGuestLoggingIn(true);
-      setTimeout(() => {
-        setIsGuestLoggingIn(false);
-      }, 1500); // 1.5s cinematic delay
-    }
+    // Instant switch to guest without artificial 1.5s delay
   };
 
   const handleLoginSuccess = () => {

@@ -2,7 +2,6 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -10,6 +9,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -34,18 +34,6 @@ const nextConfig: NextConfig = {
         hostname: 'i.postimg.cc',
       }
     ],
-  },
-  async rewrites() {
-    return {
-      beforeFiles: [
-        {
-          source: '/.well-known/acme-challenge/:path*',
-          destination: '/:path*',
-        },
-      ],
-      afterFiles: [],
-      fallback: [],
-    };
   },
 };
 

@@ -11,7 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import type { Sale } from "@/types";
 import { X, Image as ImageIcon, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { exportToWord as exportToWordAction } from "@/app/actions/export-to-word";
 
 interface ContractEditorProps {
   sale: Sale | null;
@@ -138,19 +137,15 @@ export default function ContractEditor({ sale, isOpen, onClose }: ContractEditor
 
     try {
         const htmlString = getContractHTML();
-        const fileBuffer = await exportToWordAction(htmlString);
-        
-        if (fileBuffer) {
-          const blob = new Blob([fileBuffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-          saveAs(blob, `agreement-${formData.customerName}.docx`);
-          toast({ title: "Success", description: "Agreement exported as DOCX." });
-          onClose();
-        } else {
-           throw new Error("File buffer is empty.");
-        }
-        
+        const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Agreement</title></head><body>";
+        const footer = "</body></html>";
+        const sourceHTML = header + htmlString + footer;
+        const blob = new Blob(['\ufeff' + sourceHTML], { type: 'application/msword' });
+        saveAs(blob, `agreement-${formData.customerName || 'contract'}.doc`);
+        toast({ title: "Success", description: "Agreement exported as Word document." });
+        onClose();
     } catch (err) {
-        console.error('Error exporting to DOCX:', err);
+        console.error('Error exporting to Word:', err);
         toast({
           variant: 'destructive',
           title: 'Error',

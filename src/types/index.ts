@@ -70,6 +70,12 @@ export interface GadgetPost {
   createdAt: string;
   externalLink?: string;
   imageUrl?: string;
+  title?: string;
+  titleTh?: string;
+  partNumber?: string;
+  stockStatus?: string;
+  specs?: string[];
+  installmentMonthly?: number;
 }
 
 export interface Inquiry {

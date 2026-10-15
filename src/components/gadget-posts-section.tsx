@@ -67,8 +67,12 @@ export default function GadgetPostsSection({ posts, loading, onDataChange, userR
     }
     try {
       const postRef = doc(db, "gadgetPosts", post.id);
-      await updateDoc(postRef, { isSold: !post.isSold });
-      toast({ title: "Status Updated", description: `${post.productName} marked as ${!post.isSold ? 'Out of Stock' : 'In Stock'}.` });
+      const newSold = !post.isSold;
+      await updateDoc(postRef, {
+        isSold: newSold,
+        stockStatus: newSold ? 'Out of Stock' : 'In Stock'
+      });
+      toast({ title: "Status Updated", description: `${post.productName} marked as ${newSold ? 'Out of Stock' : 'In Stock'}.` });
       onDataChange();
     } catch (e: any) {
        console.error("Error updating status:", e);

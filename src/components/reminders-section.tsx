@@ -661,7 +661,7 @@ export default function RemindersSection({ sales, commissions, loading, onDataCh
       <Dialog open={!!editingPenalty} onOpenChange={() => setEditingPenalty(null)}>
         <DialogContent className="bg-slate-900 border-slate-700 text-white">
           <DialogHeader>
-            <DialogTitle>Edit Penalty for {editingPenalty?.customerName}</DialogTitle>
+            <DialogTitle>Edit Penalty for {sales.find(s => s.id === editingPenalty?.saleId)?.customerName || editingPenalty?.description}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
