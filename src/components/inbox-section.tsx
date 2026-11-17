@@ -104,7 +104,7 @@ function InquiryItem({ inquiry, onToggleRead, onDelete }: InquiryItemProps) {
                          {!inquiry.isRead && <div className="h-2.5 w-2.5 rounded-full bg-primary animate-pulse"></div>}
                         <div>
                              <p className={cn("font-bold", !inquiry.isRead && "text-primary")}>Guest #{inquiry.dailyInquiryId}: {inquiry.guestName}</p>
-                             <p className="text-sm text-muted-foreground truncate max-w-xs md:max-w-md">{inquiry.productName}</p>
+                             <p className="text-sm text-muted-foreground truncate max-w-md lg:max-w-xl xl:max-w-2xl">{inquiry.productName}</p>
                         </div>
                     </div>
                     <div className="text-right">

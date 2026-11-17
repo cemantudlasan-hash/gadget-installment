@@ -26,7 +26,7 @@ export default function PricingCalculator() {
   }, [buyPrice, markupPercentage, downPaymentAmount]);
 
   return (
-    <Card className="max-w-4xl mx-auto bg-slate-800/30 backdrop-blur-sm border border-slate-700">
+    <Card className="w-full bg-slate-800/30 backdrop-blur-sm border border-slate-700 shadow-xl">
       <CardHeader>
         <CardTitle>Gadget Pricing Calculator</CardTitle>
         <CardDescription>
@@ -34,7 +34,7 @@ export default function PricingCalculator() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
           <div className="space-y-2">
             <Label htmlFor="buyPriceCalc">Buy Price (฿)</Label>
             <Input

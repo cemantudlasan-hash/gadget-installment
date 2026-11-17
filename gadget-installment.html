@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gadget-installment.cc — Guest Mode Escrow & Installment Marketplace</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter, Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            voidBg: '#090D16',
+            navBg: '#0E1422',
+            modalBg: '#131B2E',
+            panelBg: '#192236',
+            inputBg: '#222D44',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #090D16;
+      color: #F1F5F9;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    /* Iridescent top edge highlight on the main wizard modal */
+    .wizard-shell {
+      background:
+        radial-gradient(65% 38% at 50% 0%, rgba(45, 212, 191, 0.22) 0%, rgba(139, 92, 246, 0.16) 45%, rgba(19, 27, 46, 0) 100%),
+        linear-gradient(180deg, #162036 0%, #111827 100%);
+      box-shadow:
+        0 30px 70px -15px rgba(0, 0, 0, 0.85),
+        0 0 0 1px rgba(255, 255, 255, 0.09),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.18);
+    }
+    /* Vibrant cyan -> blue -> violet -> magenta gradient card from reference */
+    .middleman-gradient-card {
+      background: linear-gradient(155deg, #10B981 0%, #06B6D4 30%, #3B82F6 62%, #8B5CF6 84%, #C026D3 100%);
+      box-shadow: 0 12px 30px -8px rgba(59, 130, 246, 0.45);
+    }
+    /* Glowing cyan-emerald progress bar */
+    .progress-glow {
+      background: linear-gradient(90deg, #3B82F6 0%, #06B6D4 55%, #10B981 100%);
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.55);
+    }
+    /* Top CTA pill gradient */
+    .cta-cyan-emerald {
+      background: linear-gradient(90deg, #10B981 0%, #06B6D4 100%);
+      box-shadow: 0 4px 16px -2px rgba(16, 185, 129, 0.45);
+    }
+    .cta-cyan-emerald:hover {
+      filter: brightness(1.07);
+    }
+    /* Custom Range Slider for Buyer Modal */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      background: #222D44;
+      border-radius: 999px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #10B981;
+      border: 2px solid #090D16;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+      cursor: pointer;
+    }
+    /* Subtle custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0E1422;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #28354F;
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body class="bg-[#090D16] text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-[70] flex flex-col gap-2.5 max-w-md w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- ===================================================================== -->
+  <!-- 1. TOP NAVIGATION BAR (Matches Reference Header)                      -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-30 bg-[#0E1422]/95 backdrop-blur-md border-b border-slate-800/80">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Left: Custom Icon Badge + Brand Name -->
+      <a href="#" onclick="resetMarketplace(event)" class="flex items-center gap-2.5 shrink-0 group">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/25 to-emerald-500/25 border border-cyan-400/30 flex items-center justify-center shadow-inner">
+          <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+        </div>
+        <span class="font-display font-bold text-base sm:text-[17px] tracking-tight text-white">
+          gadget-installment.cc
+        </span>
+      </a>
+
+      <!-- Center: Wide Rounded Pill Search Bar -->
+      <div class="hidden md:flex flex-1 max-w-md mx-4">
+        <div class="relative w-full">
+          <input 
+            type="text" 
+            id="global-search-input"
+            oninput="filterMarketplace(this.value)"
+            placeholder="Search or anything..." 
+            class="w-full bg-[#182134] border border-slate-700/70 focus:border-cyan-500/60 rounded-full pl-4 pr-10 py-2 text-xs sm:text-sm text-slate-200 placeholder:text-slate-400 focus:outline-none transition"
+          />
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        </div>
+      </div>
+
+      <!-- Right: Guest Tracker Link + Vibrant Cyan-to-Emerald CTA -->
+      <div class="flex items-center gap-3 sm:gap-5 shrink-0">
+        <button 
+          onclick="openTrackerDrawer()"
+          class="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-300 hover:text-white transition py-1.5 px-2.5 rounded-lg hover:bg-slate-800/60"
+        >
+          <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
+          <span>Guest Tracker</span>
+          <span id="tracker-count-badge" class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-mono font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 tabular-nums">1</span>
+        </button>
+
+        <button 
+          onclick="openWizardModal()"
+          class="cta-cyan-emerald inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-[13px] font-semibold text-slate-950 transition cursor-pointer"
+        >
+          <i data-lucide="plus" class="w-4 h-4 stroke-[2.5]"></i>
+          <span>Post Gadget <span class="hidden sm:inline font-medium">(Guest Mode)</span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+
+  <!-- ===================================================================== -->
+  <!-- 2. MAIN MARKETPLACE VIEW ("Gadgets Listing" 4-Column Grid)            -->
+  <!-- ===================================================================== -->
+  <main id="marketplace-backdrop" class="flex-1 max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-7 transition-all duration-300">
+    
+    <!-- Header Row -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div class="flex items-center gap-3">
+        <h1 class="font-display text-lg sm:text-xl font-bold text-white tracking-tight">Gadgets Listing</h1>
+        <span id="marketplace-count" class="px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-slate-800/90 text-slate-300 border border-slate-700/70 tabular-nums">8 items</span>
+        <span class="hidden md:inline-flex items-center gap-1.5 text-xs text-emerald-400/90 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+          Admin Escrow Protected
+        </span>
+      </div>
+
+      <!-- Mobile Search + Guest Rating / Filter Dropdown Pill -->
+      <div class="flex items-center gap-2.5">
+        <div class="relative md:hidden flex-1">
+          <input 
+            type="text" 
+            oninput="filterMarketplace(this.value)"
+            placeholder="Search gadgets..." 
+            class="w-full bg-[#182134] border border-slate-700/70 rounded-full pl-3.5 pr-8 py-1.5 text-xs text-slate-200 placeholder:text-slate-400 focus:outline-none"
+          />
+          <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2"></i>
+        </div>
+
+        <div class="relative">
+          <select 
+            id="sort-filter"
+            onchange="sortMarketplace(this.value)"
+            aria-label="Filter listings"
+            class="appearance-none bg-[#151D2E] border border-slate-700/80 hover:border-slate-600 rounded-lg pl-3.5 pr-8 py-1.5 text-xs font-medium text-slate-300 focus:outline-none cursor-pointer"
+          >
+            <option value="featured">Guest Rating: Verified</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="laptops">Category: Laptops</option>
+            <option value="phones">Category: Smartphones</option>
+          </select>
+          <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4-Column Responsive Gadget Cards Grid -->
+    <div id="gadgets-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <!-- Cards rendered dynamically via JS -->
+    </div>
+  </main>
+
+
+  <!-- ===================================================================== -->
+  <!-- 3. CENTERPIECE MODAL: "Guest Seller Posting Wizard"                   -->
+  <!-- ===================================================================== -->
+  <div id="posting-wizard-overlay" class="fixed inset-0 z-40 flex items-center justify-center bg-[#060911]/70 backdrop-blur-md p-3 sm:p-5 overflow-y-auto">
+    
+    <div class="wizard-shell relative w-full max-w-[1060px] rounded-[20px] p-5 sm:p-7 my-auto text-slate-100 transition-all">
+      
+      <!-- Top Header & Close Button -->
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h2 class="font-display text-xl sm:text-2xl font-bold text-white tracking-tight">
+            Guest Seller Posting Wizard
+          </h2>
+          <p id="wizard-step-subtitle" class="text-xs sm:text-sm text-slate-300/90 mt-1">
+            Step 3: Installment &amp; Escrow Verification
+          </p>
+        </div>
+
+        <button 
+          onclick="closeWizardModal()"
+          aria-label="Close wizard"
+          class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+        >
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Horizontal Glowing Progress Stepper -->
+      <div class="mt-5 mb-6">
+        <div class="w-full h-1.5 bg-slate-800/90 rounded-full overflow-hidden">
+          <div id="wizard-progress-fill" class="progress-glow h-full rounded-full transition-all duration-300" style="width: 76%;"></div>
+        </div>
+        <div class="grid grid-cols-3 text-[11px] sm:text-xs font-medium mt-2">
+          <button type="button" onclick="setWizardStep(1)" id="step-label-1" class="text-left text-slate-400 hover:text-white transition cursor-pointer">
+            1. Details
+          </button>
+          <button type="button" onclick="setWizardStep(2)" id="step-label-2" class="text-center text-slate-400 hover:text-white transition cursor-pointer">
+            2. Media
+          </button>
+          <button type="button" onclick="setWizardStep(3)" id="step-label-3" class="text-right text-slate-200 font-semibold transition cursor-pointer">
+            3. Escrow terms
+          </button>
+        </div>
+      </div>
+
+      <!-- 3-COLUMN MAIN CONTENT GRID -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-stretch">
+        
+        <!-- COLUMN 1 (Left — 5 cols): Drag & Drop Media + Gadget Details -->
+        <div class="lg:col-span-5 bg-[#192236]/95 border border-slate-700/60 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-4">
+          
+          <div>
+            <!-- Header Row -->
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs sm:text-sm font-semibold text-white">Drag &amp; Drop Media</span>
+              <button type="button" onclick="cycleSampleMedia()" title="Cycle sample angles" class="text-slate-400 hover:text-white transition p-1">
+                <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <!-- 4-Slot Media Thumbnail Row -->
+            <div class="grid grid-cols-4 gap-2.5">
+              <!-- Slot 1: Upload Box -->
+              <label class="aspect-square rounded-xl bg-[#202B42] hover:bg-[#27344F] border border-dashed border-slate-500/80 hover:border-cyan-400 flex flex-col items-center justify-center p-1.5 text-center cursor-pointer transition group">
+                <input type="file" accept="image/*" class="hidden" onchange="handleCustomImageUpload(event)" />
+                <i data-lucide="upload" class="w-4 h-4 text-slate-300 group-hover:text-cyan-300 mb-1"></i>
+                <span class="text-[9px] leading-tight text-slate-300 font-medium">Drag &amp; Drop Media</span>
+              </label>
+
+              <!-- Slots 2, 3, 4: Crisp White-Framed Product Angle Thumbnails -->
+              <button type="button" onclick="selectMediaSlot(0)" id="thumb-slot-0" class="aspect-square rounded-xl bg-white p-1.5 flex items-center justify-center overflow-hidden ring-2 ring-cyan-400 transition">
+                <img id="thumb-img-0" src="" alt="Front view" class="w-full h-full object-contain" />
+              </button>
+              <button type="button" onclick="selectMediaSlot(1)" id="thumb-slot-1" class="aspect-square rounded-xl bg-white p-1.5 flex items-center justify-center overflow-hidden ring-1 ring-slate-600/40 hover:ring-cyan-400/70 transition">
+                <img id="thumb-img-1" src="" alt="Side profile" class="w-full h-full object-contain" />
+              </button>
+              <button type="button" onclick="selectMediaSlot(2)" id="thumb-slot-2" class="aspect-square rounded-xl bg-white p-1.5 flex items-center justify-center overflow-hidden ring-1 ring-slate-600/40 hover:ring-cyan-400/70 transition">
+                <img id="thumb-img-2" src="" alt="Top angle" class="w-full h-full object-contain" />
+              </button>
+            </div>
+
+            <!-- Main Preview Thumbnail + Listing Title Selector -->
+            <div class="mt-4 flex items-center gap-3.5">
+              <div class="w-16 h-16 sm:w-[70px] sm:h-[70px] rounded-xl bg-white p-1.5 shrink-0 flex items-center justify-center shadow-md">
+                <img id="main-selected-preview" src="" alt="Selected Gadget" class="w-full h-full object-contain" />
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <label for="wizard-title-select" class="block text-xs font-medium text-slate-300 mb-1.5">Listing Title</label>
+                <div class="relative">
+                  <select 
+                    id="wizard-title-select" 
+                    onchange="handlePresetChange(this.value)"
+                    class="w-full appearance-none bg-[#232E46] border border-slate-600/70 focus:border-cyan-400 rounded-xl pl-3.5 pr-9 py-2.5 text-xs sm:text-sm font-medium text-white focus:outline-none cursor-pointer"
+                  >
+                    <option value="MacBook Pro 14">MacBook Pro 14</option>
+                    <option value="iPhone 16 Pro Max">iPhone 16 Pro Max</option>
+                    <option value="Galaxy Z Fold 6">Galaxy Z Fold 6</option>
+                    <option value="iPad Pro 13 M4">iPad Pro 13 M4</option>
+                    <option value="Sony PlayStation 5 Pro">Sony PlayStation 5 Pro</option>
+                    <option value="custom">Custom Gadget Title...</option>
+                  </select>
+                  <i data-lucide="chevron-down" class="w-4 h-4 text-slate-300 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                </div>
+                <!-- Optional Custom Title Input when "custom" is chosen -->
+                <input 
+                  type="text" 
+                  id="wizard-custom-title" 
+                  placeholder="Enter custom gadget name..." 
+                  class="hidden mt-2 w-full bg-[#232E46] border border-cyan-500/60 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-400 focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Cash Price Input -->
+          <div>
+            <label for="wizard-price-input" class="block text-xs font-medium text-slate-300 mb-1.5">Total Cash Price:</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-mono text-sm font-semibold text-slate-300">$</span>
+              <input 
+                type="number" 
+                id="wizard-price-input" 
+                value="1200" 
+                min="50" 
+                max="25000" 
+                step="1"
+                oninput="recalculateWizardEscrow()"
+                class="w-full bg-[#232E46] border border-slate-600/70 focus:border-cyan-400 rounded-xl pl-8 pr-4 py-2.5 font-mono text-sm font-semibold text-white tabular-nums focus:outline-none transition"
+              />
+            </div>
+          </div>
+
+          <!-- Listing Type Selector -->
+          <div>
+            <label for="wizard-listing-type" class="block text-xs font-medium text-slate-300 mb-1.5">Listing type</label>
+            <div class="relative">
+              <select 
+                id="wizard-listing-type"
+                class="w-full appearance-none bg-[#232E46] border border-slate-600/70 focus:border-cyan-400 rounded-xl pl-3.5 pr-9 py-2.5 text-xs text-slate-200 focus:outline-none cursor-pointer"
+              >
+                <option value="Installment + Admin Escrow (3, 6, 12 Months)">Installment + Admin Escrow (3, 6, 12 Months)</option>
+                <option value="0% Downpayment + 6 Months Admin Escrow">0% Downpayment + 6 Months Admin Escrow</option>
+                <option value="20% Downpayment + 12 Months Admin Escrow">20% Downpayment + 12 Months Admin Escrow</option>
+              </select>
+              <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT SIDE WRAPPER (Columns 2 & 3 + Bottom Submit Button — 7 cols) -->
+        <div class="lg:col-span-7 flex flex-col justify-between gap-4">
+          
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-4 flex-1">
+            
+            <!-- COLUMN 2 (Middle — 6 cols): Dynamic Middleman & Escrow Estimator -->
+            <div class="md:col-span-6 bg-[#192236]/95 border border-slate-700/60 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-4">
+              <div>
+                <h3 class="font-display text-sm sm:text-[15px] font-bold text-white leading-snug">
+                  Dynamic Middleman &amp; Escrow Estimator
+                </h3>
+
+                <!-- Asking Price Box -->
+                <div class="mt-4">
+                  <span class="block text-xs text-slate-300 mb-1.5">Your Asking Price:</span>
+                  <div class="w-full bg-[#232E46] border border-slate-600/60 rounded-xl px-3.5 py-2.5 font-mono text-base sm:text-lg font-bold text-white tabular-nums">
+                    <span id="est-asking-price">$1,200.00</span>
+                  </div>
+                </div>
+
+                <!-- Admin Approval & Escrow Handover Fee (1%-3%) -->
+                <div class="mt-4">
+                  <div class="flex items-start justify-between gap-2">
+                    <span class="text-xs text-slate-300 leading-relaxed">
+                      Admin Approval &amp; Escrow<br/>Handover Fee (<span id="est-fee-rate" class="font-semibold text-cyan-300">2%</span>):
+                    </span>
+                    <div class="relative group">
+                      <button type="button" aria-label="Commission tier details" class="text-slate-400 hover:text-cyan-300 transition mt-0.5">
+                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                      </button>
+                      <!-- Hover Tooltip -->
+                      <div class="hidden group-hover:block absolute right-0 bottom-6 w-56 p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-[11px] text-slate-300 shadow-xl z-20">
+                        <p class="font-semibold text-white mb-1">Tiered Middleman Fee (1%–3%):</p>
+                        <ul class="space-y-0.5 font-mono text-[10px]">
+                          <li>• &gt;$1,500: <span class="text-emerald-400">1%</span> fee</li>
+                          <li>• $500–$1,500: <span class="text-cyan-400">2%</span> fee</li>
+                          <li>• &lt;$500: <span class="text-amber-400">3%</span> fee</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <div id="est-fee-amount" class="font-mono text-base sm:text-lg font-semibold text-slate-200 mt-1 tabular-nums">
+                    -$24.00
+                  </div>
+                </div>
+              </div>
+
+              <!-- Highlighted Emerald-Bordered Payout Card -->
+              <div class="rounded-xl bg-[#0F2929]/90 border border-emerald-500/70 p-3.5 sm:p-4 shadow-inner">
+                <span class="block text-[11px] sm:text-xs font-medium text-emerald-200/90">
+                  Guaranteed Net Payout to Seller:
+                </span>
+                <div id="est-net-payout" class="font-mono text-2xl sm:text-[26px] font-bold text-emerald-400 mt-1 tracking-tight tabular-nums">
+                  $1,176.00
+                </div>
+              </div>
+            </div>
+
+            <!-- COLUMN 3 (Right — 6 cols): Vibrant Gradient Card -->
+            <div class="md:col-span-6 middleman-gradient-card rounded-2xl p-5 flex flex-col justify-between text-white">
+              <div>
+                <h3 class="font-display text-sm sm:text-[15px] font-bold text-white leading-snug">
+                  How our Middleman System Works:
+                </h3>
+
+                <ol class="mt-4 space-y-3.5 text-xs sm:text-[13px] font-medium text-white/95 leading-relaxed">
+                  <li class="flex items-start gap-2">
+                    <span class="font-mono font-bold">1.</span>
+                    <span>You Post (Draft) <span class="opacity-90">→</span></span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="font-mono font-bold">2.</span>
+                    <span>Admin inspects &amp; approves item <span class="opacity-90">→</span></span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="font-mono font-bold">3.</span>
+                    <span>Buyer pays escrow downpayment <span class="opacity-90">→</span></span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="font-mono font-bold">4.</span>
+                    <span>Admin oversees handover &amp; releases your <strong id="est-payout-percent" class="font-bold underline decoration-white/50">98%</strong> payout.</span>
+                  </li>
+                </ol>
+              </div>
+
+              <!-- Subtle Guest Contact Handle Input inside bottom of gradient card for instant submission -->
+              <div class="mt-4 pt-3 border-t border-white/20">
+                <label for="wizard-guest-contact" class="block text-[10px] font-mono uppercase tracking-wider text-white/85 mb-1">
+                  Guest Contact / Payout Handle (Optional)
+                </label>
+                <input 
+                  type="text" 
+                  id="wizard-guest-contact" 
+                  placeholder="guest@email.com or @handle"
+                  class="w-full bg-slate-950/30 border border-white/25 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/60 focus:outline-none focus:border-white"
+                />
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Full-Width Bottom Action Button Spanning Columns 2 & 3 -->
+          <button 
+            type="button"
+            onclick="submitWizardListing()"
+            class="w-full py-3.5 px-5 rounded-xl bg-[#232D42] hover:bg-[#2B3752] border border-slate-600/80 hover:border-cyan-400/70 text-xs sm:text-sm font-semibold text-white shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>Submit to Admin for Approval (No Sign-Up Needed)</span>
+          </button>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ===================================================================== -->
+  <!-- 4. SLIDE-OVER DRAWER: GUEST TRACKER & ADMIN APPROVAL SIMULATOR        -->
+  <!-- ===================================================================== -->
+  <div id="tracker-drawer" class="fixed inset-0 z-50 hidden justify-end bg-black/70 backdrop-blur-xs">
+    <div class="bg-[#111827] border-l border-slate-800 w-full max-w-lg h-full flex flex-col justify-between shadow-2xl">
+      
+      <!-- Drawer Header -->
+      <div class="px-6 py-5 border-b border-slate-800 flex items-center justify-between bg-[#0E1422]">
+        <div>
+          <span class="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-semibold">Guest Mode Escrow Queue</span>
+          <h3 class="font-display text-lg font-bold text-white mt-0.5">Guest Tracker &amp; Admin Approval</h3>
+        </div>
+        <button onclick="closeTrackerDrawer()" class="w-8 h-8 rounded-lg bg-slate-800/80 text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Drawer Content -->
+      <div class="p-6 space-y-4 overflow-y-auto flex-1">
+        <div class="rounded-xl bg-cyan-500/10 border border-cyan-500/25 p-3.5 text-xs text-cyan-200 flex items-start gap-2.5">
+          <i data-lucide="shield-check" class="w-4 h-4 text-cyan-400 shrink-0 mt-0.5"></i>
+          <p>
+            No account needed. Track your guest listings below or click <strong>"Simulate Admin Approval"</strong> to publish an item live onto <strong>Gadgets Listing</strong>.
+          </p>
+        </div>
+
+        <div id="tracker-list-container" class="space-y-3.5">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Drawer Footer -->
+      <div class="px-6 py-4 border-t border-slate-800 bg-[#0E1422] flex items-center justify-between">
+        <span class="text-xs text-slate-400">Want to list another gadget?</span>
+        <button onclick="closeTrackerDrawer(); openWizardModal();" class="cta-cyan-emerald px-4 py-2 rounded-full text-xs font-semibold text-slate-950 cursor-pointer">
+          + Post Gadget
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ===================================================================== -->
+  <!-- 5. BUYER MODAL: AVAIL GADGET VIA INSTALLMENT & ADMIN ESCROW           -->
+  <!-- ===================================================================== -->
+  <div id="buyer-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+    <div class="wizard-shell w-full max-w-lg rounded-2xl p-6 text-slate-100 space-y-5">
+      
+      <div class="flex items-start justify-between gap-4 border-b border-slate-700/70 pb-4">
+        <div class="flex items-center gap-3.5">
+          <div class="w-14 h-14 rounded-xl bg-white p-1.5 shrink-0 flex items-center justify-center">
+            <img id="buyer-modal-img" src="" alt="Gadget" class="w-full h-full object-contain" />
+          </div>
+          <div>
+            <span class="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-semibold">
+              <i data-lucide="badge-check" class="w-3.5 h-3.5"></i> Admin Approved Listing
+            </span>
+            <h3 id="buyer-modal-title" class="font-display text-lg font-bold text-white mt-0.5">MacBook Pro 14</h3>
+            <p class="text-xs text-slate-400">Cash Price: <span id="buyer-modal-price" class="font-mono font-semibold text-white">$1,200.00</span></p>
+          </div>
+        </div>
+        <button onclick="closeBuyerModal()" class="text-slate-400 hover:text-white p-1 cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Downpayment Slider -->
+      <div>
+        <div class="flex justify-between text-xs mb-2">
+          <span class="text-slate-300">Escrow Downpayment (<span id="buyer-dp-pct" class="font-mono text-cyan-400 font-semibold">20%</span>)</span>
+          <span id="buyer-dp-amt" class="font-mono font-bold text-white tabular-nums">$240.00</span>
+        </div>
+        <input type="range" id="buyer-dp-slider" min="10" max="50" step="5" value="20" oninput="recalculateBuyerInstallment()" class="w-full" />
+      </div>
+
+      <!-- Tenor Buttons -->
+      <div>
+        <span class="block text-xs text-slate-300 mb-2">Select Installment Duration</span>
+        <div class="grid grid-cols-3 gap-2.5">
+          <button type="button" onclick="setBuyerTenor(3)" data-btenor="3" class="buyer-tenor-btn py-2 rounded-xl border border-slate-700 bg-[#192236] font-mono text-xs font-semibold text-slate-300 cursor-pointer">3 Months</button>
+          <button type="button" onclick="setBuyerTenor(6)" data-btenor="6" class="buyer-tenor-btn py-2 rounded-xl border border-slate-700 bg-[#192236] font-mono text-xs font-semibold text-slate-300 cursor-pointer">6 Months</button>
+          <button type="button" onclick="setBuyerTenor(12)" data-btenor="12" class="buyer-tenor-btn py-2 rounded-xl border border-emerald-400 bg-emerald-500/15 font-mono text-xs font-bold text-emerald-300 cursor-pointer">12 Months</button>
+        </div>
+      </div>
+
+      <!-- Monthly Summary Card -->
+      <div class="rounded-xl bg-[#0F2929] border border-emerald-500/60 p-4 flex items-center justify-between">
+        <div>
+          <span class="text-xs text-emerald-200/80 block">Estimated Monthly Payment</span>
+          <span id="buyer-monthly-amt" class="font-mono text-2xl font-bold text-emerald-400 tabular-nums">$80.00<span class="text-xs font-normal text-slate-300"> / mo</span></span>
+        </div>
+        <div class="text-right text-[11px] text-slate-300 font-mono">
+          <div>0% Escrow Fee to Buyer</div>
+          <div class="text-emerald-400">Admin Handover Protection</div>
+        </div>
+      </div>
+
+      <!-- Guest Buyer Contact -->
+      <div>
+        <label class="block text-xs text-slate-300 mb-1.5">Your Guest Email or Phone (for Admin Escrow Link)</label>
+        <input type="text" id="buyer-contact-input" placeholder="buyer@email.com" class="w-full bg-[#232E46] border border-slate-600/70 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400" />
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-1">
+        <button type="button" onclick="closeBuyerModal()" class="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer">Cancel</button>
+        <button type="button" onclick="submitBuyerAvail()" class="cta-cyan-emerald px-5 py-2.5 rounded-xl text-xs font-bold text-slate-950 cursor-pointer">
+          Avail Installment via Admin Escrow
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT LOGIC                                                      -->
+  <!-- ===================================================================== -->
+  <script>
+    // Presets with 3 crisp product angle thumbnails (Front, Side Profile, Top View)
+    const gadgetPresets = {
+      'MacBook Pro 14': {
+        price: 1200,
+        category: 'laptops',
+        images: [
+          'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80',
+          'https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?auto=format&fit=crop&w=600&q=80',
+          'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=600&q=80'
+        ]
+      },
+      'iPhone 16 Pro Max': {
+        price: 1199,
+        category: 'phones',
+        images: [
+          'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=600&q=80',
+          'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=600&q=80',
+          'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=600&q=80'
+        ]
+      },
+      'Galaxy Z Fold 6': {
+        price: 1650,
+        category: 'phones',
+        images: [
+          'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?auto=format&fit=crop&w=600&q=80',
+          'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80',
+          'https://images.unsplash.com/photo-1585060544812-6b45742d762f?auto=format&fit=crop&w=600&q=80'
+        ]
+      },
+      'iPad Pro 13 M4': {
+        price: 1299,
+        category: 'laptops',
+        images: [
+          'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=600&q=80',
+          'https://images.unsplash.com/photo-1585790050230-5dd28404ccb9?auto=format&fit=crop&w=600&q=80',
+          'https://images.unsplash.com/photo-1561154464-82e9adf32764?auto=format&fit=crop&w=600&q=80'
+        ]
+      },
+      'Sony PlayStation 5 Pro': {
+        price: 699,
+        category: 'gaming',
+        images: [
+          'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=600&q=80',
+          'https://images.unsplash.com/photo-1622297845775-5ff3fef71d13?auto=format&fit=crop&w=600&q=80',
+          'https://images.unsplash.com/photo-1607853202273-797f1c22a38e?auto=format&fit=crop&w=600&q=80'
+        ]
+      }
+    };
+
+    // Background Gadgets Listing Inventory (8 cards -> 2 clean rows of 4)
+    let marketplaceGadgets = [
+      {
+        id: 'GI-1041',
+        title: 'MacBook Pro 14 (M3 Pro)',
+        price: 1200,
+        category: 'laptops',
+        image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80',
+        seller: 'Guest #8821'
+      },
+      {
+        id: 'GI-1042',
+        title: 'MacBook Pro 14 (Space Black)',
+        price: 1350,
+        category: 'laptops',
+        image: 'https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?auto=format&fit=crop&w=600&q=80',
+        seller: 'Guest #4190'
+      },
+      {
+        id: 'GI-1043',
+        title: 'iPhone 16 Pro Max 256GB',
+        price: 1180,
+        category: 'phones',
+        image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=600&q=80',
+        seller: 'Guest #3092'
+      },
+      {
+        id: 'GI-1044',
+        title: 'Galaxy Z Fold 6 512GB',
+        price: 1490,
+        category: 'phones',
+        image: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?auto=format&fit=crop&w=600&q=80',
+        seller: 'Guest #7714'
+      },
+      {
+        id: 'GI-1045',
+        title: 'MacBook Air 15 M3',
+        price: 1050,
+        category: 'laptops',
+        image: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=600&q=80',
+        seller: 'Guest #5519'
+      },
+      {
+        id: 'GI-1046',
+        title: 'iPad Pro 13 M4 + Pencil',
+        price: 1290,
+        category: 'laptops',
+        image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=600&q=80',
+        seller: 'Guest #6402'
+      },
+      {
+        id: 'GI-1047',
+        title: 'Sony PlayStation 5 Pro',
+        price: 699,
+        category: 'gaming',
+        image: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=600&q=80',
+        seller: 'Guest #9123'
+      },
+      {
+        id: 'GI-1048',
+        title: 'Samsung Galaxy S24 Ultra',
+        price: 940,
+        category: 'phones',
+        image: 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=600&q=80',
+        seller: 'Guest #2287'
+      }
+    ];
+
+    // Guest Tracker Queue (Pre-seeded with 1 pending item)
+    let guestTrackerQueue = [
+      {
+        trackingId: 'GI-84920',
+        type: 'SELLER_SUBMISSION',
+        status: 'PENDING_ADMIN',
+        title: 'MacBook Pro 14',
+        price: 1200,
+        feeRate: 2,
+        feeAmount: 24,
+        netPayout: 1176,
+        contact: 'guest-seller@gadget-installment.cc',
+        image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80'
+      }
+    ];
+
+    let currentMediaArray = [...gadgetPresets['MacBook Pro 14'].images];
+    let selectedMediaIndex = 0;
+    let activeSearch = '';
+    let activeSort = 'featured';
+    let selectedBuyerItem = null;
+    let selectedBuyerTenor = 12;
+
+    // Tiered Admin Commission Logic (1% - 3%)
+    function getCommissionRate(price) {
+      if (price > 1500) return 1;
+      if (price >= 500) return 2;
+      return 3;
+    }
+
+    function formatCurrency(val) {
+      return '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Update Wizard Media Thumbnails
+    function renderWizardMedia() {
+      for (let i = 0; i < 3; i++) {
+        const imgEl = document.getElementById(`thumb-img-${i}`);
+        const slotEl = document.getElementById(`thumb-slot-${i}`);
+        imgEl.src = currentMediaArray[i];
+        if (i === selectedMediaIndex) {
+          slotEl.className = 'aspect-square rounded-xl bg-white p-1.5 flex items-center justify-center overflow-hidden ring-2 ring-cyan-400 shadow-md transition cursor-pointer';
+        } else {
+          slotEl.className = 'aspect-square rounded-xl bg-white p-1.5 flex items-center justify-center overflow-hidden ring-1 ring-slate-600/40 hover:ring-cyan-400/70 transition cursor-pointer';
+        }
+      }
+      document.getElementById('main-selected-preview').src = currentMediaArray[selectedMediaIndex];
+    }
+
+    function selectMediaSlot(idx) {
+      selectedMediaIndex = idx;
+      renderWizardMedia();
+    }
+
+    function cycleSampleMedia() {
+      selectedMediaIndex = (selectedMediaIndex + 1) % 3;
+      renderWizardMedia();
+    }
+
+    function handleCustomImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const objectUrl = URL.createObjectURL(file);
+      currentMediaArray[0] = objectUrl;
+      selectedMediaIndex = 0;
+      renderWizardMedia();
+      showToast('Uploaded custom gadget photo to slot 1.');
+    }
+
+    function handlePresetChange(val) {
+      const customInput = document.getElementById('wizard-custom-title');
+      if (val === 'custom') {
+        customInput.classList.remove('hidden');
+        customInput.focus();
+        return;
+      }
+      customInput.classList.add('hidden');
+      const preset = gadgetPresets[val];
+      if (preset) {
+        currentMediaArray = [...preset.images];
+        selectedMediaIndex = 0;
+        renderWizardMedia();
+        document.getElementById('wizard-price-input').value = preset.price;
+        recalculateWizardEscrow();
+      }
+    }
+
+    // Live Estimator Updates (Matches Column 2 & Column 3)
+    function recalculateWizardEscrow() {
+      const raw = parseFloat(document.getElementById('wizard-price-input').value);
+      const price = isNaN(raw) || raw < 0 ? 0 : raw;
+      const rate = getCommissionRate(price);
+      const fee = price * (rate / 100);
+      const payout = Math.max(0, price - fee);
+      const payoutPct = 100 - rate;
+
+      document.getElementById('est-asking-price').textContent = formatCurrency(price);
+      document.getElementById('est-fee-rate').textContent = `${rate}%`;
+      document.getElementById('est-fee-amount').textContent = `-${formatCurrency(fee)}`;
+      document.getElementById('est-net-payout').textContent = formatCurrency(payout);
+      document.getElementById('est-payout-percent').textContent = `${payoutPct}%`;
+    }
+
+    // Interactive Progress Stepper (1, 2, 3)
+    function setWizardStep(step) {
+      const subtitle = document.getElementById('wizard-step-subtitle');
+      const fill = document.getElementById('wizard-progress-fill');
+      const l1 = document.getElementById('step-label-1');
+      const l2 = document.getElementById('step-label-2');
+      const l3 = document.getElementById('step-label-3');
+
+      [l1, l2, l3].forEach(el => {
+        el.classList.remove('text-slate-200', 'font-semibold');
+        el.classList.add('text-slate-400');
+      });
+
+      if (step === 1) {
+        subtitle.textContent = 'Step 1: Gadget Specification & Pricing';
+        fill.style.width = '28%';
+        l1.classList.replace('text-slate-400', 'text-slate-200');
+        l1.classList.add('font-semibold');
+      } else if (step === 2) {
+        subtitle.textContent = 'Step 2: Device Angles & Condition Media';
+        fill.style.width = '52%';
+        l2.classList.replace('text-slate-400', 'text-slate-200');
+        l2.classList.add('font-semibold');
+      } else {
+        subtitle.textContent = 'Step 3: Installment & Escrow Verification';
+        fill.style.width = '76%';
+        l3.classList.replace('text-slate-400', 'text-slate-200');
+        l3.classList.add('font-semibold');
+      }
+    }
+
+    // Submit Guest Listing from Wizard
+    function submitWizardListing() {
+      const selectVal = document.getElementById('wizard-title-select').value;
+      const customVal = document.getElementById('wizard-custom-title').value.trim();
+      const title = selectVal === 'custom' ? (customVal || 'Custom Flagship Gadget') : selectVal;
+      const price = parseFloat(document.getElementById('wizard-price-input').value) || 1200;
+      const contact = document.getElementById('wizard-guest-contact').value.trim() || 'guest-session@gadget-installment.cc';
+
+      const rate = getCommissionRate(price);
+      const feeAmount = price * (rate / 100);
+      const netPayout = price - feeAmount;
+      const trackingId = 'GI-' + Math.floor(10000 + Math.random() * 90000);
+
+      guestTrackerQueue.unshift({
+        trackingId,
+        type: 'SELLER_SUBMISSION',
+        status: 'PENDING_ADMIN',
+        title,
+        price,
+        feeRate: rate,
+        feeAmount,
+        netPayout,
+        contact,
+        image: currentMediaArray[selectedMediaIndex]
+      });
+
+      updateTrackerBadge();
+      closeWizardModal();
+      showToast(`Submitted! Tracking ID ${trackingId} is awaiting Admin approval.`, true);
+    }
+
+    // Render Background Gadgets Listing Grid
+    function renderMarketplaceGrid() {
+      const grid = document.getElementById('gadgets-grid');
+      const countBadge = document.getElementById('marketplace-count');
+
+      let items = marketplaceGadgets.filter(item =>
+        item.title.toLowerCase().includes(activeSearch.toLowerCase())
+      );
+
+      if (activeSort === 'price-asc') items.sort((a, b) => a.price - b.price);
+      if (activeSort === 'price-desc') items.sort((a, b) => b.price - a.price);
+      if (activeSort === 'laptops') items = items.filter(i => i.category === 'laptops');
+      if (activeSort === 'phones') items = items.filter(i => i.category === 'phones');
+
+      countBadge.textContent = `${items.length} items`;
+
+      grid.innerHTML = items.map(item => {
+        const monthly12 = ((item.price * 0.8) / 12).toFixed(0);
+        return `
+          <div onclick="openBuyerModal('${item.id}')" class="group bg-[#131B2E] hover:bg-[#18223A] border border-slate-800/90 hover:border-cyan-500/50 rounded-2xl p-3.5 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-lg">
+            <div>
+              <!-- White Framed Product Preview Box (Matches Background Cards in Screenshot) -->
+              <div class="aspect-[4/3] w-full rounded-xl bg-white p-3 flex items-center justify-center overflow-hidden relative">
+                <img 
+                  src="${item.image}" 
+                  alt="${item.title}" 
+                  onerror="this.src='https://placehold.co/400x300/FFFFFF/0F172A?text=Gadget'"
+                  class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                />
+                <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-slate-900/85 text-[10px] font-mono text-emerald-400 font-semibold">
+                  Admin Verified
+                </span>
+              </div>
+
+              <!-- Title & Price -->
+              <div class="mt-3">
+                <h3 class="font-display text-sm font-bold text-white truncate group-hover:text-cyan-300 transition">
+                  ${item.title}
+                </h3>
+                <div class="flex items-baseline justify-between mt-1">
+                  <span class="font-mono text-sm font-bold text-slate-200 tabular-nums">$${item.price.toLocaleString()}</span>
+                  <span class="font-mono text-[11px] text-emerald-400 tabular-nums">~$${monthly12}/mo</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Footer Action -->
+            <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between">
+              <span class="text-[11px] font-mono text-slate-400">${item.seller}</span>
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] font-semibold group-hover:bg-emerald-500 group-hover:text-slate-950 transition">
+                + Avail
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function filterMarketplace(query) {
+      activeSearch = query.trim();
+      renderMarketplaceGrid();
+    }
+
+    function sortMarketplace(mode) {
+      activeSort = mode;
+      renderMarketplaceGrid();
+    }
+
+    function resetMarketplace(e) {
+      if (e) e.preventDefault();
+      activeSearch = '';
+      activeSort = 'featured';
+      const searchEl = document.getElementById('global-search-input');
+      if (searchEl) searchEl.value = '';
+      document.getElementById('sort-filter').value = 'featured';
+      renderMarketplaceGrid();
+    }
+
+    // Modal & Drawer Controls
+    function openWizardModal() {
+      const overlay = document.getElementById('posting-wizard-overlay');
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function closeWizardModal() {
+      const overlay = document.getElementById('posting-wizard-overlay');
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+    }
+
+    function openTrackerDrawer() {
+      renderTrackerDrawer();
+      const drawer = document.getElementById('tracker-drawer');
+      drawer.classList.remove('hidden');
+      drawer.classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function closeTrackerDrawer() {
+      const drawer = document.getElementById('tracker-drawer');
+      drawer.classList.add('hidden');
+      drawer.classList.remove('flex');
+    }
+
+    function updateTrackerBadge() {
+      const pending = guestTrackerQueue.filter(i => i.status === 'PENDING_ADMIN').length;
+      const badge = document.getElementById('tracker-count-badge');
+      badge.textContent = guestTrackerQueue.length;
+      badge.classList.toggle('hidden', pending === 0 && guestTrackerQueue.length === 0);
+    }
+
+    function renderTrackerDrawer() {
+      const container = document.getElementById('tracker-list-container');
+      if (guestTrackerQueue.length === 0) {
+        container.innerHTML = `<div class="text-center py-10 text-xs text-slate-400">No guest submissions yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = guestTrackerQueue.map(item => {
+        if (item.type === 'BUYER_REQUEST') {
+          return `
+            <div class="rounded-xl bg-[#192236] border border-cyan-500/40 p-4 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <span class="font-mono text-xs font-bold text-cyan-300">${item.trackingId}</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                  Buyer Escrow Reserved
+                </span>
+              </div>
+              <div class="text-sm font-bold text-white">${item.title}</div>
+              <div class="text-xs text-slate-300 font-mono tabular-nums">
+                Downpayment: $${item.dp.toFixed(2)} • $${item.monthly.toFixed(2)}/mo (${item.tenor} mos)
+              </div>
+            </div>
+          `;
+        }
+
+        const isApproved = item.status === 'APPROVED_LIVE';
+        return `
+          <div class="rounded-xl bg-[#192236] border ${isApproved ? 'border-emerald-500/50' : 'border-slate-700/80'} p-4 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <span class="px-2.5 py-0.5 rounded-md bg-slate-900 font-mono text-xs font-bold text-cyan-300 border border-slate-700">
+                ${item.trackingId}
+              </span>
+              ${isApproved
+                ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    <i data-lucide="check-circle-2" class="w-3 h-3"></i> Live on Marketplace
+                   </span>`
+                : `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                    <i data-lucide="clock" class="w-3 h-3"></i> Pending Admin Inspection
+                   </span>`
+              }
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-lg bg-white p-1 shrink-0 flex items-center justify-center">
+                <img src="${item.image}" alt="${item.title}" class="w-full h-full object-contain" />
+              </div>
+              <div class="min-w-0 flex-1">
+                <h4 class="text-sm font-bold text-white truncate">${item.title}</h4>
+                <p class="text-[11px] text-slate-400 truncate">${item.contact}</p>
+              </div>
+            </div>
+
+            <div class="rounded-lg bg-slate-900/80 p-2.5 border border-slate-800 flex items-center justify-between font-mono text-xs tabular-nums">
+              <div>
+                <span class="text-slate-400 block text-[10px]">Asking / Fee (${item.feeRate}%)</span>
+                <span class="text-white">$${item.price.toFixed(2)}</span>
+                <span class="text-rose-400"> (-$${item.feeAmount.toFixed(2)})</span>
+              </div>
+              <div class="text-right">
+                <span class="text-slate-400 block text-[10px]">Seller Net Payout</span>
+                <span class="text-emerald-400 font-bold">$${item.netPayout.toFixed(2)}</span>
+              </div>
+            </div>
+
+            ${!isApproved ? `
+              <button 
+                onclick="simulateAdminApproval('${item.trackingId}')"
+                class="w-full py-2 px-3 rounded-lg bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 border border-emerald-500/40 text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                <span>Simulate Admin Approval (Publish Live)</span>
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function simulateAdminApproval(trackingId) {
+      const record = guestTrackerQueue.find(r => r.trackingId === trackingId);
+      if (!record || record.status === 'APPROVED_LIVE') return;
+
+      record.status = 'APPROVED_LIVE';
+      marketplaceGadgets.unshift({
+        id: record.trackingId,
+        title: record.title,
+        price: record.price,
+        category: 'laptops',
+        image: record.image,
+        seller: 'Guest Verified'
+      });
+
+      renderTrackerDrawer();
+      renderMarketplaceGrid();
+      showToast(`Admin approved ${trackingId}! It is now live in Gadgets Listing.`);
+    }
+
+    // Buyer Modal Functions
+    function openBuyerModal(itemId) {
+      const item = marketplaceGadgets.find(g => g.id === itemId);
+      if (!item) return;
+      selectedBuyerItem = item;
+      selectedBuyerTenor = 12;
+
+      document.getElementById('buyer-modal-img').src = item.image;
+      document.getElementById('buyer-modal-title').textContent = item.title;
+      document.getElementById('buyer-modal-price').textContent = formatCurrency(item.price);
+      document.getElementById('buyer-dp-slider').value = 20;
+
+      setBuyerTenor(12);
+      const modal = document.getElementById('buyer-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function closeBuyerModal() {
+      const modal = document.getElementById('buyer-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function setBuyerTenor(tenor) {
+      selectedBuyerTenor = tenor;
+      document.querySelectorAll('.buyer-tenor-btn').forEach(btn => {
+        if (Number(btn.dataset.btenor) === tenor) {
+          btn.className = 'buyer-tenor-btn py-2 rounded-xl border border-emerald-400 bg-emerald-500/15 font-mono text-xs font-bold text-emerald-300 cursor-pointer';
+        } else {
+          btn.className = 'buyer-tenor-btn py-2 rounded-xl border border-slate-700 bg-[#192236] font-mono text-xs font-semibold text-slate-300 cursor-pointer';
+        }
+      });
+      recalculateBuyerInstallment();
+    }
+
+    function recalculateBuyerInstallment() {
+      if (!selectedBuyerItem) return;
+      const pct = Number(document.getElementById('buyer-dp-slider').value);
+      const dp = selectedBuyerItem.price * (pct / 100);
+      const monthly = (selectedBuyerItem.price - dp) / selectedBuyerTenor;
+
+      document.getElementById('buyer-dp-pct').textContent = `${pct}%`;
+      document.getElementById('buyer-dp-amt').textContent = formatCurrency(dp);
+      document.getElementById('buyer-monthly-amt').innerHTML = `${formatCurrency(monthly)}<span class="text-xs font-normal text-slate-300"> / mo</span>`;
+    }
+
+    function submitBuyerAvail() {
+      if (!selectedBuyerItem) return;
+      const pct = Number(document.getElementById('buyer-dp-slider').value);
+      const dp = selectedBuyerItem.price * (pct / 100);
+      const monthly = (selectedBuyerItem.price - dp) / selectedBuyerTenor;
+      const trackingId = 'GI-' + Math.floor(10000 + Math.random() * 90000);
+
+      guestTrackerQueue.unshift({
+        trackingId,
+        type: 'BUYER_REQUEST',
+        status: 'ESCROW_RESERVED',
+        title: selectedBuyerItem.title,
+        dp,
+        monthly,
+        tenor: selectedBuyerTenor
+      });
+
+      updateTrackerBadge();
+      closeBuyerModal();
+      showToast(`Installment request ${trackingId} sent to Admin Escrow!`, true);
+    }
+
+    // Toast Helper
+    function showToast(message, showTrackerAction = false) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-[#162036] text-white border border-cyan-500/40 shadow-2xl text-xs transition-all duration-300';
+      toast.innerHTML = `
+        <div class="flex items-center gap-2.5">
+          <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+          <span>${message}</span>
+        </div>
+        ${showTrackerAction ? `
+          <button onclick="openTrackerDrawer()" class="px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 font-semibold whitespace-nowrap cursor-pointer">
+            Open Guest Tracker
+          </button>
+        ` : ''}
+      `;
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(8px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 5000);
+    }
+
+    // Initialize on Load
+    window.addEventListener('DOMContentLoaded', () => {
+      renderWizardMedia();
+      recalculateWizardEscrow();
+      renderMarketplaceGrid();
+      updateTrackerBadge();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

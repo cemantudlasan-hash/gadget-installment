@@ -2,7 +2,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { UserCog, User } from "lucide-react";
+import { UserCog, Store, ShieldCheck } from "lucide-react";
 import React from 'react';
 
 interface RoleSelectionProps {
@@ -76,9 +76,9 @@ export default function RoleSelection({ onRoleSelect }: RoleSelectionProps) {
             onClick={() => onRoleSelect('admin')}
         />
         <RoleCard
-            icon={User}
-            title="Guest"
-            description="Browse available gadgets and inquire about products."
+            icon={Store}
+            title="Escrow Market"
+            description="Browse available gadgets, calculate installments, and post devices with escrow protection."
             onClick={() => onRoleSelect('guest')}
         />
       </div>

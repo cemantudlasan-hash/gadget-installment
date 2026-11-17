@@ -9,6 +9,9 @@ import PricingCalculator from "@/components/pricing-calculator";
 import RemindersSection from "@/components/reminders-section";
 import GadgetPostsSection from "@/components/gadget-posts-section";
 import InboxSection from "@/components/inbox-section"; // New Import
+import EscrowApprovalSection from "@/components/escrow-approval-section";
+import { getEscrowQueue } from "@/lib/escrow-store";
+import { Currency, CURRENCIES, getSavedCurrency, saveCurrency } from "@/lib/currency";
 import { useFirebase } from "@/lib/firebase/context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -32,6 +35,8 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
   const [gadgetPosts, setGadgetPosts] = useState<GadgetPost[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pendingEscrowCount, setPendingEscrowCount] = useState(0);
+  const [currentCurrency, setCurrentCurrency] = useState<Currency>("USD");
   const [loadingData, setLoadingData] = useState(true);
 
   const fetchAllData = useCallback(async () => {
@@ -71,6 +76,40 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
       setLoadingData(false);
     }
   }, [db, toast]);
+
+  useEffect(() => {
+    const updateEscrowCount = () => {
+      try {
+        const q = getEscrowQueue();
+        const pending = q.filter((item) => item.status === "PENDING_ADMIN").length;
+        setPendingEscrowCount(pending);
+      } catch {}
+    };
+
+    updateEscrowCount();
+    setCurrentCurrency(getSavedCurrency());
+
+    const handleEscrowUpdate = () => {
+      updateEscrowCount();
+      fetchAllData();
+    };
+    const handlePostDeleted = () => {
+      fetchAllData();
+    };
+    const handleCurrChange = (e: any) => {
+      if (e.detail) setCurrentCurrency(e.detail);
+    };
+
+    window.addEventListener("escrow_queue_updated", handleEscrowUpdate);
+    window.addEventListener("gadget_post_deleted", handlePostDeleted);
+    window.addEventListener("currency_changed", handleCurrChange);
+
+    return () => {
+      window.removeEventListener("escrow_queue_updated", handleEscrowUpdate);
+      window.removeEventListener("gadget_post_deleted", handlePostDeleted);
+      window.removeEventListener("currency_changed", handleCurrChange);
+    };
+  }, [fetchAllData]);
 
   useEffect(() => {
     fetchAllData();
@@ -132,7 +171,7 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
 
   if (userLoading) {
     return (
-      <div className="max-w-7xl mx-auto p-6 sm:p-8 space-y-8">
+      <div className="w-full max-w-[2560px] 2xl:max-w-none mx-auto p-6 sm:p-8 space-y-8">
         <Skeleton className="h-10 w-1/3 mx-auto" />
         <Skeleton className="h-8 w-1/4 mx-auto" />
         <Skeleton className="h-12 w-full" />
@@ -156,7 +195,7 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto bg-transparent p-0 w-full">
+    <div className="w-full max-w-[2560px] 2xl:max-w-none mx-auto bg-transparent px-2 sm:px-4 lg:px-6 xl:px-8">
        <Tabs defaultValue="sales" className="w-full">
         <header className="relative mb-8">
             <div className="flex w-full flex-wrap items-center sm:grid sm:grid-cols-[1fr_auto_1fr] sm:gap-4">
@@ -189,6 +228,10 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
                             Inbox
                             {unreadCount > 0 && <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">{unreadCount}</span>}
                         </TabsTrigger>
+                        <TabsTrigger value="escrow" className="dashboard-tab relative w-full px-3 py-1.5 text-sm text-slate-300 transition-all duration-300 sm:w-auto">
+                            Escrow Queue
+                            {pendingEscrowCount > 0 && <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-xs text-slate-950 font-bold">{pendingEscrowCount}</span>}
+                        </TabsTrigger>
                     </TabsList>
                 </div>
 
@@ -209,6 +252,24 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
                         <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
                     </Avatar>
                     <span>Logged in as: <span className="bg-cyan-900/50 px-2 py-1 rounded-md text-cyan-300 font-semibold">{getWelcomeMessage()}</span></span>
+                    <div className="flex items-center gap-1 bg-slate-900 border border-slate-700/70 rounded-lg p-0.5 ml-2">
+                      {(["USD", "PHP", "THB"] as Currency[]).map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => {
+                            setCurrentCurrency(c);
+                            saveCurrency(c);
+                          }}
+                          className={`px-2 py-0.5 rounded text-[11px] font-mono font-semibold transition ${
+                            currentCurrency === c
+                              ? "bg-cyan-500 text-slate-950 shadow"
+                              : "text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          {CURRENCIES[c].symbol} {c}
+                        </button>
+                      ))}
+                    </div>
                 </div>
             )}
             <p className="text-xs text-slate-500 mt-2">AI powered @Firebase | Created by: Ceman Dejamo Tudlasan</p>
@@ -231,6 +292,9 @@ export default function Dashboard({ onLogout, userRole }: DashboardProps) {
         </TabsContent>
         <TabsContent value="inbox">
           <InboxSection inquiries={inquiries} loading={loadingData} onUpdateInquiry={handleUpdateInquiry} />
+        </TabsContent>
+        <TabsContent value="escrow">
+          <EscrowApprovalSection />
         </TabsContent>
       </Tabs>
     </div>

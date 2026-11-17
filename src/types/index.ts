@@ -58,12 +58,14 @@ export interface GadgetPost {
   productNumber: string;
   productName: string;
   category: string;
+  condition?: "New" | "Used" | string;
   description?: string;
   cashPrice: number;
   downPayment?: number;
   installmentMonths?: number;
   monthlyInstallment?: number;
   adminName: string;
+  shopName?: string;
   contactNumber: string;
   socialMedia: string;
   isSold: boolean;

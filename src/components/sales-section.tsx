@@ -400,7 +400,7 @@ export default function SalesSection({ sales, loading, onDataChange, onUpdateSal
               Download Excel
             </Button>
           </div>
-           <div className="flex flex-col md:flex-row gap-4 pt-4 max-w-2xl">
+           <div className="flex flex-col md:flex-row gap-4 pt-4 w-full max-w-4xl">
                <div className="flex-1">
                  <Label htmlFor="customer-search" className="sr-only">Search Customers</Label>
                  <div className="relative">

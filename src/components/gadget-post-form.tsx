@@ -26,6 +26,8 @@ const postSchema = z.object({
   productName: z.string().min(1, "Product name is required"),
   titleTh: z.string().optional(),
   category: z.string().min(1, "Category is required"),
+  condition: z.enum(["New", "Used"]).default("New"),
+  shopName: z.string().optional(),
   isSold: z.boolean().default(false),
   specsInput: z.string().optional(),
   description: z.string().optional(),
@@ -63,6 +65,8 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
       productName: initialData?.productName || initialData?.title || "",
       titleTh: initialData?.titleTh || "",
       category: initialData?.category || "Notebook",
+      condition: (initialData?.condition === "Used" ? "Used" : "New") as "New" | "Used",
+      shopName: initialData?.shopName || "",
       isSold: initialData?.isSold ?? (initialData?.stockStatus === "Out of Stock"),
       specsInput: initialData?.specs ? initialData.specs.join(", ") : "",
       description: initialData?.description || "",
@@ -214,6 +218,8 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
         title: values.productName,
         titleTh: values.titleTh || "",
         category: values.category,
+        condition: values.condition || "New",
+        shopName: values.shopName || values.adminName,
         description: values.description || "",
         specs: parsedSpecs,
         isSold: values.isSold,
@@ -403,21 +409,89 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
               )}
             />
 
+            {/* Condition & Company / Shop Name */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <FormField
+                name="condition"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Condition *</FormLabel>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => field.onChange("New")}
+                        className={`py-2 px-3 rounded-xl border text-xs font-bold transition cursor-pointer flex items-center justify-center gap-2 ${
+                          field.value === "New"
+                            ? "bg-emerald-500/25 border-emerald-400 text-emerald-300 ring-1 ring-emerald-500/50"
+                            : "bg-slate-800 border-slate-700 text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                        <span>✨ New</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => field.onChange("Used")}
+                        className={`py-2 px-3 rounded-xl border text-xs font-bold transition cursor-pointer flex items-center justify-center gap-2 ${
+                          field.value === "Used"
+                            ? "bg-amber-500/25 border-amber-400 text-amber-300 ring-1 ring-amber-500/50"
+                            : "bg-slate-800 border-slate-700 text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-amber-400" />
+                        <span>📦 Used</span>
+                      </button>
+                    </div>
+                    <FormDescription className="text-xs text-slate-400">
+                      Strictly New or Used. Displayed separately in its own condition status box.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                name="shopName"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company / Shop Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="e.g. TechZone Store / Clefy Gadgets"
+                        className="bg-slate-800 border-slate-700"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs text-slate-400">
+                      Brand or store badge displayed on the gadget listing.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             {/* Description */}
             <FormField
               name="description"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Product Description & Condition</FormLabel>
+                  <FormLabel>Item Specifications &amp; Inclusions</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
                       rows={4}
-                      placeholder="e.g., Macbook pro in excellent condition. 16 inch Touchbar 512gb ssd 32gb ram. Updated latest OS with charger..."
+                      placeholder="e.g., Apple M3 chip, 16GB unified memory, 512GB SSD. Inclusions: Original 70W USB-C charger, USB-C to MagSafe 3 cable, box, manuals..."
                       className="bg-slate-800 border-slate-700"
                     />
                   </FormControl>
+                  <FormDescription className="text-xs text-slate-400">
+                    Detailed gadget specifications and items included in the package. Rendered in a separate specifications container.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -542,6 +616,22 @@ export default function GadgetPostForm({ onSaveSuccess, initialData, onCancel }:
                     <FormControl>
                       <Input type="number" {...field} placeholder="e.g., 6 or 12" className="bg-slate-800 border-slate-700 font-mono" />
                     </FormControl>
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {[1, 3, 6, 12, 24].map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => form.setValue("installmentMonths", m, { shouldValidate: true })}
+                          className={`text-[10px] font-mono px-2 py-0.5 rounded border transition cursor-pointer ${
+                            field.value === m
+                              ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40 font-bold"
+                              : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
+                          }`}
+                        >
+                          {m === 1 ? "1 Mo (0% Cash)" : `${m}m`}
+                        </button>
+                      ))}
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}

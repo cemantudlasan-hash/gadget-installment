@@ -12,13 +12,13 @@ export default function GuestLoadingOverlay() {
         className="relative flex flex-col items-center text-center text-cyan-300"
         style={{ animation: 'slide-in-fwd-center 0.8s cubic-bezier(0.250, 0.460, 0.450, 0.940) both' }}
       >
-        <Store className="w-16 h-16 mb-6 text-purple-400 animate-pulse" />
+        <Store className="w-16 h-16 mb-6 text-cyan-400 animate-pulse" />
         <h1 
-          className="text-3xl md:text-5xl font-bold tracking-wider animate-[flicker_2s_linear_infinite] bg-gradient-to-r from-purple-400 to-cyan-300 bg-clip-text text-transparent"
+          className="text-3xl md:text-5xl font-bold tracking-wider font-display bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent"
         >
-          Generating Guest Session
+          Escrow Marketplace
         </h1>
-        <p className="mt-4 text-lg text-slate-300">Preparing available gadgets...</p>
+        <p className="mt-4 text-base md:text-lg text-slate-300">Synchronizing verified gadgets &amp; installments...</p>
         <div 
           className="absolute inset-0 bg-purple-500/10 animate-[scanline_2s_linear_infinite] pointer-events-none"
           style={{
