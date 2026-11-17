@@ -113,21 +113,50 @@ const getCachedMarketplaceItems = (): MarketplaceItem[] => {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed
-          .filter(
-            (i) => i.id !== "GI-84920" && i.id !== "GI-59102" && !i.id.startsWith("GI-104")
-          )
-          .map((i) => {
-            // Auto-heal any legacy cache where priceUSD was stored in raw THB (> 3000)
-            if (i.priceUSD > 3000) {
-              return {
-                ...i,
-                priceUSD: i.priceUSD / 35,
-                monthlyUSD: (i.monthlyUSD || 0) / 35,
-              };
-            }
-            return i;
-          });
+        const seenKeys = new Set<string>();
+        const uniqueItems: MarketplaceItem[] = [];
+
+        for (const rawItem of parsed) {
+          if (
+            !rawItem ||
+            rawItem.id === "GI-84920" ||
+            rawItem.id === "GI-59102" ||
+            rawItem.id?.startsWith("GI-104")
+          ) {
+            continue;
+          }
+
+          const item: MarketplaceItem = {
+            ...rawItem,
+            priceUSD: rawItem.priceUSD > 3000 ? rawItem.priceUSD / 35 : rawItem.priceUSD,
+            monthlyUSD:
+              (rawItem.monthlyUSD || 0) > 3000 ? (rawItem.monthlyUSD || 0) / 35 : rawItem.monthlyUSD,
+          };
+
+          const prodNum = (item.productNumber || item.id || "").trim().toUpperCase();
+          const normTitle = (item.title || "").trim().toLowerCase();
+          const shop = (item.shopName || item.seller || "").trim().toLowerCase();
+          const titleShopKey = `${normTitle}::${shop}`;
+
+          if (prodNum && prodNum.startsWith("GI-") && seenKeys.has(prodNum)) {
+            continue;
+          }
+          if (titleShopKey && seenKeys.has(titleShopKey)) {
+            continue;
+          }
+          if (normTitle && seenKeys.has(normTitle)) {
+            continue;
+          }
+
+          if (prodNum && prodNum.startsWith("GI-")) seenKeys.add(prodNum);
+          if (titleShopKey) seenKeys.add(titleShopKey);
+          if (normTitle) seenKeys.add(normTitle);
+          seenKeys.add(item.id);
+
+          uniqueItems.push(item);
+        }
+
+        return uniqueItems;
       }
     }
   } catch {}
@@ -298,6 +327,7 @@ export default function GuestPage({ onBack }: GuestPageProps) {
         .filter((item) => item.status === "APPROVED_LIVE" || item.status === "INSTALLMENT_ACTIVE")
         .map((item) => ({
           id: item.trackingId,
+          productNumber: item.trackingId,
           title: item.title,
           priceUSD: item.priceUSD,
           category: item.category,
@@ -315,16 +345,62 @@ export default function GuestPage({ onBack }: GuestPageProps) {
 
       setItems(() => {
         const map = new Map<string, MarketplaceItem>();
+        const seenProductNumbers = new Set<string>();
+        const seenTitles = new Set<string>();
+
         // 1. Live Firestore items (admin posted & stock managed)
         dbPosts.forEach((i) => {
-          if (!i.id.startsWith("GI-104")) map.set(i.id, i);
-        });
-        // 2. Approved escrow items (submitted by users & approved by Admin)
-        approvedEscrow.forEach((i) => {
-          if (i.id !== "GI-84920" && i.id !== "GI-59102" && !i.id.startsWith("GI-104")) {
+          if (!i.id.startsWith("GI-104")) {
+            const prodNum = (i.productNumber || "").trim().toUpperCase();
+            const normTitle = (i.title || "").trim().toLowerCase();
+            const shop = (i.shopName || i.seller || "").trim().toLowerCase();
+            const titleShopKey = `${normTitle}::${shop}`;
+
+            // Prevent duplicate documents from Firestore if any
+            if (prodNum && prodNum.startsWith("GI-") && seenProductNumbers.has(prodNum)) {
+              return;
+            }
+            if (titleShopKey && seenTitles.has(titleShopKey)) {
+              return;
+            }
+
+            if (prodNum && prodNum.startsWith("GI-")) seenProductNumbers.add(prodNum);
+            if (titleShopKey) seenTitles.add(titleShopKey);
+            if (normTitle) seenTitles.add(normTitle);
+            seenProductNumbers.add(i.id.toUpperCase());
+
             map.set(i.id, i);
           }
         });
+
+        // 2. Approved escrow items (submitted by users & approved by Admin)
+        // Deduplicate: ONLY add an escrow item if it has NOT already been synced/published to Firestore!
+        approvedEscrow.forEach((i) => {
+          if (i.id === "GI-84920" || i.id === "GI-59102" || i.id.startsWith("GI-104")) {
+            return;
+          }
+
+          const trackingId = (i.id || "").trim().toUpperCase();
+          const normTitle = (i.title || "").trim().toLowerCase();
+          const shop = (i.shopName || i.seller || "").trim().toLowerCase();
+          const titleShopKey = `${normTitle}::${shop}`;
+
+          // Check if this item is already in Firestore dbPosts!
+          if (seenProductNumbers.has(trackingId)) {
+            // Already published in Firestore under this tracking ID! Do not duplicate!
+            return;
+          }
+          if (seenTitles.has(titleShopKey) || seenTitles.has(normTitle)) {
+            // Already published in Firestore under this title! Do not duplicate!
+            return;
+          }
+
+          seenProductNumbers.add(trackingId);
+          seenTitles.add(titleShopKey);
+          seenTitles.add(normTitle);
+          map.set(i.id, i);
+        });
+
         const combined = Array.from(map.values());
         if (combined.length > 0) {
           try {
@@ -361,7 +437,9 @@ export default function GuestPage({ onBack }: GuestPageProps) {
               const priceRaw = Number(data.cashPrice || 0);
               const dpRaw = Number(data.downPayment || 0);
               const tenor = Number(data.installmentMonths || 12);
-              const dpPct = priceRaw > 0 && dpRaw > 0 ? Math.round((dpRaw / priceRaw) * 100) : 20;
+              const dpPct =
+                Number(data.downpaymentPct) ||
+                (priceRaw > 0 && dpRaw > 0 ? Math.round((dpRaw / priceRaw) * 100) : 20);
               const monthlyRaw = Number(
                 data.monthlyInstallment ||
                   (priceRaw > 0 && tenor > 0 ? (priceRaw - dpRaw) / tenor : 0)
@@ -375,6 +453,8 @@ export default function GuestPage({ onBack }: GuestPageProps) {
 
               return {
                 id: docSnap.id,
+                firestoreDocId: docSnap.id,
+                productNumber: data.productNumber || docSnap.id,
                 title: data.productName || data.title || "Gadget",
                 priceUSD,
                 category: (data.category?.toLowerCase() || "laptops") as any,

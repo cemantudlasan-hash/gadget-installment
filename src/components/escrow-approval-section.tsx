@@ -176,12 +176,22 @@ export default function EscrowApprovalSection() {
     const updated = updateEscrowStatus(trackingId, "APPROVED_LIVE", "Approved & auto-calculated by Admin");
     setQueue(updated);
 
-    const approvedItem = queue.find((i) => i.trackingId === trackingId);
+    const approvedItem = updated.find((i) => i.trackingId === trackingId) || queue.find((i) => i.trackingId === trackingId);
     if (db && approvedItem) {
       try {
         const postsRef = collection(db, "gadgetPosts");
         const q = query(postsRef, where("productNumber", "==", approvedItem.trackingId));
         const snap = await getDocs(q);
+
+        const dpUSD =
+          approvedItem.downpaymentUSD !== undefined && approvedItem.downpaymentUSD > 0
+            ? approvedItem.downpaymentUSD
+            : approvedItem.priceUSD * ((approvedItem.downpaymentPct || 20) / 100);
+
+        const monthlyUSD =
+          approvedItem.monthlyPaymentUSD !== undefined && approvedItem.monthlyPaymentUSD > 0
+            ? approvedItem.monthlyPaymentUSD
+            : (approvedItem.tenorMonths > 0 ? (approvedItem.priceUSD - dpUSD) / approvedItem.tenorMonths : 0);
 
         const postData = {
           productNumber: approvedItem.trackingId,
@@ -190,9 +200,10 @@ export default function EscrowApprovalSection() {
           condition: approvedItem.condition || "Mint 99%",
           description: approvedItem.description || "",
           cashPrice: Math.round(approvedItem.priceUSD * 35),
-          downPayment: Math.round(approvedItem.downpaymentUSD * 35),
-          installmentMonths: approvedItem.tenorMonths,
-          monthlyInstallment: Math.round(approvedItem.monthlyPaymentUSD * 35),
+          downPayment: Math.round(dpUSD * 35),
+          downpaymentPct: approvedItem.downpaymentPct || 20,
+          installmentMonths: approvedItem.tenorMonths || 12,
+          monthlyInstallment: Math.round(monthlyUSD * 35),
           adminName: approvedItem.sellerName || "Escrow Seller",
           shopName: approvedItem.shopName || approvedItem.sellerName || "Verified Shop",
           contactNumber: approvedItem.sellerContact,
@@ -204,9 +215,18 @@ export default function EscrowApprovalSection() {
           updatedAt: new Date().toISOString(),
         };
 
-        if (!snap.empty) {
+        let existingDocId = !snap.empty ? snap.docs[0].id : null;
+        if (!existingDocId) {
+          const qTitle = query(postsRef, where("productName", "==", approvedItem.title));
+          const snapTitle = await getDocs(qTitle);
+          if (!snapTitle.empty) {
+            existingDocId = snapTitle.docs[0].id;
+          }
+        }
+
+        if (existingDocId) {
           // Update existing listing document rather than creating a duplicate
-          await updateDoc(doc(db, "gadgetPosts", snap.docs[0].id), postData);
+          await updateDoc(doc(db, "gadgetPosts", existingDocId), postData);
         } else {
           await addDoc(postsRef, {
             ...postData,
@@ -553,6 +573,16 @@ export default function EscrowApprovalSection() {
         const q = query(postsRef, where("productNumber", "==", item.trackingId));
         const snap = await getDocs(q);
 
+        const dpUSD =
+          item.downpaymentUSD !== undefined && item.downpaymentUSD > 0
+            ? item.downpaymentUSD
+            : item.priceUSD * ((item.downpaymentPct || 20) / 100);
+
+        const monthlyUSD =
+          item.monthlyPaymentUSD !== undefined && item.monthlyPaymentUSD > 0
+            ? item.monthlyPaymentUSD
+            : (item.tenorMonths > 0 ? (item.priceUSD - dpUSD) / item.tenorMonths : 0);
+
         const postData = {
           productNumber: item.trackingId,
           productName: item.title,
@@ -560,9 +590,10 @@ export default function EscrowApprovalSection() {
           condition: item.condition || "Mint 99%",
           description: item.description || "",
           cashPrice: Math.round(item.priceUSD * 35),
-          downPayment: Math.round(item.downpaymentUSD * 35),
-          installmentMonths: item.tenorMonths,
-          monthlyInstallment: Math.round(item.monthlyPaymentUSD * 35),
+          downPayment: Math.round(dpUSD * 35),
+          downpaymentPct: item.downpaymentPct || 20,
+          installmentMonths: item.tenorMonths || 12,
+          monthlyInstallment: Math.round(monthlyUSD * 35),
           adminName: item.sellerName || "Escrow Seller",
           shopName: item.shopName || item.sellerName || "Verified Shop",
           contactNumber: item.sellerContact,
@@ -572,9 +603,15 @@ export default function EscrowApprovalSection() {
           updatedAt: new Date().toISOString(),
         };
 
-        if (!snap.empty) {
-          const docId = snap.docs[0].id;
-          await updateDoc(doc(db, "gadgetPosts", docId), postData);
+        let existingDocId = !snap.empty ? snap.docs[0].id : null;
+        if (!existingDocId) {
+          const qTitle = query(postsRef, where("productName", "==", item.title));
+          const snapTitle = await getDocs(qTitle);
+          if (!snapTitle.empty) existingDocId = snapTitle.docs[0].id;
+        }
+
+        if (existingDocId) {
+          await updateDoc(doc(db, "gadgetPosts", existingDocId), postData);
         } else {
           await addDoc(postsRef, {
             ...postData,
